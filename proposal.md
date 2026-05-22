@@ -14,8 +14,8 @@
 *Nota*: si utiliza un monorepo indicar un solo link con fullstack app.
 
 ## Tema
-### Descripción
-*2 a 6 líneas describiendo el negocio (menos es más)*
+### Sistema de Gestión - Instituto de Inglés.
+El sistema a desarrollar es una plataforma de gestión para un instituto dedicado exclusivamente al dictado de cursos de idioma inglés. Su objetivo principal es digitalizar y centralizar los procesos administrativos básicos que actualmente se realizan de forma manual. Esto permitirá optimizar la gestión de la oferta académica, la organización de comisiones y la inscripción de alumnos. El sistema será de uso exclusivamente interno, permitiendo el acceso únicamente al personal del instituto (Administrador/Secretaría y Profesores).
 
 ### Modelo
 ![imagen del modelo]()
