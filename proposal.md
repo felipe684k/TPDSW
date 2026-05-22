@@ -2,7 +2,11 @@
 
 ## Grupo
 ### Integrantes
-* legajo - Apellido(s), Nombre(s)
+* 54286 - Cuffia, Felipe
+* 54288 - Garibaldi, Francisco
+* 53944 - Radicic, Patricio
+* 53914 - Tosar, Salvador
+* 55263 - Yocco, Simon
 
 ### Repositorios
 * [frontend app](http://hyperlinkToGihubOrGitlab)
