@@ -9,9 +9,7 @@
 * 55263 - Yocco, Simon
 
 ### Repositorios
-* [frontend app](http://hyperlinkToGihubOrGitlab)
-* [backend app](http://hyperlinkToGihubOrGitlab)
-*Nota*: si utiliza un monorepo indicar un solo link con fullstack app.
+* [fullstack app]([http://hyperlinkToGihubOrGitlab](https://github.com/felipe684k/TPDSW/tree/main))
 
 ## Tema
 ### Sistema de Gestión - Instituto de Inglés.
