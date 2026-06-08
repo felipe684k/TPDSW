@@ -26,22 +26,20 @@ El sistema a desarrollar es una plataforma de gestión para un instituto dedicad
 
 ### Alcance Mínimo
 
-*Nota*: el siguiente es un ejemplo para un grupo de 3 integrantes para un sistema de hotel. El 
-
 Regularidad:
 |Req|Detalle|
 |:-|:-|
-|CRUD simple|1. CRUD Tipo Habitacion<br>2. CRUD Servicio<br>3. CRUD Localidad|
-|CRUD dependiente|1. CRUD Habitación {depende de} CRUD Tipo Habitacion<br>2. CRUD Cliente {depende de} CRUD Localidad|
-|Listado<br>+<br>detalle| 1. Listado de habitaciones filtrado por tipo de habitación, muestra nro y tipo de habitación => detalle CRUD Habitacion<br> 2. Listado de reservas filtrado por rango de fecha, muestra nro de habitación, fecha inicio y fin estadía, estado y nombre del cliente => detalle muestra datos completos de la reserva y del cliente|
-|CUU/Epic|1. Reservar una habitación para la estadía<br>2. Realizar el check-in de una reserva|
+|CRUD simple|1. [cite_start]CRUD Nivel [cite: 20]<br>2. [cite_start]CRUD Aula [cite: 20]<br>3. [cite_start]CRUD Horario [cite: 20]<br>4. [cite_start]CRUD Docente [cite: 20]<br>5. [cite_start]CRUD Alumno [cite: 20]|
+|CRUD dependiente|1. [cite_start]CRUD Comisión {depende de} CRUD Curso, CRUD Aula, CRUD Docente y CRUD Horario [cite: 20]<br>2. [cite_start]CRUD Curso {depende de} CRUD Nivel [cite: 20]<br>3. [cite_start]CRUD Inscripción {depende de} CRUD Alumno y CRUD Comisión [cite: 20]|
+|Listado<br>+<br>detalle| 1. [cite_start]Listado de cursos filtrado por nivel muestra nombre del curso, carga horaria y costo => detalle del curso [cite: 20][cite_start]<br> 2. Listado de comisiones filtrado por nivel o curso muestra aula, horario, docente y cupo disponible => detalle de la comisión [cite: 20][cite_start]<br> 3. Listado de alumnos filtrado por comisión muestra nombre, DNI y fecha de inscripción => detalle del alumno [cite: 20]|
+|CUU/Epic|1. [cite_start]CUU 1: Crear comisiones [cite: 20]<br>2. [cite_start]CUU 2: Inscribir alumno a comisión [cite: 20]<br>3. [cite_start]CUU 3: Asignar docente a una comisión [cite: 20]|
 
 
 Adicionales para Aprobación
 |Req|Detalle|
 |:-|:-|
-|CRUD |1. CRUD Tipo Habitacion<br>2. CRUD Servicio<br>3. CRUD Localidad<br>4. CRUD Provincia<br>5. CRUD Habitación<br>6. CRUD Empleado<br>7. CRUD Cliente|
-|CUU/Epic|1. Reservar una habitación para la estadía<br>2. Realizar el check-in de una reserva<br>3. Realizar el check-out y facturación de estadía y servicios|
+|CRUD |1. [cite_start]CRUD Nivel [cite: 20]<br>2. [cite_start]CRUD Aula [cite: 20]<br>3. [cite_start]CRUD Horario [cite: 20]<br>4. [cite_start]CRUD Docente [cite: 20]<br>5. [cite_start]CRUD Alumno [cite: 20]<br>6. [cite_start]CRUD Comisión [cite: 20]<br>7. [cite_start]CRUD Curso [cite: 20]<br>8. [cite_start]CRUD Inscripción [cite: 20]|
+|CUU/Epic|1. [cite_start]CUU 1: Crear comisiones [cite: 20]<br>2. [cite_start]CUU 2: Inscribir alumno a comisión [cite: 20]<br>3. [cite_start]CUU 3: Asignar docente a una comisión [cite: 20]<br>4. [cite_start]CUU 4: Generar reporte de alumnos [cite: 21]<br>5. [cite_start]CUU 5: Asignar aulas a comisiones [cite: 21]|
 
 
 ### Alcance Adicional Voluntario
@@ -50,7 +48,5 @@ Adicionales para Aprobación
 
 |Req|Detalle|
 |:-|:-|
-|Listados |1. Estadía del día filtrado por fecha muestra, cliente, habitaciones y estado <br>2. Reservas filtradas por cliente muestra datos del cliente y de cada reserve fechas, estado cantidad de habitaciones y huespedes|
-|CUU/Epic|1. Consumir servicios<br>2. Cancelación de reserva|
-|Otros|1. Envío de recordatorio de reserva por email|
+|Otros|1. [cite_start]Envío de mail al alumno confirmando su inscripción mediante API externa [cite: 21]|
 
