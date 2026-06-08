@@ -29,7 +29,7 @@ El sistema a desarrollar es una plataforma de gestión para un instituto dedicad
 Regularidad:
 |Req|Detalle|
 |:-|:-|
-|CRUD simple|1. [cite_start]CRUD Nivel [cite: 20]<br>2. [cite_start]CRUD Aula [cite: 20]<br>3. [cite_start]CRUD Horario [cite: 20]<br>4. [cite_start]CRUD Docente [cite: 20]<br>5. [cite_start]CRUD Alumno [cite: 20]|
+|CRUD simple|1. CRUD Nivel<br>2. [cite_start]CRUD Aula [cite: 20]<br>3. [cite_start]CRUD Horario [cite: 20]<br>4. [cite_start]CRUD Docente [cite: 20]<br>5. [cite_start]CRUD Alumno [cite: 20]|
 |CRUD dependiente|1. [cite_start]CRUD Comisión {depende de} CRUD Curso, CRUD Aula, CRUD Docente y CRUD Horario [cite: 20]<br>2. [cite_start]CRUD Curso {depende de} CRUD Nivel [cite: 20]<br>3. [cite_start]CRUD Inscripción {depende de} CRUD Alumno y CRUD Comisión [cite: 20]|
 |Listado<br>+<br>detalle| 1. [cite_start]Listado de cursos filtrado por nivel muestra nombre del curso, carga horaria y costo => detalle del curso [cite: 20][cite_start]<br> 2. Listado de comisiones filtrado por nivel o curso muestra aula, horario, docente y cupo disponible => detalle de la comisión [cite: 20][cite_start]<br> 3. Listado de alumnos filtrado por comisión muestra nombre, DNI y fecha de inscripción => detalle del alumno [cite: 20]|
 |CUU/Epic|1. [cite_start]CUU 1: Crear comisiones [cite: 20]<br>2. [cite_start]CUU 2: Inscribir alumno a comisión [cite: 20]<br>3. [cite_start]CUU 3: Asignar docente a una comisión [cite: 20]|
