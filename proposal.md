@@ -9,7 +9,7 @@
 * 55263 - Yocco, Simon
 
 ### Repositorios
-* [fullstack app]([https://github.com/felipe684k/TPDSW/tree/main])
+* [fullstack app](https://github.com/felipe684k/TPDSW/tree/main)
 
 ## Tema
 ### Sistema de Gestión - Instituto de Inglés.
