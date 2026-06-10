@@ -1,10 +1,3 @@
-
-¡Es la mejor pregunta que podés hacer en este momento! Cuando uno recién arranca, ver esa catarata de archivos de golpe marea a cualquiera.
-
-Para que no te abrume, vamos a agruparlos lógicamente. Imaginate que tu proyecto es un restaurante: tenés la cocina (configuraciones), el depósito (dependencias) y el salón comedor (tu código).
-
-Acá tenés la radiografía exacta de tu proyecto:
-
 ### 📁 1. Las Carpetas Principales
 
 * **`node_modules/` (El depósito gigante):** Acá viven todas las herramientas que instalaste al hacer `npm install` (como React, Vite, etc.). Pesa muchísimo y **nunca, jamás tenés que tocar nada acá adentro**. Tampoco se sube a GitHub.
