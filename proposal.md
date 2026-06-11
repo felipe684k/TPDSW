@@ -1,4 +1,4 @@
-<img width="1346" height="675" alt="E01-R03_ ART-MD-Modelo de Dominio2" src="https://github.com/user-attachments/assets/b81722ae-10a6-44ae-8c17-554d7d73169a" /># Propuesta TP DSW
+# Propuesta TP DSW
 
 ## Grupo
 ### Integrantes
