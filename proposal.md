@@ -18,8 +18,6 @@ El sistema a desarrollar es una plataforma de gestión para un instituto dedicad
 ### Modelo
 ![E01-R03_ ART-MD-Modelo de Dominio2](https://github.com/user-attachments/assets/041ac472-1303-449d-965a-80f2a0fe476b)
 
-*Nota*: incluir un link con la imagen de un modelo, puede ser modelo de dominio, diagrama de clases, DER. Si lo prefieren pueden utilizar diagramas con [Mermaid](https://mermaid.js.org) en lugar de imágenes.
-
 ## Alcance Funcional 
 
 ### Alcance Mínimo
