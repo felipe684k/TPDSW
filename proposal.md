@@ -1,4 +1,4 @@
-# Propuesta TP DSW
+<img width="1346" height="675" alt="E01-R03_ ART-MD-Modelo de Dominio2" src="https://github.com/user-attachments/assets/b81722ae-10a6-44ae-8c17-554d7d73169a" /># Propuesta TP DSW
 
 ## Grupo
 ### Integrantes
@@ -16,7 +16,7 @@
 El sistema a desarrollar es una plataforma de gestión para un instituto dedicado exclusivamente al dictado de cursos de idioma inglés. Su objetivo principal es digitalizar y centralizar los procesos administrativos básicos que actualmente se realizan de forma manual. Esto permitirá optimizar la gestión de la oferta académica, la organización de comisiones y la inscripción de alumnos. El sistema será de uso exclusivamente interno, permitiendo el acceso únicamente al personal del instituto (Administrador/Secretaría y Profesores).
 
 ### Modelo
-![imagen del modelo]()
+![E01-R03_ ART-MD-Modelo de Dominio2](https://github.com/user-attachments/assets/041ac472-1303-449d-965a-80f2a0fe476b)
 
 *Nota*: incluir un link con la imagen de un modelo, puede ser modelo de dominio, diagrama de clases, DER. Si lo prefieren pueden utilizar diagramas con [Mermaid](https://mermaid.js.org) en lugar de imágenes.
 
