@@ -1,122 +1,107 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect } from 'react'
+import Sidebar from './components/Sidebar'
+import Configuracion from './components/Configuracion'
+import Comisiones from './components/Comisiones'
+import Pagos from './components/Pagos'
+import Topbar from './components/Topbar'
+import Dashboard from './components/Dashboard'
+import Inscripciones from './components/Inscripciones'
+import Alumnos from './components/Alumnos'
+import Docentes from './components/Docentes'
+import Cursos from './components/Cursos'
+import ValorCuota from './components/ValorCuota'
+import Login from './components/Login'
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  // Estado para simular si el usuario ya inició sesión o no
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  // Estado que controla qué página estamos viendo
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'valorCuota' | 'configuracion' | 'comisiones' | 'pagos'>('dashboard')
+
+  // Estado del ciclo lectivo (active/inactive)
+  const [cicloActivo, setCicloActivo] = useState<boolean>(() => {
+    const stored = localStorage.getItem('cicloActivo')
+    return stored !== null ? stored === 'true' : false
+  })
+
+  useEffect(() => {
+    localStorage.setItem('cicloActivo', cicloActivo.toString())
+  }, [cicloActivo])
+
+  // Datos globales que se comparten entre componentes
+  const [inscripciones, setInscripciones] = useState([
+    { id: 1, apellido: 'González', nombre: 'Lucía', dni: '40.123.456', comision: 'B1 — Mañana', nivel: 'B1', fecha: '02/07/2026', estado: 'Activa' },
+    { id: 2, apellido: 'Ramírez', nombre: 'Tomás', dni: '38.901.234', comision: 'A2 — Tarde', nivel: 'A2', fecha: '01/07/2026', estado: 'Pendiente' },
+    { id: 3, apellido: 'Fernández', nombre: 'Valentina', dni: '42.567.890', comision: 'A1 — Noche', nivel: 'A1', fecha: '30/06/2026', estado: 'Activa' },
+    { id: 4, apellido: 'López', nombre: 'Mateo', dni: '41.234.567', comision: 'B2 — Mañana', nivel: 'B2', fecha: '29/06/2026', estado: 'Moroso' },
+    { id: 5, apellido: 'Perez', nombre: 'Antonella', dni: '39.876.543', comision: 'A2 — Mañana', nivel: 'A2', fecha: '28/06/2026', estado: 'Activa' }
+  ])
+
+  // Si no está logueado, muestra únicamente la pantalla de Login
+  if (!isLoggedIn) {
+    return <Login onLogin={() => setIsLoggedIn(true)} />
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Comenza</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="flex h-screen bg-slate-100 text-slate-900 font-sans overflow-hidden">
+      
+      {/* Nuestro componente de menú lateral */}
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => setIsLoggedIn(false)} />
+      
+      <main className="flex-1 flex flex-col overflow-hidden">
+        
+        {/* Nuestro componente de barra superior */}
+        <Topbar activeTab={activeTab} />
+        
+        {/* El contenedor principal donde mostramos una página u otra */}
+        <div className="flex-1 overflow-y-auto p-6">
+          
+          {activeTab === 'dashboard' && (
+            <Dashboard 
+              inscripciones={inscripciones} 
+              setActiveTab={setActiveTab} 
+            />
+          )}
 
-      <div className="ticks"></div>
+          {activeTab === 'inscripciones' && (
+            <Inscripciones 
+              inscripciones={inscripciones} 
+              setInscripciones={setInscripciones} 
+            />
+          )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          {activeTab === 'alumnos' && (
+            <Alumnos />
+          )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+          {activeTab === 'docentes' && (
+            <Docentes />
+          )}
+
+          {activeTab === 'cursos' && (
+            <Cursos />
+          )}
+
+          {activeTab === 'valorCuota' && (
+            <ValorCuota />
+          )}
+
+          {activeTab === 'comisiones' && (
+            <Comisiones />
+          )}
+
+          {activeTab === 'pagos' && (
+            <Pagos />
+          )}
+
+          {activeTab === 'configuracion' && (
+            <Configuracion cicloActivo={cicloActivo} setCicloActivo={setCicloActivo} />
+          )}
+
+        </div>
+      </main>
+
+    </div>
   )
 }
-
-export default App

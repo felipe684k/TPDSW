@@ -1,0 +1,8 @@
+[
+  { "id": 1, "nombre": "A1", "descripcion": "Nivel principiante" },
+  { "id": 2, "nombre": "A2", "descripcion": "Nivel elemental" },
+  { "id": 3, "nombre": "B1", "descripcion": "Nivel intermedio bajo" },
+  { "id": 4, "nombre": "B2", "descripcion": "Nivel intermedio alto" },
+  { "id": 5, "nombre": "C1", "descripcion": "Nivel avanzado" },
+  { "id": 6, "nombre": "C2", "descripcion": "Nivel superior" }
+]

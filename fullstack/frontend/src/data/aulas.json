@@ -1,0 +1,14 @@
+[
+  { "id": 1, "nombre": "Aula 101", "capacidad": 20 },
+  { "id": 2, "nombre": "Aula 102", "capacidad": 25 },
+  { "id": 3, "nombre": "Aula 103", "capacidad": 30 },
+  { "id": 4, "nombre": "Aula 104", "capacidad": 20 },
+  { "id": 5, "nombre": "Aula 105", "capacidad": 25 },
+  { "id": 6, "nombre": "Aula 106", "capacidad": 30 },
+  { "id": 7, "nombre": "Aula 201", "capacidad": 20 },
+  { "id": 8, "nombre": "Aula 202", "capacidad": 25 },
+  { "id": 9, "nombre": "Aula 203", "capacidad": 30 },
+  { "id": 10, "nombre": "Aula 204", "capacidad": 20 },
+  { "id": 11, "nombre": "Aula 205", "capacidad": 25 },
+  { "id": 12, "nombre": "Aula 206", "capacidad": 30 }
+]
