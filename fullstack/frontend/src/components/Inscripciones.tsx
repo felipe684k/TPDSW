@@ -34,15 +34,29 @@ export default function Inscripciones({ inscripciones, setInscripciones }: Inscr
 
   // Mock datos
   const alumnosDisponibles = [
-    { id: 1, nombreCompleto: 'González, Lucía', dni: '40.123.456' },
-    { id: 2, nombreCompleto: 'Ramírez, Tomás', dni: '38.901.234' },
-    { id: 3, nombreCompleto: 'Fernández, Valentina', dni: '42.567.890' }
+    { id: 1, 
+      nombreCompleto: 'González, Lucía', 
+      dni: '40.123.456' },
+
+    { id: 2, 
+      nombreCompleto: 'Ramírez, Tomás', 
+      dni: '38.901.234' },
+
+    { id: 3, 
+      nombreCompleto: 'Fernández, Valentina', 
+      dni: '42.567.890' }
   ]
 
   const comisionesDisponibles = [
-    { id: 1, nombre: 'Kids 1 - A', matricula: 8000 },
-    { id: 2, nombre: 'Teens 3 - Noche', matricula: 10000 },
-    { id: 3, nombre: 'First Certificate Prep', matricula: 15000 }
+    { id: 1, 
+      nombre: 'Kids 1 - A', 
+      matricula: 8000 },
+    { id: 2, 
+      nombre: 'Teens 3 - Noche', 
+      matricula: 10000 },
+    { id: 3, 
+      nombre: 'First Certificate Prep', 
+      matricula: 15000 }
   ]
 
   const comisionSeleccionada = comisionesDisponibles.find(c => c.id.toString() === formComision)

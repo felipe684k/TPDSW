@@ -2,7 +2,7 @@ import type { Inscripcion } from './Inscripciones'
 
 interface DashboardProps {
   inscripciones: Inscripcion[]
-  setActiveTab: (tab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'valorCuota' | 'configuracion' | 'comisiones' | 'pagos') => void
+  setActiveTab: (tab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'valorCuota' | 'comisiones' | 'pagos' | 'aulas') => void
 }
 
 export default function Dashboard({ inscripciones, setActiveTab }: DashboardProps) {

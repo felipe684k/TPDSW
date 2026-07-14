@@ -6,11 +6,45 @@ export default function Alumnos() {
 
   // Datos estáticos (hardcodeados) de ejemplo para la tabla de alumnos
   const alumnosEjemplo = [
-    { dni: '43.123.456', apellido: 'González', nombre: 'Lucía', telefono: '2216789012', email: 'lucia.gonzalez@email.com', nivel: 'B1', ingreso: '15/03/2024' },
-    { dni: '41.901.234', apellido: 'Ramírez', nombre: 'Tomás', telefono: '2215432109', email: 'tomas.ramirez@email.com', nivel: 'A2', ingreso: '10/04/2024' },
-    { dni: '44.567.890', apellido: 'Fernández', nombre: 'Valentina', telefono: '2219876543', email: 'valen.f@email.com', nivel: 'A1', ingreso: '02/06/2025' },
-    { dni: '42.234.567', apellido: 'López', nombre: 'Mateo', telefono: '2213456789', email: 'mateo.lopez@email.com', nivel: 'B2', ingreso: '20/11/2023' },
-    { dni: '40.876.543', apellido: 'Perez', nombre: 'Antonella', telefono: '2216549870', email: 'anto.perez@email.com', nivel: 'A2', ingreso: '05/02/2024' }
+    { dni: '43.123.456', 
+      apellido: 'González', 
+      nombre: 'Lucía', 
+      telefono: '2216789012', 
+      email: 'lucia.gonzalez@email.com', 
+      nivel: 'B1', 
+      ingreso: '15/03/2024' },
+    
+    { dni: '41.901.234', 
+      apellido: 'Ramírez', 
+      nombre: 'Tomás', 
+      telefono: '2215432109', 
+      email: 'tomas.ramirez@email.com', 
+      nivel: 'A2', 
+      ingreso: '10/04/2024' },
+
+    { dni: '44.567.890', 
+      apellido: 'Fernández', 
+      nombre: 'Valentina', 
+      telefono: '2219876543', 
+      email: 'valen.f@email.com', 
+      nivel: 'A1', 
+      ingreso: '02/06/2025' },
+
+    { dni: '42.234.567', 
+      apellido: 'López', 
+      nombre: 'Mateo', 
+      telefono: '2213456789', 
+      email: 'mateo.lopez@email.com', 
+      nivel: 'B2', 
+      ingreso: '20/11/2023' },
+
+    { dni: '40.876.543', 
+      apellido: 'Perez', 
+      nombre: 'Antonella', 
+      telefono: '2216549870', 
+      email: 'anto.perez@email.com', 
+      nivel: 'A2', 
+      ingreso: '05/02/2024' }
   ]
 
   return (

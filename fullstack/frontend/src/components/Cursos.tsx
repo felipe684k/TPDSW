@@ -34,10 +34,33 @@ export default function Cursos() {
 
   // Valores de cuota simulados para el selector
   const cuotasDisponibles = [
-    { id_cuota: 1, costo_mensual: 12000, fecha_desde: '01/03/2026', descripcion: 'Tarifa Básica Kids ($12.000)' },
-    { id_cuota: 2, costo_mensual: 14500, fecha_desde: '01/03/2026', descripcion: 'Tarifa Teens/Adultos ($14.500)' },
-    { id_cuota: 3, costo_mensual: 16000, fecha_desde: '01/03/2026', descripcion: 'Tarifa Business ($16.000)' },
-    { id_cuota: 4, costo_mensual: 18000, fecha_desde: '01/03/2026', descripcion: 'Tarifa FCE Cambridge ($18.000)' }
+    { 
+      id_cuota: 1, 
+      costo_mensual: 12000, 
+      fecha_desde: '01/03/2026', 
+      descripcion: 'Tarifa Básica Kids ($12.000)' 
+    },
+
+    { 
+      id_cuota: 2, 
+      costo_mensual: 14500, 
+      fecha_desde: '01/03/2026', 
+      descripcion: 'Tarifa Teens/Adultos ($14.500)' 
+    },
+
+    { 
+      id_cuota: 3, 
+      costo_mensual: 16000, 
+      fecha_desde: '01/03/2026', 
+      descripcion: 'Tarifa Business ($16.000)' 
+    },
+
+    { 
+      id_cuota: 4, 
+      costo_mensual: 18000, 
+      fecha_desde: '01/03/2026', 
+      descripcion: 'Tarifa FCE Cambridge ($18.000)' 
+    }
   ]
 
   return (
@@ -53,7 +76,7 @@ export default function Cursos() {
           onClick={() => setModalOpen(true)} 
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all"
         >
-          ➕ Registrar Curso
+          ➕ Registrar Curso 
         </button>
       </div>
 
@@ -117,7 +140,7 @@ export default function Cursos() {
               <h2 className="text-sm font-semibold text-slate-800">🏫 Registrar Nuevo Curso</h2>
               <button 
                 onClick={() => setModalOpen(false)}
-                className="w-7 h-7 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 rounded flex items-center justify-center text-sm text-slate-500 transition-colors"
+                className="cursor-pointer w-7 h-7 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 rounded flex items-center justify-center text-sm text-slate-500 transition-colors"
               >
                 ✕
               </button>

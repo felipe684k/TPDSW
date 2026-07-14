@@ -1,15 +1,15 @@
 import { useState } from 'react'
 
 interface LoginProps {
-  onLogin: () => void
+  onLogin: () => void //onLogin es una funcion que recibe como parametro otro boton que cuando se presione va a cambiar el estado a "conectado"
 }
 
 export default function Login({ onLogin }: LoginProps) {
   const [dni, setDni] = useState('')
   const [password, setPassword] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = (e: React.FormEvent) => {  //handlesubmit significa "manejar el envio" de un formulario
+    e.preventDefault()  //previene que se recargue la pagina al enviar el formulario 
     
     // Validación estática simple: solo verifica que no estén vacíos
     if (!dni || !password) {
@@ -22,13 +22,13 @@ export default function Login({ onLogin }: LoginProps) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      {/* Tarjeta de login principal */}
-      <div className="w-full max-w-md bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden p-8 space-y-6">
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">  {/*Este div representa el fondo, todo esto es para poder centrar la tarjeta*/}
+      {/* Tarjeta de login principal */}    
+      <div className="w-full max-w-md bg-slate-950 border border-slate-800 rounded-2xl shadow-2x1 overflow-hidden p-8 space-y-6"> {/*Este div representa la tarjeta de login*/}
         
         {/* Encabezado con Logo del Instituto */}
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-lg shadow-indigo-600/30">
+          <div className="w-14 h-14 bg-blue-600 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-lg shadow-blue-600/30">
             🎓
           </div>
           <h2 className="text-xl font-bold tracking-tight text-slate-100">
@@ -93,7 +93,7 @@ export default function Login({ onLogin }: LoginProps) {
           {/* Botón de envío */}
           <button 
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium py-2.5 rounded-lg text-xs shadow-lg shadow-indigo-600/20 transition-all"
+            className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium py-2.5 rounded-lg text-xs shadow-lg shadow-blue-600/20 transition-all"
           >
             Iniciar Sesión
           </button>
