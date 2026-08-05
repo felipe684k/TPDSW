@@ -106,7 +106,7 @@ export default function Inscripciones({ inscripciones, setInscripciones }: Inscr
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">Inscripciones</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-100">Inscripciones</h1>
           <p className="text-xs text-slate-500 mt-1">Listado de alumnos inscriptos a comisiones.</p>
         </div>
         <button onClick={() => setModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all">
@@ -121,17 +121,17 @@ export default function Inscripciones({ inscripciones, setInscripciones }: Inscr
       </div>
 
       {/* Tabla principal */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-200 flex justify-between items-center">
-          <div className="text-xs font-semibold text-slate-700">Listado de Inscripciones</div>
-          <span className="text-2xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded font-mono">
+      <div className="bg-[#1c1d24] rounded-xl border border-slate-800 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-800 flex justify-between items-center">
+          <div className="text-xs font-semibold text-slate-300">Listado de Inscripciones</div>
+          <span className="text-2xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded font-mono">
             Total: {inscripciones.length}
           </span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
+              <tr className="bg-[#17181e] border-b border-slate-800">
                 <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Alumno</th>
                 <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">DNI</th>
                 <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Comisión</th>
@@ -143,28 +143,28 @@ export default function Inscripciones({ inscripciones, setInscripciones }: Inscr
                 <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-800/60">
               {inscripciones.map((i) => (
-                <tr key={i.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="p-3 text-xs font-semibold text-slate-800">{i.apellido}, {i.nombre}</td>
+                <tr key={i.id} className="hover:bg-[#17181e] transition-colors">
+                  <td className="p-3 text-xs font-semibold text-slate-200">{i.apellido}, {i.nombre}</td>
                   <td className="p-3 text-xs font-mono text-slate-400">{i.dni}</td>
-                  <td className="p-3 text-xs text-slate-600">{i.comision}</td>
+                  <td className="p-3 text-xs text-slate-400">{i.comision}</td>
                   <td className="p-3 text-xs">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold bg-indigo-50 text-indigo-700">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold bg-indigo-950/30 text-indigo-400">
                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>{i.nivel}
                     </span>
                   </td>
                   <td className="p-3 text-xs text-slate-400">{i.fecha}</td>
-                  <td className="p-3 text-xs font-semibold text-slate-600">{i.porc_asistencia || '0%'}</td>
-                  <td className="p-3 text-xs font-semibold text-slate-600">{i.nota_final || '-'}</td>
+                  <td className="p-3 text-xs font-semibold text-slate-400">{i.porc_asistencia || '0%'}</td>
+                  <td className="p-3 text-xs font-semibold text-slate-400">{i.nota_final || '-'}</td>
                   <td className="p-3 text-xs">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold ${
                       i.estado === 'Activa' ? 'bg-emerald-50 text-emerald-700' :
-                      i.estado === 'Pendiente' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700'
+                      i.estado === 'Pendiente' ? 'bg-amber-50 text-amber-700' : 'bg-rose-950/30 text-rose-700'
                     }`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${
                         i.estado === 'Activa' ? 'bg-emerald-500' :
-                        i.estado === 'Pendiente' ? 'bg-amber-500' : 'bg-rose-500'
+                        i.estado === 'Pendiente' ? 'bg-amber-500' : 'bg-rose-950/300'
                       }`}></span>
                       {i.estado}
                     </span>
@@ -172,7 +172,7 @@ export default function Inscripciones({ inscripciones, setInscripciones }: Inscr
                   <td className="p-3 text-xs">
                     <button 
                       onClick={() => handleEliminar(i.id)} 
-                      className="text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-2 py-1 rounded text-2xs font-medium transition-colors"
+                      className="text-rose-500 hover:text-rose-400 hover:bg-rose-950/30 px-2 py-1 rounded text-2xs font-medium transition-colors"
                     >
                       Dar de Baja
                     </button>
@@ -189,14 +189,14 @@ export default function Inscripciones({ inscripciones, setInscripciones }: Inscr
            ========================================== */}
       {modalOpen && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-start justify-center p-6 overflow-y-auto z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[calc(100vh-48px)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-[#1c1d24] rounded-xl shadow-xl w-full max-w-lg max-h-[calc(100vh-48px)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             
             {/* Header */}
-            <div className="p-4 border-b border-slate-200 flex justify-between items-center shrink-0">
-              <h2 className="text-sm font-semibold text-slate-800">📝 Registrar Inscripción</h2>
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center shrink-0">
+              <h2 className="text-sm font-semibold text-slate-200">📝 Registrar Inscripción</h2>
               <button 
                 onClick={cerrarModal}
-                className="w-7 h-7 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 rounded flex items-center justify-center text-sm text-slate-500 transition-colors"
+                className="w-7 h-7 bg-slate-900 hover:bg-rose-950/30 hover:text-rose-400 rounded flex items-center justify-center text-sm text-slate-500 transition-colors"
               >
                 ✕
               </button>
@@ -207,12 +207,12 @@ export default function Inscripciones({ inscripciones, setInscripciones }: Inscr
               
               {/* Sección Alumno */}
               <div className="space-y-3">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">Selección de Alumno</div>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Selección de Alumno</div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-slate-600">Alumno a inscribir *</label>
+                  <label className="text-xs font-semibold text-slate-400">Alumno a inscribir *</label>
                   <select 
                     required value={formAlumno} onChange={e => setFormAlumno(e.target.value)}
-                    className="border border-slate-200 rounded p-2 text-xs bg-white outline-none focus:border-indigo-500"
+                    className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] outline-none focus:border-indigo-500"
                   >
                     <option value="">— Seleccionar Alumno Registrado —</option>
                     {alumnosDisponibles.map(a => (
@@ -225,12 +225,12 @@ export default function Inscripciones({ inscripciones, setInscripciones }: Inscr
 
               {/* Sección Comisión */}
               <div className="space-y-3">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">Selección de Comisión</div>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Selección de Comisión</div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-slate-600">Comisión *</label>
+                  <label className="text-xs font-semibold text-slate-400">Comisión *</label>
                   <select 
                     required value={formComision} onChange={e => setFormComision(e.target.value)}
-                    className="border border-slate-200 rounded p-2 text-xs bg-white outline-none focus:border-indigo-500"
+                    className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] outline-none focus:border-indigo-500"
                   >
                     <option value="">— Seleccionar Comisión —</option>
                     {comisionesDisponibles.map(c => (
@@ -242,13 +242,13 @@ export default function Inscripciones({ inscripciones, setInscripciones }: Inscr
 
               {/* Sección Matrícula y Pago */}
               <div className="space-y-3">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">Pago de Matrícula (Abono Inmediato)</div>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Pago de Matrícula (Abono Inmediato)</div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold text-slate-600">Forma de pago *</label>
+                    <label className="text-xs font-semibold text-slate-400">Forma de pago *</label>
                     <select 
                       required value={formPago} onChange={e => setFormPago(e.target.value)}
-                      className="border border-slate-200 rounded p-2 text-xs bg-white outline-none focus:border-indigo-500"
+                      className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] outline-none focus:border-indigo-500"
                     >
                       <option value="">— Seleccionar —</option>
                       <option value="efectivo">Efectivo (-10%)</option>
@@ -257,10 +257,10 @@ export default function Inscripciones({ inscripciones, setInscripciones }: Inscr
                     </select>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold text-slate-600">Monto a abonar hoy</label>
+                    <label className="text-xs font-semibold text-slate-400">Monto a abonar hoy</label>
                     <input 
                       type="text" readOnly value={formPago ? `$${montoMatricula.toLocaleString('es-AR')}` : ''}
-                      placeholder="$0" className="border border-slate-200 bg-slate-50 rounded p-2 text-xs text-slate-500 outline-none font-bold text-slate-900"
+                      placeholder="$0" className="border border-slate-800 bg-[#17181e] rounded p-2 text-xs text-slate-500 outline-none font-bold text-slate-100"
                     />
                     {formPago === 'efectivo' && (
                       <span className="text-[10px] text-emerald-600 font-semibold mt-0.5">✅ Descuento por efectivo aplicado.</span>
@@ -272,10 +272,10 @@ export default function Inscripciones({ inscripciones, setInscripciones }: Inscr
             </form>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-2 shrink-0">
+            <div className="p-4 border-t border-slate-800 bg-[#17181e] flex justify-end gap-2 shrink-0">
               <button 
                 type="button" onClick={cerrarModal}
-                className="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded text-xs font-medium transition-colors"
+                className="px-4 py-2 border border-slate-800 bg-[#1c1d24] hover:bg-[#17181e] text-slate-400 rounded text-xs font-medium transition-colors"
               >
                 Cancelar
               </button>

@@ -74,7 +74,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-100 text-slate-900 font-sans overflow-hidden">
+    <div className="flex h-screen bg-[#16171d] text-slate-200 font-sans overflow-hidden">
       
       {/* Nuestro componente de menú lateral */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => setIsLoggedIn(false)} />

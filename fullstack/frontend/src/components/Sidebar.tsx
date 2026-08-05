@@ -16,7 +16,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
       </div>
 
       <nav className="flex-1 p-3 flex flex-col gap-1">
-        <span className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-slate-600">General</span>
+        <span className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-slate-400">General</span>
         
         <button 
           onClick={() => setActiveTab('dashboard')}
@@ -26,7 +26,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
         </button>
 
         <div className="h-px bg-slate-900 my-2"></div>
-        <span className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider font-bold text-slate-600">Académico</span>
+        <span className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider font-bold text-slate-400">Académico</span>
 
         <button 
           onClick={() => setActiveTab('cursos')}

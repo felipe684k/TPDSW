@@ -97,17 +97,17 @@ export default function Pagos() {
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">Cobro de Cuotas</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-100">Cobro de Cuotas</h1>
           <p className="text-xs text-slate-500 mt-1">Gestión de pagos mensuales por alumno.</p>
         </div>
       </div>
 
       {/* Buscador / Selector de Alumno */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3">
-        <label className="text-xs font-semibold text-slate-700">Buscar Alumno Inscripto</label>
+      <div className="bg-[#1c1d24] p-5 rounded-xl border border-slate-800 shadow-sm flex flex-col gap-3">
+        <label className="text-xs font-semibold text-slate-300">Buscar Alumno Inscripto</label>
         <select 
           onChange={handleSeleccionarAlumno}
-          className="border border-slate-300 rounded-lg p-3 text-sm bg-slate-50 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all max-w-md"
+          className="border border-slate-300 rounded-lg p-3 text-sm bg-[#17181e] outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all max-w-md"
         >
           <option value="">— Seleccionar Alumno —</option>
           {alumnosInscriptos.map(a => (
@@ -118,30 +118,30 @@ export default function Pagos() {
 
       {/* Panel de Cuotas */}
       {alumnoSeleccionado && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+        <div className="bg-[#1c1d24] rounded-xl border border-slate-800 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="p-4 border-b border-slate-800 bg-[#17181e] flex justify-between items-center">
             <div>
-              <h2 className="text-sm font-bold text-slate-800">Estado de Cuenta</h2>
+              <h2 className="text-sm font-bold text-slate-200">Estado de Cuenta</h2>
               <div className="flex gap-2 items-center mt-1">
                 <p className="text-xs text-slate-500">Ciclo Lectivo 2026</p>
-                <span className="text-[10px] font-semibold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-semibold bg-indigo-100 text-indigo-400 px-2 py-0.5 rounded-full">
                   Ingreso: {cuotas.length > 0 ? cuotas[0].mes_cuota : ''}
                 </span>
               </div>
             </div>
             <div className="text-right">
               <span className="text-xs text-slate-500 block">Deuda Total Vencida</span>
-              <span className="text-lg font-bold text-rose-600">$0</span>
+              <span className="text-lg font-bold text-rose-500">$0</span>
             </div>
           </div>
           
           <div className="p-5">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {cuotas.map((cuota) => (
-                <div key={cuota.id} className={`p-4 rounded-xl border ${cuota.estado === 'Pagado' ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white'} shadow-sm flex flex-col justify-between space-y-4`}>
+                <div key={cuota.id} className={`p-4 rounded-xl border ${cuota.estado === 'Pagado' ? 'border-emerald-200 bg-emerald-50' : 'border-slate-800 bg-[#1c1d24]'} shadow-sm flex flex-col justify-between space-y-4`}>
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">{cuota.mes_cuota}</span>
+                      <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">{cuota.mes_cuota}</span>
                       <span className="block text-[10px] text-slate-500">Vto: {cuota.vencimiento}</span>
                     </div>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -151,20 +151,20 @@ export default function Pagos() {
                     </span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2 text-[10px] bg-slate-50/50 p-2 rounded border border-slate-100">
+                  <div className="grid grid-cols-2 gap-2 text-[10px] bg-[#17181e]/50 p-2 rounded border border-slate-800/60">
                     <div>
                       <span className="text-slate-400 block">Base</span>
-                      <span className="font-semibold text-slate-700">${cuota.monto.toLocaleString('es-AR')}</span>
+                      <span className="font-semibold text-slate-300">${cuota.monto.toLocaleString('es-AR')}</span>
                     </div>
                     {cuota.estado === 'Pagado' && (
                       <>
                         <div>
                           <span className="text-slate-400 block">Fecha Pago</span>
-                          <span className="font-semibold text-slate-700">{cuota.fecha_pago}</span>
+                          <span className="font-semibold text-slate-300">{cuota.fecha_pago}</span>
                         </div>
                         <div>
                           <span className="text-slate-400 block">Recargo</span>
-                          <span className="font-semibold text-rose-600">+${cuota.recargo}</span>
+                          <span className="font-semibold text-rose-500">+${cuota.recargo}</span>
                         </div>
                         <div>
                           <span className="text-slate-400 block">Descuento</span>
@@ -174,10 +174,10 @@ export default function Pagos() {
                     )}
                   </div>
 
-                  <div className="flex justify-between items-end pt-2 border-t border-slate-100/50">
+                  <div className="flex justify-between items-end pt-2 border-t border-slate-800/60/50">
                     <div>
                       <span className="block text-[10px] text-slate-500">Total a Pagar / Pagado</span>
-                      <span className="text-lg font-bold text-slate-900">${(cuota.monto + cuota.recargo - cuota.descuento).toLocaleString('es-AR')}</span>
+                      <span className="text-lg font-bold text-slate-100">${(cuota.monto + cuota.recargo - cuota.descuento).toLocaleString('es-AR')}</span>
                     </div>
                     
                     {cuota.estado === 'Pendiente' ? (
@@ -188,7 +188,7 @@ export default function Pagos() {
                         Pagar
                       </button>
                     ) : (
-                      <button className="text-slate-400 hover:text-slate-600 px-2 py-1 rounded text-xs font-medium underline transition-colors">
+                      <button className="text-slate-400 hover:text-slate-400 px-2 py-1 rounded text-xs font-medium underline transition-colors">
                         Ver Recibo
                       </button>
                     )}
@@ -203,39 +203,39 @@ export default function Pagos() {
       {/* MODAL DE PAGO */}
       {modalPago && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-6 z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-slate-200">
-              <h2 className="text-sm font-bold text-slate-800">Registrar Pago</h2>
+          <div className="bg-[#1c1d24] rounded-xl shadow-xl w-full max-w-sm animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-slate-800">
+              <h2 className="text-sm font-bold text-slate-200">Registrar Pago</h2>
             </div>
             
             <form onSubmit={handleProcesarPago} className="p-5 space-y-4">
-              <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center mb-2">
+              <div className="bg-[#17181e] border border-slate-800/60 rounded-lg p-3 text-center mb-2">
                 <span className="block text-xs text-slate-500 uppercase tracking-wider">Cuota de {modalPago.mes_cuota}</span>
-                <span className="text-2xl font-bold text-slate-900">${(modalPago.monto + recargo - descuento).toLocaleString('es-AR')}</span>
+                <span className="text-2xl font-bold text-slate-100">${(modalPago.monto + recargo - descuento).toLocaleString('es-AR')}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-slate-600">Recargo ($)</label>
+                  <label className="text-xs font-semibold text-slate-400">Recargo ($)</label>
                   <input 
                     type="number" min="0" value={recargo} onChange={e => setRecargo(Number(e.target.value))}
-                    className="border border-slate-300 rounded p-2 text-sm bg-white outline-none focus:border-indigo-500"
+                    className="border border-slate-300 rounded p-2 text-sm bg-[#1c1d24] outline-none focus:border-indigo-500"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-slate-600">Descuento ($)</label>
+                  <label className="text-xs font-semibold text-slate-400">Descuento ($)</label>
                   <input 
                     type="number" min="0" value={descuento} onChange={e => setDescuento(Number(e.target.value))}
-                    className="border border-slate-300 rounded p-2 text-sm bg-white outline-none focus:border-indigo-500"
+                    className="border border-slate-300 rounded p-2 text-sm bg-[#1c1d24] outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-600">Método de Pago *</label>
+                <label className="text-xs font-semibold text-slate-400">Método de Pago *</label>
                 <select 
                   required value={metodoPago} onChange={e => setMetodoPago(e.target.value)}
-                  className="border border-slate-300 rounded p-2.5 text-sm bg-white outline-none focus:border-indigo-500"
+                  className="border border-slate-300 rounded p-2.5 text-sm bg-[#1c1d24] outline-none focus:border-indigo-500"
                 >
                   <option value="">— Seleccionar —</option>
                   <option value="efectivo">Efectivo</option>
@@ -247,7 +247,7 @@ export default function Pagos() {
               <div className="pt-4 flex gap-2">
                 <button 
                   type="button" onClick={() => setModalPago(null)}
-                  className="flex-1 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded text-xs font-medium transition-colors"
+                  className="flex-1 py-2 border border-slate-800 bg-[#1c1d24] hover:bg-[#17181e] text-slate-400 rounded text-xs font-medium transition-colors"
                 >
                   Cancelar
                 </button>

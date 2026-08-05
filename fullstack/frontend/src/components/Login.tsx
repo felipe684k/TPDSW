@@ -83,7 +83,7 @@ export default function Login({ onLogin }: LoginProps) {
             <input 
               type="checkbox" 
               id="remember" 
-              className="w-3.5 h-3.5 rounded border-slate-800 bg-slate-900 text-indigo-600 focus:ring-indigo-500"
+              className="w-3.5 h-3.5 rounded border-slate-800 bg-slate-900 text-indigo-400 focus:ring-indigo-500"
             />
             <label htmlFor="remember" className="text-[10px] text-slate-500 select-none">
               Recordar mi sesión en este equipo
