@@ -1,63 +1,74 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+interface AlumnoItem {
+  dni: string
+  apellido: string
+  nombre: string
+  telefono: string
+  email: string
+  nivel: string
+  ingreso: string
+}
 
 export default function Alumnos() {
   // Un único estado simple para abrir/cerrar el formulario de registro
   const [modalOpen, setModalOpen] = useState(false)
 
-  // Datos estáticos (hardcodeados) de ejemplo para la tabla de alumnos
-  const alumnosEjemplo = [
-    { dni: '43.123.456', 
-      apellido: 'González', 
-      nombre: 'Lucía', 
-      telefono: '2216789012', 
-      email: 'lucia.gonzalez@email.com', 
-      nivel: 'B1', 
-      ingreso: '15/03/2024' },
-    
-    { dni: '41.901.234', 
-      apellido: 'Ramírez', 
-      nombre: 'Tomás', 
-      telefono: '2215432109', 
-      email: 'tomas.ramirez@email.com', 
-      nivel: 'A2', 
-      ingreso: '10/04/2024' },
+  // Datos de alumnos con conexión a API backend
+  const [alumnos, setAlumnos] = useState<AlumnoItem[]>([
+    { dni: '43.123.456', apellido: 'González', nombre: 'Lucía', telefono: '2216789012', email: 'lucia.gonzalez@email.com', nivel: 'B1', ingreso: '15/03/2024' },
+    { dni: '41.901.234', apellido: 'Ramírez', nombre: 'Tomás', telefono: '2215432109', email: 'tomas.ramirez@email.com', nivel: 'A2', ingreso: '10/04/2024' },
+    { dni: '44.567.890', apellido: 'Fernández', nombre: 'Valentina', telefono: '2219876543', email: 'valen.f@email.com', nivel: 'A1', ingreso: '02/06/2025' },
+    { dni: '42.234.567', apellido: 'López', nombre: 'Mateo', telefono: '2213456789', email: 'mateo.lopez@email.com', nivel: 'B2', ingreso: '20/11/2023' },
+    { dni: '40.876.543', apellido: 'Perez', nombre: 'Antonella', telefono: '2216549870', email: 'anto.perez@email.com', nivel: 'A2', ingreso: '05/02/2024' }
+  ])
+  const [isFromBackend, setIsFromBackend] = useState(false)
+  const [dbCount, setDbCount] = useState<number | null>(null)
 
-    { dni: '44.567.890', 
-      apellido: 'Fernández', 
-      nombre: 'Valentina', 
-      telefono: '2219876543', 
-      email: 'valen.f@email.com', 
-      nivel: 'A1', 
-      ingreso: '02/06/2025' },
-
-    { dni: '42.234.567', 
-      apellido: 'López', 
-      nombre: 'Mateo', 
-      telefono: '2213456789', 
-      email: 'mateo.lopez@email.com', 
-      nivel: 'B2', 
-      ingreso: '20/11/2023' },
-
-    { dni: '40.876.543', 
-      apellido: 'Perez', 
-      nombre: 'Antonella', 
-      telefono: '2216549870', 
-      email: 'anto.perez@email.com', 
-      nivel: 'A2', 
-      ingreso: '05/02/2024' }
-  ]
+  useEffect(() => {
+    const fetchAlumnosFromBackend = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/users')
+        if (res.ok) {
+          const json = await res.json()
+          setIsFromBackend(true)
+          if (json.data && Array.isArray(json.data)) {
+            setDbCount(json.data.length)
+            if (json.data.length > 0) {
+              const mapped = json.data.map((item: any) => ({
+                dni: item.dni || String(item.id || 'N/A'),
+                apellido: item.apellido || item.nombre_apellido || item.nombre_usuario || 'Sin Apellido',
+                nombre: item.nombre || item.nombre_apellido || item.nombre_usuario || 'Sin Nombre',
+                telefono: item.telefono || 'N/A',
+                email: item.email || 'N/A',
+                nivel: item.nivel || 'A1',
+                ingreso: item.createdAt ? new Date(item.createdAt).toLocaleDateString('es-AR') : 'Reciente'
+              }))
+              setAlumnos(mapped)
+            } else {
+              // Si la DB tiene 0 alumnos, limpiamos los precargados ficticios
+              setAlumnos([])
+            }
+          }
+        }
+      } catch {
+        // Fallback a datos locales si la API está apagada
+      }
+    }
+    fetchAlumnosFromBackend()
+  }, [])
 
   return (
     <div className="space-y-6">
-      
+
       {/* Cabecera de la sección */}
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-100">Alumnos</h1>
           <p className="text-xs text-slate-500 mt-1">Administración de alumnos del instituto.</p>
         </div>
-        <button 
-          onClick={() => setModalOpen(true)} 
+        <button
+          onClick={() => setModalOpen(true)}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all"
         >
           ➕ Registrar Alumno
@@ -71,7 +82,7 @@ export default function Alumnos() {
           <input 
             type="text" 
             placeholder="Buscar por DNI, apellido o nombre..." 
-            className="w-full pl-8 pr-3 py-2 border border-slate-800 rounded text-xs outline-none focus:border-indigo-500"
+            className="w-full pl-8 pr-3 py-2 border border-slate-800 rounded text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
           />
         </div>
         <div className="flex gap-2 w-full md:w-auto">
@@ -88,12 +99,19 @@ export default function Alumnos() {
       {/* Tabla de Alumnos */}
       <div className="bg-[#1c1d24] rounded-xl border border-slate-800 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-800 flex justify-between items-center">
-          <div className="text-xs font-semibold text-slate-300">Listado General</div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-300">Listado General</span>
+            {isFromBackend && (
+              <span className="text-[10px] bg-emerald-900/50 text-emerald-400 border border-emerald-800/50 px-2 py-0.5 rounded-full font-medium">
+                📡 Conectado a Backend ({dbCount !== null ? `${dbCount} reg. en DB` : 'API OK'})
+              </span>
+            )}
+          </div>
           <span className="text-2xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded font-mono">
-            Total: {alumnosEjemplo.length}
+            Total: {alumnos.length}
           </span>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -108,7 +126,16 @@ export default function Alumnos() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
-              {alumnosEjemplo.map((alumno) => (
+              {alumnos.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-xs text-slate-400">
+                    {isFromBackend 
+                      ? '📂 Conectado a la Base de Datos: Aún no hay alumnos registrados en MySQL.' 
+                      : 'Cargando alumnos...'}
+                  </td>
+                </tr>
+              ) : (
+                alumnos.map((alumno) => (
                 <tr key={alumno.dni} className="hover:bg-[#17181e] transition-colors">
                   <td className="p-3 text-xs font-semibold text-slate-200">{alumno.apellido}, {alumno.nombre}</td>
                   <td className="p-3 text-xs font-mono text-slate-400">{alumno.dni}</td>
@@ -126,7 +153,7 @@ export default function Alumnos() {
                     <button className="text-rose-500 hover:text-rose-400 font-semibold text-2xs">Eliminar</button>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
@@ -152,7 +179,7 @@ export default function Alumnos() {
 
             {/* Formulario (Cuerpo Scrolleable) */}
             <form className="flex-1 overflow-y-auto p-5 space-y-5">
-              
+
               {/* Sección Datos Personales */}
               <div className="space-y-3">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Datos Personales</div>
@@ -161,14 +188,14 @@ export default function Alumnos() {
                     <label className="text-xs font-semibold text-slate-400">Apellido *</label>
                     <input 
                       type="text" required placeholder="Ej. González" 
-                      className="border border-slate-800 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
+                      className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-slate-400">Nombre *</label>
                     <input 
                       type="text" required placeholder="Ej. Lucía" 
-                      className="border border-slate-800 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
+                      className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
                   </div>
                 </div>
@@ -177,14 +204,14 @@ export default function Alumnos() {
                     <label className="text-xs font-semibold text-slate-400">DNI *</label>
                     <input 
                       type="text" required maxLength={8} placeholder="Ej. 40123456" 
-                      className="border border-slate-800 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
+                      className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-slate-400">Fecha de Nacimiento</label>
                     <input 
                       type="date" 
-                      className="border border-slate-800 rounded p-2 text-xs outline-none focus:border-indigo-500"
+                      className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
                     />
                   </div>
                 </div>
@@ -198,14 +225,14 @@ export default function Alumnos() {
                     <label className="text-xs font-semibold text-slate-400">Teléfono *</label>
                     <input 
                       type="tel" required placeholder="Ej. 2216789012" 
-                      className="border border-slate-800 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
+                      className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-slate-400">Email</label>
                     <input 
                       type="email" placeholder="Ej. nombre@email.com" 
-                      className="border border-slate-800 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
+                      className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
                   </div>
                 </div>
@@ -217,7 +244,7 @@ export default function Alumnos() {
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-slate-400">Nivel de Ingreso (Opcional)</label>
                   <select 
-                    className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] outline-none focus:border-indigo-500"
+                    className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
                   >
                     <option value="">Sin nivel previo (Requiere diagnóstico)</option>
                     <option value="A1">A1 — Principiante</option>
@@ -239,7 +266,7 @@ export default function Alumnos() {
               >
                 Cancelar
               </button>
-              <button 
+              <button
                 type="button" onClick={() => setModalOpen(false)}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium shadow-sm transition-all"
               >
