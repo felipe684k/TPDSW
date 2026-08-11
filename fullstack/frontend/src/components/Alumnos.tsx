@@ -1,63 +1,74 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+interface AlumnoItem {
+  dni: string
+  apellido: string
+  nombre: string
+  telefono: string
+  email: string
+  nivel: string
+  ingreso: string
+}
 
 export default function Alumnos() {
   // Un único estado simple para abrir/cerrar el formulario de registro
   const [modalOpen, setModalOpen] = useState(false)
 
-  // Datos estáticos (hardcodeados) de ejemplo para la tabla de alumnos
-  const alumnosEjemplo = [
-    { dni: '43.123.456', 
-      apellido: 'González', 
-      nombre: 'Lucía', 
-      telefono: '2216789012', 
-      email: 'lucia.gonzalez@email.com', 
-      nivel: 'B1', 
-      ingreso: '15/03/2024' },
-    
-    { dni: '41.901.234', 
-      apellido: 'Ramírez', 
-      nombre: 'Tomás', 
-      telefono: '2215432109', 
-      email: 'tomas.ramirez@email.com', 
-      nivel: 'A2', 
-      ingreso: '10/04/2024' },
+  // Datos de alumnos con conexión a API backend
+  const [alumnos, setAlumnos] = useState<AlumnoItem[]>([
+    { dni: '43.123.456', apellido: 'González', nombre: 'Lucía', telefono: '2216789012', email: 'lucia.gonzalez@email.com', nivel: 'B1', ingreso: '15/03/2024' },
+    { dni: '41.901.234', apellido: 'Ramírez', nombre: 'Tomás', telefono: '2215432109', email: 'tomas.ramirez@email.com', nivel: 'A2', ingreso: '10/04/2024' },
+    { dni: '44.567.890', apellido: 'Fernández', nombre: 'Valentina', telefono: '2219876543', email: 'valen.f@email.com', nivel: 'A1', ingreso: '02/06/2025' },
+    { dni: '42.234.567', apellido: 'López', nombre: 'Mateo', telefono: '2213456789', email: 'mateo.lopez@email.com', nivel: 'B2', ingreso: '20/11/2023' },
+    { dni: '40.876.543', apellido: 'Perez', nombre: 'Antonella', telefono: '2216549870', email: 'anto.perez@email.com', nivel: 'A2', ingreso: '05/02/2024' }
+  ])
+  const [isFromBackend, setIsFromBackend] = useState(false)
+  const [dbCount, setDbCount] = useState<number | null>(null)
 
-    { dni: '44.567.890', 
-      apellido: 'Fernández', 
-      nombre: 'Valentina', 
-      telefono: '2219876543', 
-      email: 'valen.f@email.com', 
-      nivel: 'A1', 
-      ingreso: '02/06/2025' },
-
-    { dni: '42.234.567', 
-      apellido: 'López', 
-      nombre: 'Mateo', 
-      telefono: '2213456789', 
-      email: 'mateo.lopez@email.com', 
-      nivel: 'B2', 
-      ingreso: '20/11/2023' },
-
-    { dni: '40.876.543', 
-      apellido: 'Perez', 
-      nombre: 'Antonella', 
-      telefono: '2216549870', 
-      email: 'anto.perez@email.com', 
-      nivel: 'A2', 
-      ingreso: '05/02/2024' }
-  ]
+  useEffect(() => {
+    const fetchAlumnosFromBackend = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/users')
+        if (res.ok) {
+          const json = await res.json()
+          setIsFromBackend(true)
+          if (json.data && Array.isArray(json.data)) {
+            setDbCount(json.data.length)
+            if (json.data.length > 0) {
+              const mapped = json.data.map((item: any) => ({
+                dni: item.dni || String(item.id || 'N/A'),
+                apellido: item.apellido || item.nombre_apellido || item.nombre_usuario || 'Sin Apellido',
+                nombre: item.nombre || item.nombre_apellido || item.nombre_usuario || 'Sin Nombre',
+                telefono: item.telefono || 'N/A',
+                email: item.email || 'N/A',
+                nivel: item.nivel || 'A1',
+                ingreso: item.createdAt ? new Date(item.createdAt).toLocaleDateString('es-AR') : 'Reciente'
+              }))
+              setAlumnos(mapped)
+            } else {
+              // Si la DB tiene 0 alumnos, limpiamos los precargados ficticios
+              setAlumnos([])
+            }
+          }
+        }
+      } catch {
+        // Fallback a datos locales si la API está apagada
+      }
+    }
+    fetchAlumnosFromBackend()
+  }, [])
 
   return (
     <div className="space-y-6">
-      
+
       {/* Cabecera de la sección */}
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900">Alumnos</h1>
           <p className="text-xs text-slate-500 mt-1">Administración de alumnos del instituto.</p>
         </div>
-        <button 
-          onClick={() => setModalOpen(true)} 
+        <button
+          onClick={() => setModalOpen(true)}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all"
         >
           ➕ Registrar Alumno
@@ -68,9 +79,9 @@ export default function Alumnos() {
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
         <div className="relative w-full md:w-80">
           <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs">🔍</span>
-          <input 
-            type="text" 
-            placeholder="Buscar por DNI, apellido o nombre..." 
+          <input
+            type="text"
+            placeholder="Buscar por DNI, apellido o nombre..."
             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded text-xs outline-none focus:border-indigo-500"
           />
         </div>
@@ -88,12 +99,19 @@ export default function Alumnos() {
       {/* Tabla de Alumnos */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex justify-between items-center">
-          <div className="text-xs font-semibold text-slate-700">Listado General</div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-700">Listado General</span>
+            {isFromBackend && (
+              <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
+                📡 Conectado a Backend ({dbCount !== null ? `${dbCount} reg. en DB` : 'API OK'})
+              </span>
+            )}
+          </div>
           <span className="text-2xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded font-mono">
-            Total: {alumnosEjemplo.length}
+            Total: {alumnos.length}
           </span>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -108,7 +126,16 @@ export default function Alumnos() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {alumnosEjemplo.map((alumno) => (
+              {alumnos.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-xs text-slate-400">
+                    {isFromBackend 
+                      ? '📂 Conectado a la Base de Datos: Aún no hay alumnos registrados en MySQL.' 
+                      : 'Cargando alumnos...'}
+                  </td>
+                </tr>
+              ) : (
+                alumnos.map((alumno) => (
                 <tr key={alumno.dni} className="hover:bg-slate-50 transition-colors">
                   <td className="p-3 text-xs font-semibold text-slate-800">{alumno.apellido}, {alumno.nombre}</td>
                   <td className="p-3 text-xs font-mono text-slate-400">{alumno.dni}</td>
@@ -126,7 +153,7 @@ export default function Alumnos() {
                     <button className="text-rose-600 hover:text-rose-800 font-semibold text-2xs">Eliminar</button>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
@@ -138,11 +165,11 @@ export default function Alumnos() {
       {modalOpen && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-start justify-center p-6 overflow-y-auto z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[calc(100vh-48px)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            
+
             {/* Header del Modal */}
             <div className="p-4 border-b border-slate-200 flex justify-between items-center shrink-0">
               <h2 className="text-sm font-semibold text-slate-800">👤 Registrar Nuevo Alumno</h2>
-              <button 
+              <button
                 onClick={() => setModalOpen(false)}
                 className="w-7 h-7 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 rounded flex items-center justify-center text-sm text-slate-500 transition-colors"
               >
@@ -152,22 +179,22 @@ export default function Alumnos() {
 
             {/* Formulario (Cuerpo Scrolleable) */}
             <form className="flex-1 overflow-y-auto p-5 space-y-5">
-              
+
               {/* Sección Datos Personales */}
               <div className="space-y-3">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">Datos Personales</div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-slate-600">Apellido *</label>
-                    <input 
-                      type="text" required placeholder="Ej. González" 
+                    <input
+                      type="text" required placeholder="Ej. González"
                       className="border border-slate-200 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-slate-600">Nombre *</label>
-                    <input 
-                      type="text" required placeholder="Ej. Lucía" 
+                    <input
+                      type="text" required placeholder="Ej. Lucía"
                       className="border border-slate-200 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
                   </div>
@@ -175,15 +202,15 @@ export default function Alumnos() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-slate-600">DNI *</label>
-                    <input 
-                      type="text" required maxLength={8} placeholder="Ej. 40123456" 
+                    <input
+                      type="text" required maxLength={8} placeholder="Ej. 40123456"
                       className="border border-slate-200 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-slate-600">Fecha de Nacimiento</label>
-                    <input 
-                      type="date" 
+                    <input
+                      type="date"
                       className="border border-slate-200 rounded p-2 text-xs outline-none focus:border-indigo-500"
                     />
                   </div>
@@ -196,15 +223,15 @@ export default function Alumnos() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-slate-600">Teléfono *</label>
-                    <input 
-                      type="tel" required placeholder="Ej. 2216789012" 
+                    <input
+                      type="tel" required placeholder="Ej. 2216789012"
                       className="border border-slate-200 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-slate-600">Email</label>
-                    <input 
-                      type="email" placeholder="Ej. nombre@email.com" 
+                    <input
+                      type="email" placeholder="Ej. nombre@email.com"
                       className="border border-slate-200 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
                   </div>
@@ -216,7 +243,7 @@ export default function Alumnos() {
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">Académico</div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-slate-600">Nivel de Ingreso (Opcional)</label>
-                  <select 
+                  <select
                     className="border border-slate-200 rounded p-2 text-xs bg-white outline-none focus:border-indigo-500"
                   >
                     <option value="">Sin nivel previo (Requiere diagnóstico)</option>
@@ -233,13 +260,13 @@ export default function Alumnos() {
 
             {/* Footer del Modal */}
             <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-2 shrink-0">
-              <button 
+              <button
                 type="button" onClick={() => setModalOpen(false)}
                 className="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded text-xs font-medium transition-colors"
               >
                 Cancelar
               </button>
-              <button 
+              <button
                 type="button" onClick={() => setModalOpen(false)}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium shadow-sm transition-all"
               >
