@@ -2,11 +2,22 @@ interface SidebarProps {
   activeTab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'valorCuota' | 'comisiones' | 'pagos' | 'aulas'
   setActiveTab: (tab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'valorCuota' | 'comisiones' | 'pagos' | 'aulas') => void
   onLogout: () => void
+  isSidebarOpen: boolean
+  setIsSidebarOpen: (isOpen: boolean) => void
 }
 
-export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
+export default function Sidebar({ activeTab, setActiveTab, onLogout, isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
   return (
-    <aside className="w-60 bg-slate-950 text-slate-400 flex flex-col border-r border-slate-800 shrink-0">
+    <>
+      {/* Overlay oscuro para cerrar el menú tocando afuera en mobile */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+      
+      <aside className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 md:relative md:translate-x-0 w-60 bg-slate-950 text-slate-400 flex flex-col border-r border-slate-800 shrink-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="p-5 flex items-center gap-3 border-b border-slate-900">
         <div className="w-9 h-9 rounded bg-indigo-600 flex items-center justify-center text-lg text-white font-bold">🎓</div>
         <div>
@@ -104,5 +115,6 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
         </button>
       </div>
     </aside>
+    </>
   )
 }

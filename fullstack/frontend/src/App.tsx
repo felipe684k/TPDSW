@@ -19,6 +19,8 @@ export default function App() {
   // Estado que controla qué página estamos viendo
   const [activeTab, setActiveTab] = useState<'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'valorCuota' | 'comisiones' | 'pagos' | 'aulas'>('dashboard')
 
+  // Estado para controlar el menú lateral en celulares
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   // Datos globales que se comparten entre componentes
   const [inscripciones, setInscripciones] = useState([
@@ -77,12 +79,12 @@ export default function App() {
     <div className="flex h-screen bg-[#16171d] text-slate-200 font-sans overflow-hidden">
       
       {/* Nuestro componente de menú lateral */}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => setIsLoggedIn(false)} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => setIsLoggedIn(false)} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
       
       <main className="flex-1 flex flex-col overflow-hidden">
         
         {/* Nuestro componente de barra superior */}
-        <Topbar activeTab={activeTab} />
+        <Topbar activeTab={activeTab} setIsSidebarOpen={setIsSidebarOpen} />
         
         {/* El contenedor principal donde mostramos una página u otra */}
         <div className="flex-1 overflow-y-auto p-6">

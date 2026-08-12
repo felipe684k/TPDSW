@@ -1,7 +1,6 @@
 import { useState } from 'react'
 
 export default function Aulas() {
-  // Las aulas son fijas (precargadas) por la infraestructura del instituto
   const [aulas] = useState([
     { id: 1, nombre: 'Aula 1', capacidad: 25 },
     { id: 2, nombre: 'Aula 2', capacidad: 30 },

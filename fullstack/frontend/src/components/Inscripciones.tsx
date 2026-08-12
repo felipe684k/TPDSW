@@ -188,8 +188,8 @@ export default function Inscripciones({ inscripciones, setInscripciones }: Inscr
            MODAL: NUEVA INSCRIPCIÓN
            ========================================== */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-start justify-center p-6 overflow-y-auto z-50">
-          <div className="bg-[#1c1d24] rounded-xl shadow-xl w-full max-w-lg max-h-[calc(100vh-48px)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#1c1d24] border border-slate-800 rounded-xl shadow-2xl w-full md:max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
             
             {/* Header */}
             <div className="p-4 border-b border-slate-800 flex justify-between items-center shrink-0">
@@ -210,6 +210,13 @@ export default function Inscripciones({ inscripciones, setInscripciones }: Inscr
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Selección de Alumno</div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-slate-400">Alumno a inscribir *</label>
+                  {/* 
+                    Nota sobre el <select>: 
+                    En Windows/Chrome de escritorio, esta caja puede verse levemente desalineada 
+                    con un borde blanco debido a cómo el sistema operativo dibuja los menús desplegables nativos.
+                    Se deja así por simplicidad, ya que en celulares (iOS/Android) funciona perfecto 
+                    porque el teléfono abre su propio menú nativo en pantalla completa.
+                  */}
                   <select 
                     required value={formAlumno} onChange={e => setFormAlumno(e.target.value)}
                     className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] outline-none focus:border-indigo-500"

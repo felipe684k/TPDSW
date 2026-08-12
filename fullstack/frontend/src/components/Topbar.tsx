@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-export default function Topbar({ activeTab }: { activeTab: string }) {
+export default function Topbar({ activeTab, setIsSidebarOpen }: { activeTab: string, setIsSidebarOpen: (isOpen: boolean) => void }) {
   const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking')
 
   useEffect(() => {
@@ -24,6 +24,12 @@ export default function Topbar({ activeTab }: { activeTab: string }) {
   return (
     <header className="h-14 bg-[#1c1d24] border-b border-slate-800 px-6 flex items-center justify-between shadow-sm shrink-0">
       <div className="flex items-center gap-2 text-xs text-slate-400">
+        <button 
+          onClick={() => setIsSidebarOpen(true)}
+          className="md:hidden w-8 h-8 flex items-center justify-center rounded border border-slate-800 hover:bg-[#17181e] text-slate-300 mr-2"
+        >
+          ☰
+        </button>
         <span>Inicio</span>
         <span>›</span>
         <strong className="text-slate-300 font-semibold capitalize">{activeTab}</strong>
@@ -35,7 +41,7 @@ export default function Topbar({ activeTab }: { activeTab: string }) {
             backendStatus === 'connected' ? 'bg-emerald-500 animate-pulse' :
             backendStatus === 'disconnected' ? 'bg-rose-500' : 'bg-amber-500'
           }`} />
-          <span className="text-slate-400">
+          <span className="hidden md:block text-slate-400">
             {backendStatus === 'connected' ? 'API Conectada' :
              backendStatus === 'disconnected' ? 'API Desconectada' : 'Verificando...'}
           </span>
@@ -43,8 +49,8 @@ export default function Topbar({ activeTab }: { activeTab: string }) {
 
         <button className="w-8 h-8 border border-slate-800 rounded flex items-center justify-center text-sm hover:bg-[#17181e] text-slate-300">🔔</button>
         <div className="flex items-center gap-2 px-2 py-1 border border-slate-800 rounded hover:bg-[#17181e] cursor-pointer">
-          <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white">SC</div>
-          <span className="text-xs font-semibold text-slate-300">Secretaría</span>
+          <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white shrink-0">SC</div>
+          <span className="hidden md:block text-xs font-semibold text-slate-300">Secretaría</span>
         </div>
       </div>
     </header>
