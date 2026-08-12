@@ -41,6 +41,12 @@ export const user = sequelize.define('Usuario', {
   tipo: {
     type: DataTypes.ENUM('ALUMNO', 'PROFESOR', 'ADMIN'),
     allowNull: false
+  },
+  // Campo para controlar la baja lógica del usuario (true = activo / visible, false = inactivo / dado de baja)
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
   }
 }, {
   tableName: 'usuario',

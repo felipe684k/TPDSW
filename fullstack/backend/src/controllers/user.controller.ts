@@ -7,8 +7,10 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
   try {
     const { search, nivel } = req.query;
 
+    // BAJA LÓGICA: Filtramos por defecto solo los usuarios con activo: true (alumnos vigentes)
     let condicionesDeBusqueda: any = {
-      tipo: 'ALUMNO'
+      tipo: 'ALUMNO',
+      activo: true
     };
 
     if (search) {
@@ -70,14 +72,16 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
 export const getUserByDni = async (req: Request, res: Response): Promise<void> => {
   try {
     const { dni } = req.params;
+    // BAJA LÓGICA: Solo buscamos el alumno si se encuentra activo
     const usuarioEncontrado = await user.findOne({
       where: {
         dni: dni,
-        tipo: 'ALUMNO'
+        tipo: 'ALUMNO',
+        activo: true
       }
     });
     if (!usuarioEncontrado) {
-      res.status(404).json({ status: 'error', mensaje: 'No se encontró ningún alumno con el DNI: ' + dni, data: null });
+      res.status(404).json({ status: 'error', mensaje: 'No se encontró ningún alumno activo con el DNI: ' + dni, data: null });
       return;
     }
     res.status(200).json({ status: 'ok', mensaje: 'Alumno encontrado con éxito', data: usuarioEncontrado });
@@ -96,14 +100,28 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    const usuarioExistente = await user.findOne({ where: { dni } });
+    const usuarioExistente: any = await user.findOne({ where: { dni } });
     if (usuarioExistente) {
-      res.status(409).json({ status: 'error', mensaje: 'Ya existe un usuario con el DNI ' + dni, data: null });
+      // BAJA LÓGICA: Si el usuario existía pero estaba inactivo, se puede reactivar
+      if (!usuarioExistente.activo) {
+        await user.update(
+          { nombre, apellido, telefono, fecha_nacimiento, email, usuario, contrasena, tipo: 'ALUMNO', activo: true },
+          { where: { dni } }
+        );
+        if (codigo_nivel) {
+          const fechaActual = new Date().toISOString().split('T')[0];
+          await UsuarioNivel.create({ dni: dni, codigo_nivel: codigo_nivel, fecha_desde: fechaActual });
+        }
+        res.status(200).json({ status: 'ok', mensaje: 'Alumno reactivado con éxito', data: usuarioExistente });
+        return;
+      }
+      res.status(409).json({ status: 'error', mensaje: 'Ya existe un usuario activo con el DNI ' + dni, data: null });
       return;
     }
 
+    // BAJA LÓGICA: Al crear un usuario nuevo, la propiedad 'activo' se establece en true por defecto
     const nuevoUsuario = await user.create({
-      dni, nombre, apellido, telefono, fecha_nacimiento, email, usuario, contrasena, tipo: 'ALUMNO' 
+      dni, nombre, apellido, telefono, fecha_nacimiento, email, usuario, contrasena, tipo: 'ALUMNO', activo: true 
     });
 
     if (codigo_nivel) {
@@ -123,13 +141,14 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     const { dni } = req.params;
     const { nombre, apellido, telefono, fecha_nacimiento, email, usuario, contrasena, codigo_nivel } = req.body;
 
-    const usuarioExistente = await user.findOne({ where: { dni: dni, tipo: 'ALUMNO' } });
+    // BAJA LÓGICA: Solo permitimos modificar alumnos que permanezcan activos
+    const usuarioExistente = await user.findOne({ where: { dni: dni, tipo: 'ALUMNO', activo: true } });
     if (!usuarioExistente) {
-      res.status(404).json({ status: 'error', mensaje: 'No se encontró alumno con DNI ' + dni, data: null });
+      res.status(404).json({ status: 'error', mensaje: 'No se encontró un alumno activo con DNI ' + dni, data: null });
       return;
     }
 
-    await user.update({ nombre, apellido, telefono, fecha_nacimiento, email, usuario, contrasena }, { where: { dni: dni, tipo: 'ALUMNO' } });
+    await user.update({ nombre, apellido, telefono, fecha_nacimiento, email, usuario, contrasena }, { where: { dni: dni, tipo: 'ALUMNO', activo: true } });
 
     if (codigo_nivel) {
        await UsuarioNivel.destroy({ where: { dni: dni } });
@@ -147,16 +166,23 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
 export const deleteUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { dni } = req.params;
-    await UsuarioNivel.destroy({ where: { dni: dni } }); 
-    const result = await user.destroy({ where: { dni: dni, tipo: 'ALUMNO' } });
     
-    if (result === 0) {
-      res.status(404).json({ status: 'error', mensaje: 'No se encontró alumno con DNI ' + dni, data: null });
+    // BAJA LÓGICA: En lugar de usar destroy() y borrar los registros físicamente de las tablas 
+    // ('usuario' y 'usuario_nivel'), actualizamos el campo 'activo' a false.
+    // Esto mantiene intacto todo el historial del alumno (inscripciones, pagos, notas).
+    const [filasAfectadas] = await user.update(
+      { activo: false },
+      { where: { dni: dni, tipo: 'ALUMNO', activo: true } }
+    );
+    
+    if (filasAfectadas === 0) {
+      res.status(404).json({ status: 'error', mensaje: 'No se encontró un alumno activo con DNI ' + dni, data: null });
       return;
     }
-    res.status(200).json({ status: 'ok', mensaje: 'Alumno eliminado con éxito', data: null });
+    
+    res.status(200).json({ status: 'ok', mensaje: 'Alumno dado de baja (baja lógica) con éxito', data: null });
   } catch (error: any) {
-    console.error('Error al eliminar el alumno:', error?.message || error);
+    console.error('Error al dar de baja el alumno:', error?.message || error);
     res.status(500).json({ status: 'db_error', mensaje: 'Error interno del servidor', data: null });
   }
 };
