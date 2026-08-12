@@ -141,22 +141,35 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     const { dni } = req.params;
     const { nombre, apellido, telefono, fecha_nacimiento, email, usuario, contrasena, codigo_nivel } = req.body;
 
-    // BAJA LÓGICA: Solo permitimos modificar alumnos que permanezcan activos
+    // BAJA LÓGICA: Verificamos primero que el alumno exista y esté activo en la BD
     const usuarioExistente = await user.findOne({ where: { dni: dni, tipo: 'ALUMNO', activo: true } });
     if (!usuarioExistente) {
       res.status(404).json({ status: 'error', mensaje: 'No se encontró un alumno activo con DNI ' + dni, data: null });
       return;
     }
 
-    await user.update({ nombre, apellido, telefono, fecha_nacimiento, email, usuario, contrasena }, { where: { dni: dni, tipo: 'ALUMNO', activo: true } });
+    // CORRECCIÓN: Armamos un objeto dinámico con solo los campos enviados en req.body.
+    // Esto evita pisar datos obligatorios (como usuario o contraseña) con 'undefined' si no se enviaron en la edición.
+    const datosAActualizar: any = {};
+    if (nombre !== undefined) datosAActualizar.nombre = nombre;
+    if (apellido !== undefined) datosAActualizar.apellido = apellido;
+    if (telefono !== undefined) datosAActualizar.telefono = telefono;
+    if (fecha_nacimiento !== undefined) datosAActualizar.fecha_nacimiento = fecha_nacimiento;
+    if (email !== undefined) datosAActualizar.email = email;
+    if (usuario !== undefined) datosAActualizar.usuario = usuario;
+    if (contrasena !== undefined) datosAActualizar.contrasena = contrasena;
 
+    // Ejecutamos la actualización solo con los campos filtrados
+    await user.update(datosAActualizar, { where: { dni: dni, tipo: 'ALUMNO', activo: true } });
+
+    // Si se especificó un nuevo nivel académico, actualizamos la relación en usuario_nivel
     if (codigo_nivel) {
        await UsuarioNivel.destroy({ where: { dni: dni } });
        const fechaActual = new Date().toISOString().split('T')[0];
        await UsuarioNivel.create({ dni: dni, codigo_nivel: codigo_nivel, fecha_desde: fechaActual });
     }
 
-    res.status(200).json({ status: 'ok', mensaje: 'Alumno actualizado con éxito', data: { dni, nombre, apellido } });
+    res.status(200).json({ status: 'ok', mensaje: 'Alumno actualizado con éxito', data: { dni, ...datosAActualizar } });
   } catch (error: any) {
     console.error('Error al actualizar el alumno:', error?.message || error);
     res.status(500).json({ status: 'db_error', mensaje: 'Error interno del servidor', data: null });

@@ -7,6 +7,9 @@ export default function Alumnos() {
   const [isFromBackend, setIsFromBackend] = useState(false)
   const [busqueda, setBusqueda] = useState("")
 
+  // NUEVO ESTADO: Si editingDni es string estamos Editando, si es null estamos Creando
+  const [editingDni, setEditingDni] = useState<string | null>(null)
+
   // Estados para el formulario (vinculados a los inputs)
   const [formData, setFormData] = useState({
     nombre: '',
@@ -44,32 +47,64 @@ export default function Alumnos() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  // Función que envía los datos al backend cuando tocamos "Guardar Alumno"
+  // NUEVA FUNCIÓN: Abrir modal para CREAR (resetea el formulario)
+  const handleOpenModalCreate = () => {
+    setEditingDni(null)
+    setFormData({ nombre: '', apellido: '', dni: '', telefono: '', email: '', nivel: '', fecha_nacimiento: '' })
+    setModalOpen(true)
+  }
+
+  // NUEVA FUNCIÓN: Abrir modal para EDITAR (carga los datos del alumno seleccionado)
+  const handleEdit = (alumno: Alumno) => {
+    setEditingDni(alumno.dni)
+    setFormData({
+      nombre: alumno.nombre || '',
+      apellido: alumno.apellido || '',
+      dni: alumno.dni || '',
+      telefono: alumno.telefono || '',
+      email: alumno.email || '',
+      nivel: (alumno as any).nivel_actual || '',
+      fecha_nacimiento: alumno.fecha_nacimiento ? alumno.fecha_nacimiento.split('T')[0] : ''
+    })
+    setModalOpen(true)
+  }
+
+  // Función que envía los datos al backend (crea o actualiza según editingDni)
   const handleSubmit = async () => {
     try {
-      // Como el backend pide usuario y contraseña obligatoriamente para la tabla Usuario,
-      // le pasamos el DNI por defecto en ambos campos (luego el sistema tendrá opción de cambiarlo)
-      const nuevoAlumno = {
-        ...formData,
-        usuario: formData.dni,
-        contrasena: formData.dni
+      if (editingDni) {
+        // MODO EDICIÓN: Enviamos los datos al endpoint PUT /api/users/:dni
+        await alumnoService.updateAlumno(editingDni, {
+          nombre: formData.nombre,
+          apellido: formData.apellido,
+          telefono: formData.telefono,
+          email: formData.email,
+          fecha_nacimiento: formData.fecha_nacimiento
+        })
+      } else {
+        // MODO CREACIÓN: Enviamos los datos al endpoint POST /api/users
+        const nuevoAlumno = {
+          ...formData,
+          usuario: formData.dni,
+          contrasena: formData.dni
+        }
+        await alumnoService.createAlumno(nuevoAlumno as any)
       }
-
-      await alumnoService.createAlumno(nuevoAlumno as any)
 
       // Cerramos la ventana y vaciamos el formulario
       setModalOpen(false)
       setFormData({ nombre: '', apellido: '', dni: '', telefono: '', email: '', nivel: '', fecha_nacimiento: '' })
+      setEditingDni(null)
 
-      // Volvemos a cargar la lista para que aparezca el nuevo
+      // Volvemos a cargar la lista para ver los cambios reflejados
       cargarAlumnos()
     } catch (error) {
       console.error("Error al guardar alumno", error)
-      alert("Error al guardar el alumno")
+      alert("Error al procesar el alumno en el backend")
     }
   }
 
-  // Función para borrar
+  // Función para borrar (Baja Lógica)
   const handleDelete = async (dni: string) => {
     if (confirm("¿Estás seguro de eliminar a este alumno?")) {
       try {
@@ -92,7 +127,7 @@ export default function Alumnos() {
         </div>
 
         <button
-          onClick={() => setModalOpen(true)}
+          onClick={handleOpenModalCreate}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all"
         >
           ➕ Registrar Alumno
@@ -156,11 +191,16 @@ export default function Alumnos() {
                     <td className="p-3 text-xs text-slate-400">{alumno.telefono || 'N/A'}</td>
                     <td className="p-3 text-xs text-slate-400">{alumno.email || 'N/A'}</td>
                     <td className="p-3 text-xs flex gap-2">
-                      <button className="text-indigo-400 hover:text-indigo-300 font-semibold text-2xs">Editar</button>
+                      <button 
+                        onClick={() => handleEdit(alumno)}
+                        className="text-indigo-400 hover:text-indigo-300 font-semibold text-2xs cursor-pointer"
+                      >
+                        Editar
+                      </button>
                       <span className="text-slate-300">|</span>
                       <button
                         onClick={() => handleDelete(alumno.dni)}
-                        className="text-rose-500 hover:text-rose-400 font-semibold text-2xs">Eliminar</button>
+                        className="text-rose-500 hover:text-rose-400 font-semibold text-2xs cursor-pointer">Eliminar</button>
                     </td>
                   </tr>
                 )))}
@@ -169,13 +209,15 @@ export default function Alumnos() {
         </div>
       </div>
 
-      {/* MODAL: REGISTRAR ALUMNO */}
+      {/* MODAL: REGISTRAR O EDITAR ALUMNO */}
       {modalOpen && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-start justify-center p-6 overflow-y-auto z-50">
           <div className="bg-[#1c1d24] rounded-xl shadow-xl w-full max-w-lg max-h-[calc(100vh-48px)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
 
             <div className="p-4 border-b border-slate-800 flex justify-between items-center shrink-0">
-              <h2 className="text-sm font-semibold text-slate-200">👤 Registrar Nuevo Alumno</h2>
+              <h2 className="text-sm font-semibold text-slate-200">
+                {editingDni ? '✏️ Editar Alumno' : '👤 Registrar Nuevo Alumno'}
+              </h2>
               <button
                 onClick={() => setModalOpen(false)}
                 className="w-7 h-7 bg-slate-900 hover:bg-rose-950/30 hover:text-rose-400 rounded flex items-center justify-center text-sm text-slate-500 transition-colors"
@@ -209,7 +251,8 @@ export default function Alumnos() {
                     <input
                       name="dni" value={formData.dni} onChange={handleInputChange}
                       type="text" required maxLength={8} placeholder="Ej. 40123456"
-                      className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
+                      disabled={!!editingDni} // El DNI no se puede editar porque es la clave primaria
+                      className={`border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500 ${editingDni ? 'opacity-50 cursor-not-allowed' : ''}`}
                     />
                   </div>
                   <div className="flex flex-col gap-1">
@@ -245,22 +288,24 @@ export default function Alumnos() {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Académico</div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-slate-400">Nivel de Ingreso (Opcional)</label>
-                  <select
-                    name="nivel" value={formData.nivel} onChange={handleInputChange}
-                    className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
-                  >
-                    <option value="">Sin nivel previo (Requiere diagnóstico)</option>
-                    <option value="A1">A1 — Principiante</option>
-                    <option value="A2">A2 — Elemental</option>
-                    <option value="B1">B1 — Intermedio</option>
-                    <option value="B2">B2 — Intermedio Alto</option>
-                  </select>
+              {!editingDni && (
+                <div className="space-y-3">
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Académico</div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-slate-400">Nivel de Ingreso (Opcional)</label>
+                    <select
+                      name="nivel" value={formData.nivel} onChange={handleInputChange}
+                      className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
+                    >
+                      <option value="">Sin nivel previo (Requiere diagnóstico)</option>
+                      <option value="A1">A1 — Principiante</option>
+                      <option value="A2">A2 — Elemental</option>
+                      <option value="B1">B1 — Intermedio</option>
+                      <option value="B2">B2 — Intermedio Alto</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
+              )}
             </form>
 
             <div className="p-4 border-t border-slate-800 bg-[#17181e] flex justify-end gap-2 shrink-0">
@@ -271,7 +316,9 @@ export default function Alumnos() {
               <button
                 type="button" onClick={handleSubmit}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium shadow-sm transition-all"
-              >Guardar Alumno</button>
+              >
+                {editingDni ? 'Guardar Cambios' : 'Guardar Alumno'}
+              </button>
             </div>
           </div>
         </div>
