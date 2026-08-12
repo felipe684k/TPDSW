@@ -26,3 +26,43 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
     });
   }
 };
+
+export const getUserByDni = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // 1. Extraemos el DNI que viene en la URL (por ejemplo: /api/users/12345678)
+    const { dni } = req.params;
+    // 2. Buscamos en la base de datos usando findOne.
+    // Usamos where para asegurar que coincida el DNI y que además sea ALUMNO.
+    const usuarioEncontrado = await user.findOne({
+      where: {
+        dni: dni,
+        tipo: 'ALUMNO' // Importante para que no traiga profesores o admins por accidente
+      }
+    });
+    // 3. Validamos si la base de datos encontró algo
+    if (!usuarioEncontrado) {
+      // Retornamos de inmediato con código 404 (Not Found) si no existe
+      res.status(404).json({
+        status: 'error',
+        mensaje: `No se encontró ningún alumno con el DNI: ${dni}`,
+        data: null
+      });
+      return; // El return evita que se siga ejecutando el código de abajo
+    }
+    // 4. Si llegó hasta acá, es porque lo encontró. Lo devolvemos al frontend.
+    res.status(200).json({
+      status: 'ok',
+      mensaje: 'Alumno encontrado con éxito',
+      data: usuarioEncontrado
+    });
+  } catch (error: any) {
+    // 5. Manejo de errores por si se cae la base de datos
+    console.error(`Error al buscar el alumno con DNI ${req.params.dni}:`, error?.message || error);
+    res.status(500).json({
+      status: 'db_error',
+      mensaje: 'Error interno del servidor al buscar el alumno',
+      data: null
+    });
+  }
+};
+

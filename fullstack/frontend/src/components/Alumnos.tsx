@@ -49,7 +49,7 @@ export default function Alumnos() {
                 nivel: item.nivel || 'A1',
                 ingreso: item.createdAt ? new Date(item.createdAt).toLocaleDateString('es-AR') : 'Reciente'
               }))
-              setAlumnos(mapped)
+              setAlumnos(mapped) //aca se actualiza la lista de alumnos con los datos traidos del backend
             } else {
               // Si la DB tiene 0 alumnos, limpiamos los precargados ficticios
               setAlumnos([])
