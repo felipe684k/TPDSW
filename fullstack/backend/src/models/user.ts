@@ -8,8 +8,12 @@ export const user = sequelize.define('Usuario', {
     primaryKey: true,
     allowNull: false
   },
-  nombre_apellido: {
-    type: DataTypes.STRING(150),
+  nombre: {
+    type: DataTypes.STRING(75),
+    allowNull: false
+  },
+  apellido: {
+    type: DataTypes.STRING(75),
     allowNull: false
   },
   telefono: {
