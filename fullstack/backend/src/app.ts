@@ -1,6 +1,11 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
-import './config/database.js';
+import { sequelize } from './models/index.js';
+
+// Sincronizar modelos con la base de datos (crea las tablas que falten automáticamente)
+sequelize.sync()
+  .then(() => console.log('✅ Tablas de la base de datos sincronizadas'))
+  .catch((err) => console.error('❌ Error sincronizando tablas:', err));
 import userRouter from './routes/user.router.js';
 
 const app = express();
