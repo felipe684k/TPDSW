@@ -1,0 +1,11 @@
+[
+  { "id": 1, "descripcion": "Lunes 08:00 - 10:00", "inicio": "08:00", "fin": "10:00" },
+  { "id": 2, "descripcion": "Martes 14:00 - 16:00", "inicio": "14:00", "fin": "16:00" },
+  { "id": 3, "descripcion": "Jueves 18:00 - 20:00", "inicio": "18:00", "fin": "20:00" },
+  { "id": 4, "descripcion": "Martes 08:00 - 10:00", "inicio": "08:00", "fin": "10:00" },
+  { "id": 5, "descripcion": "Jueves 14:00 - 16:00", "inicio": "14:00", "fin": "16:00" },
+  { "id": 6, "descripcion": "Lunes 18:00 - 20:00", "inicio": "18:00", "fin": "20:00" },
+  { "id": 7, "descripcion": "Jueves 08:00 - 10:00", "inicio": "08:00", "fin": "10:00" },
+  { "id": 8, "descripcion": "Lunes 14:00 - 16:00", "inicio": "14:00", "fin": "16:00" },
+  { "id": 9, "descripcion": "Martes 18:00 - 20:00", "inicio": "18:00", "fin": "20:00" }
+]
