@@ -1,6 +1,7 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 
+//usamos sequelize para definir el modelo de la tabla usuario
 export const user = sequelize.define('Usuario', {
   dni: {
     type: DataTypes.STRING(15),
