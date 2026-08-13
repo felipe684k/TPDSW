@@ -7,11 +7,15 @@ export default function Alumnos() {
   const [isFromBackend, setIsFromBackend] = useState(false)
   const [busqueda, setBusqueda] = useState("")
 
-  // NUEVO ESTADO: Si editingDni es string estamos Editando, si es null estamos Creando
+  // ESTADO: Si editingDni es string estamos Editando, si es null estamos Creando
   const [editingDni, setEditingDni] = useState<string | null>(null)
 
-  // Nuevo estado: si deletingDni es string se abre la ventana, si es null no se abre
-  const [deletingDni, setDeletingDni] = useState<string | null>(null) // deketingDni es o str o null
+  // Estado: si studentToDelete es string se abre la ventana, si es null no se abre
+  const [studentToDelete, setStudentToDelete] = useState<string | null>(null) 
+  
+  // Estado: 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
   // Estados para el formulario (vinculados a los inputs)
   const [formData, setFormData] = useState({
     nombre: '',
@@ -54,6 +58,7 @@ export default function Alumnos() {
     setEditingDni(null)
     setFormData({ nombre: '', apellido: '', dni: '', telefono: '', email: '', nivel: '', fecha_nacimiento: '' })
     setModalOpen(true)
+    setErrorMsg(null) // 
   }
 
   // NUEVA FUNCIÓN: Abrir modal para EDITAR (carga los datos del alumno seleccionado)
@@ -72,10 +77,12 @@ export default function Alumnos() {
   }
 
   // Función que envía los datos al backend (crea o actualiza según editingDni)
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); // Evita que la página parpadee o se recargue
+    setErrorMsg(null); // Borramos errores viejos
+    
     try {
       if (editingDni) {
-        // MODO EDICIÓN: Enviamos los datos al endpoint PUT /api/users/:dni
         await alumnoService.updateAlumno(editingDni, {
           nombre: formData.nombre,
           apellido: formData.apellido,
@@ -84,7 +91,6 @@ export default function Alumnos() {
           fecha_nacimiento: formData.fecha_nacimiento
         })
       } else {
-        // MODO CREACIÓN: Enviamos los datos al endpoint POST /api/users
         const nuevoAlumno = {
           ...formData,
           usuario: formData.dni,
@@ -93,26 +99,25 @@ export default function Alumnos() {
         await alumnoService.createAlumno(nuevoAlumno as any)
       }
 
-      // Cerramos la ventana y vaciamos el formulario
       setModalOpen(false)
       setFormData({ nombre: '', apellido: '', dni: '', telefono: '', email: '', nivel: '', fecha_nacimiento: '' })
       setEditingDni(null)
-
-      // Volvemos a cargar la lista para ver los cambios reflejados
       cargarAlumnos()
+      
     } catch (error) {
       console.error("Error al guardar alumno", error)
-      alert("Error al procesar el alumno en el backend")
+      // En vez de alert(), guardamos el error en nuestra variable
+      setErrorMsg("No se pudo guardar el alumno. Verifique que el DNI y/o Email no esté repetido o intente nuevamente.")
     }
   }
 
   // Función para borrar (Baja Lógica)
   const handleDelete = async () => {
-    if (deletingDni) {
+    if (studentToDelete) {
       try {
-        await alumnoService.deleteAlumno(deletingDni)
+        await alumnoService.deleteAlumno(studentToDelete)
         cargarAlumnos() // Recargamos lista al borrar
-        setDeletingDni(null)
+        setStudentToDelete(null)
       } catch (error) {
         console.error("Error al eliminar", error)
       }
@@ -202,7 +207,7 @@ export default function Alumnos() {
                       </button>
                       <span className="text-slate-300">|</span>
                       <button
-                        onClick={() => setDeletingDni(alumno.dni)}
+                        onClick={() => setStudentToDelete(alumno.dni)}
                         className="text-rose-500 hover:text-rose-400 font-semibold text-2xs cursor-pointer">Eliminar</button>
                     </td>
                   </tr>
@@ -227,8 +232,14 @@ export default function Alumnos() {
               >✕</button>
             </div>
 
-            <form className="flex-1 overflow-y-auto p-5 space-y-5">
+            <form id="formulario-alumno" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-5">
+
               <div className="space-y-3">
+                {errorMsg && (
+                  <div className="bg-rose-500/10 border border-rose-500/50 text-rose-500 text-xs font-semibold p-3 rounded flex items-center gap-2">
+                    <span>⚠️</span> {errorMsg}
+                  </div>
+                )}
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Datos Personales</div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
@@ -317,7 +328,8 @@ export default function Alumnos() {
                 className="px-4 py-2 border border-slate-800 bg-[#1c1d24] hover:bg-[#17181e] text-slate-400 rounded text-xs font-medium transition-colors"
               >Cancelar</button>
               <button
-                type="button" onClick={handleSubmit}
+                type="submit"
+                form="formulario-alumno"
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium shadow-sm transition-all"
               >
                 {editingDni ? 'Guardar Cambios' : 'Guardar Alumno'}
@@ -328,14 +340,14 @@ export default function Alumnos() {
       )}
 
       {/* VENTANA DE CONFIRMACIÓN DE BORRADO */}
-      {deletingDni && (
+      {studentToDelete && (
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
           <div className="bg-[#1c1d24] border border-rose-900/50 rounded-xl shadow-2xl p-6 w-full max-w-sm text-center relative">
             
             {/* BOTÓN DE CRUZ (AQUÍ LO AGREGAMOS) */}
             <div className="absolute top-4 right-4">
               <button
-                onClick={() => setDeletingDni(null)}
+                onClick={() => setStudentToDelete(null)}
                 className="w-7 h-7 bg-slate-900 hover:bg-rose-950/30 hover:text-rose-400 rounded flex items-center justify-center text-sm text-slate-500 transition-colors"
               >
                 ✕
@@ -352,7 +364,7 @@ export default function Alumnos() {
             
             <div className="flex gap-3 justify-center">
               <button 
-                onClick={() => setDeletingDni(null)}
+                onClick={() => setStudentToDelete(null)}
                 className="px-4 py-2 rounded font-semibold text-xs text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors"
               >
                 Cancelar
