@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
-import Sidebar from './components/Sidebar'
-import Comisiones from './components/Comisiones'
-import Pagos from './components/Pagos'
-import Topbar from './components/Topbar'
-import Dashboard from './components/Dashboard'
-import Inscripciones from './components/Inscripciones'
-import Alumnos from './components/Alumnos'
-import Docentes from './components/Docentes'
-import Cursos from './components/Cursos'
-import Aulas from './components/Aulas'
-import ValorCuota from './components/ValorCuota'
-import Login from './components/Login'
+import Sidebar from './shared/Sidebar'
+import Comisiones from './admin/Comisiones'
+import Pagos from './admin/Pagos'
+import Topbar from './shared/Topbar'
+import Dashboard from './admin/Dashboard'
+import Inscripciones from './admin/Inscripciones'
+import Students from './admin/Students'
+import Docentes from './admin/Docentes'
+import Cursos from './admin/Cursos'
+import Aulas from './admin/Aulas'
+import ValorCuota from './admin/ValorCuota'
+import Login from './auth/Login'
 
 export default function App() {
   // Estado para simular si el usuario ya inició sesión, persistido en localStorage
@@ -136,7 +136,7 @@ export default function App() {
           )}
 
           {activeTab === 'alumnos' && (
-            <Alumnos />
+            <Students />
           )}
 
           {activeTab === 'docentes' && (

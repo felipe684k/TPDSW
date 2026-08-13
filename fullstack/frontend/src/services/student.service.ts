@@ -1,4 +1,4 @@
-export interface Alumno {
+export interface Student {
   dni: string;
   nombre: string;
   apellido: string;
@@ -12,10 +12,10 @@ export interface Alumno {
 
 const API_URL = 'http://localhost:3000/api/users';
 
-export const alumnoService = {
+export const studentService = {
   // Obtener todos los alumnos
   // Nota: Como la API devuelve todos los usuarios, filtramos solo los que son ALUMNO
-  getAlumnos: async (): Promise<Alumno[]> => {
+  getStudents: async (): Promise<Student[]> => {
     try {
       const response = await fetch(API_URL);
       if (!response.ok) throw new Error('Error al obtener los alumnos');
@@ -29,7 +29,7 @@ export const alumnoService = {
   },
 
   // Crear un nuevo alumno
-  createAlumno: async (alumno: Omit<Alumno, 'tipo'>): Promise<Alumno> => {
+  createStudent: async (student: Omit<Student, 'tipo'>): Promise<Student> => {
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -37,7 +37,7 @@ export const alumnoService = {
           'Content-Type': 'application/json',
         },
         // Nos aseguramos de forzar el tipo a 'ALUMNO'
-        body: JSON.stringify({ ...alumno, tipo: 'ALUMNO' }),
+        body: JSON.stringify({ ...student, tipo: 'ALUMNO' }),
       });
       if (!response.ok) throw new Error('Error al crear el alumno');
       return await response.json();
@@ -48,14 +48,14 @@ export const alumnoService = {
   },
 
   // Actualizar un alumno existente por su DNI
-  updateAlumno: async (dni: string, alumno: Partial<Alumno>): Promise<Alumno> => {
+  updateStudent: async (dni: string, student: Partial<Student>): Promise<Student> => {
     try {
       const response = await fetch(`${API_URL}/${dni}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(alumno),
+        body: JSON.stringify(student),
       });
       if (!response.ok) throw new Error('Error al actualizar el alumno');
       return await response.json();
@@ -66,7 +66,7 @@ export const alumnoService = {
   },
 
   // Eliminar un alumno por su DNI
-  deleteAlumno: async (dni: string): Promise<void> => {
+  deleteStudent: async (dni: string): Promise<void> => {
     try {
       const response = await fetch(`${API_URL}/${dni}`, {
         method: 'DELETE',
