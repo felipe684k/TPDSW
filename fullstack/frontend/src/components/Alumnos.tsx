@@ -10,6 +10,8 @@ export default function Alumnos() {
   // NUEVO ESTADO: Si editingDni es string estamos Editando, si es null estamos Creando
   const [editingDni, setEditingDni] = useState<string | null>(null)
 
+  // Nuevo estado: si deletingDni es string se abre la ventana, si es null no se abre
+  const [deletingDni, setDeletingDni] = useState<string | null>(null) // deketingDni es o str o null
   // Estados para el formulario (vinculados a los inputs)
   const [formData, setFormData] = useState({
     nombre: '',
@@ -105,11 +107,12 @@ export default function Alumnos() {
   }
 
   // Función para borrar (Baja Lógica)
-  const handleDelete = async (dni: string) => {
-    if (confirm("¿Estás seguro de eliminar a este alumno?")) {
+  const handleDelete = async () => {
+    if (deletingDni) {
       try {
-        await alumnoService.deleteAlumno(dni)
+        await alumnoService.deleteAlumno(deletingDni)
         cargarAlumnos() // Recargamos lista al borrar
+        setDeletingDni(null)
       } catch (error) {
         console.error("Error al eliminar", error)
       }
@@ -199,7 +202,7 @@ export default function Alumnos() {
                       </button>
                       <span className="text-slate-300">|</span>
                       <button
-                        onClick={() => handleDelete(alumno.dni)}
+                        onClick={() => setDeletingDni(alumno.dni)}
                         className="text-rose-500 hover:text-rose-400 font-semibold text-2xs cursor-pointer">Eliminar</button>
                     </td>
                   </tr>
@@ -318,6 +321,47 @@ export default function Alumnos() {
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium shadow-sm transition-all"
               >
                 {editingDni ? 'Guardar Cambios' : 'Guardar Alumno'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VENTANA DE CONFIRMACIÓN DE BORRADO */}
+      {deletingDni && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-[#1c1d24] border border-rose-900/50 rounded-xl shadow-2xl p-6 w-full max-w-sm text-center relative">
+            
+            {/* BOTÓN DE CRUZ (AQUÍ LO AGREGAMOS) */}
+            <div className="absolute top-4 right-4">
+              <button
+                onClick={() => setDeletingDni(null)}
+                className="w-7 h-7 bg-slate-900 hover:bg-rose-950/30 hover:text-rose-400 rounded flex items-center justify-center text-sm text-slate-500 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl mx-auto mb-4 mt-2">
+              ⚠️
+            </div>
+            <h3 className="text-lg font-bold text-slate-100 mb-2">¿Eliminar Alumno?</h3>
+            <p className="text-sm text-slate-400 mb-6">
+              Esta acción dará de baja al alumno del sistema. ¿Estás seguro de continuar?
+            </p>
+            
+            <div className="flex gap-3 justify-center">
+              <button 
+                onClick={() => setDeletingDni(null)}
+                className="px-4 py-2 rounded font-semibold text-xs text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleDelete}
+                className="px-4 py-2 rounded font-semibold text-xs text-white bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-900/20 transition-all"
+              >
+                Sí, eliminar
               </button>
             </div>
           </div>
