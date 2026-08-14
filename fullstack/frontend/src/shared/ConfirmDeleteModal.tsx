@@ -2,10 +2,10 @@ interface Props {
   isOpen: boolean;                  // El cable que le dice si tiene que mostrarse o no
   onClose: () => void;              // El cable para el botón Cancelar
   onConfirm: () => void;            // El cable para el botón Sí, Eliminar
-  mensaje?: string;                 // Un cable opcional por si queremos cambiar el texto
+  message?: string;                 // Un cable opcional por si queremos cambiar el texto
 }
 
-export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, mensaje }: Props) {
+export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, message: message }: Props) {
   if (!isOpen) return null; // Si no está abierta, no dibuja nada
 
   return (
@@ -26,7 +26,7 @@ export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, mensaje
         </div>
         <h3 className="text-lg font-bold text-slate-100 mb-2">¿Estás seguro?</h3>
         <p className="text-sm text-slate-400 mb-6">
-          {mensaje || "Esta acción dará de baja el registro del sistema. ¿Deseas continuar?"}
+          {message || "Esta acción dará de baja el registro del sistema. ¿Deseas continuar?"}
         </p>
         
         <div className="flex gap-3 justify-center">

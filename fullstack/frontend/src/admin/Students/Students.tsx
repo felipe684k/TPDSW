@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { studentService, type Student as Student } from '../services/student.service'
-import ConfirmDeleteModal from '../shared/ConfirmDeleteModal'
+import { studentService, type Student as Student } from '../../services/student.service'
+import ConfirmDeleteModal from '../../shared/ConfirmDeleteModal'
 import StudentFormModal from './StudentFormModal'
 
 export default function Students() {
@@ -233,7 +233,7 @@ export default function Students() {
         isOpen={studentToDelete != null}
         onClose={() => setStudentToDelete(null)}
         onConfirm={handleDelete}
-        mensaje='Esta acción dará de baja al alumno del sistema. ¿Estás seguro de continuar?'
+        message='Esta acción dará de baja al alumno del sistema. ¿Estás seguro de continuar?'
       />
     </div>
   )
