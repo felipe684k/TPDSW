@@ -36,7 +36,7 @@ export default function Cursos() {
   ]
 
   // Valores de cuota simulados para el selector
-  const cuotasDisponibles = [
+  /* const cuotasDisponibles = [
     { 
       id_cuota: 1, 
       costo_mensual: 12000, 
@@ -61,7 +61,7 @@ export default function Cursos() {
       fecha_desde: '01/03/2026', 
       descripcion: 'Tarifa FCE Cambridge ($18.000)' 
     }
-  ]
+  ] */
 
   return (
     <div className="space-y-6">

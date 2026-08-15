@@ -7,6 +7,7 @@ sequelize.sync()
   .then(() => console.log('✅ Tablas de la base de datos sincronizadas'))
   .catch((err) => console.error('❌ Error sincronizando tablas:', err));
 import userRouter from './routes/user.router.js';
+import profesorRouter from './routes/profesor.router.js';
 
 const app = express();
 const PORT = 3000;
@@ -15,6 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/users', userRouter);
+app.use('/api/profesores', profesorRouter);
 
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', mensaje: 'Backend conectado correctamente 🚀' });
