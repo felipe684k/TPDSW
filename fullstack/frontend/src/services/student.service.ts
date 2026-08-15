@@ -10,7 +10,7 @@ export interface Student {
   tipo: 'ALUMNO' | 'PROFESOR' | 'ADMIN';
 }
 
-const API_URL = 'http://localhost:3000/api/users';
+const API_URL = `http://${window.location.hostname}:3000/api/users`;
 
 export const studentService = {
   // Obtener todos los alumnos

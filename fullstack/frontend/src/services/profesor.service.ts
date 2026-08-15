@@ -12,7 +12,7 @@ export interface Profesor {
   createdAt?: string; // Para la fecha de ingreso
 }
 
-const API_URL = 'http://localhost:3000/api/profesores';
+const API_URL = `http://${window.location.hostname}:3000/api/users`;
 
 export const profesorService = {
   getProfesores: async (search?: string, estado?: string): Promise<Profesor[]> => {

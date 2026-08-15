@@ -1,3 +1,5 @@
+import { SIDEBAR_TABS } from "./Sidebar.const"
+
 interface SidebarProps {
   activeTab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'valorCuota' | 'comisiones' | 'pagos' | 'aulas'
   setActiveTab: (tab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'valorCuota' | 'comisiones' | 'pagos' | 'aulas') => void
@@ -48,7 +50,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isSidebarOp
 
         <button 
           onClick={() => setActiveTab('comisiones')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'comisiones' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
+          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === SIDEBAR_TABS.COMISIONES}}bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
         >
           <span>🏷️</span> Comisiones
         </button>

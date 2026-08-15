@@ -1,0 +1,1 @@
+export const formModalContainerClass = "fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-start justify-center p-6 overflow-y-auto z-50";
