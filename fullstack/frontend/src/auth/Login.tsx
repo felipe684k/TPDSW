@@ -5,15 +5,20 @@ interface LoginProps {
 }
 
 export default function Login({ onLogin }: LoginProps) {
-  const [dni, setDni] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {  //handlesubmit significa "manejar el envio" de un formulario
     e.preventDefault()  //previene que se recargue la pagina al enviar el formulario 
     
-    // Validación estática simple: solo verifica que no estén vacíos
-    if (!dni || !password) {
-      alert('Por favor, ingresa tu DNI y contraseña.')
+    // Validación estática para el usuario admin
+    if (!username || !password) {
+      alert('Por favor, ingresa tu usuario y contraseña.')
+      return
+    }
+
+    if (username !== 'admin' || password !== '12345') {
+      alert('Usuario o contraseña incorrectos.')
       return
     }
 
@@ -42,18 +47,17 @@ export default function Login({ onLogin }: LoginProps) {
         {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-4">
           
-          {/* Campo DNI */}
+          {/* Campo Usuario */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-400">
-              Número de DNI
+              Usuario
             </label>
             <input 
               type="text" 
               required
-              maxLength={8}
-              value={dni}
-              onChange={e => setDni(e.target.value)}
-              placeholder="Ej. 12345678"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              placeholder="Ej. admin"
               className="bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
             />
           </div>
@@ -101,7 +105,7 @@ export default function Login({ onLogin }: LoginProps) {
 
         {/* Nota informativa para pruebas */}
         <div className="bg-slate-900/50 border border-slate-800/80 rounded-lg p-3 text-[10px] text-slate-500 text-center leading-relaxed">
-          💡 <strong>Nota del Prototipo:</strong> Podés ingresar escribiendo cualquier DNI y contraseña de ejemplo.
+          💡 <strong>Nota del Prototipo:</strong> Ingresá con el usuario <strong>admin</strong> y contraseña <strong>12345</strong>.
         </div>
 
       </div>
