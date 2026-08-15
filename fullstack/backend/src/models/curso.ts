@@ -11,7 +11,11 @@ export const Curso = sequelize.define('Curso', {
     type: DataTypes.STRING(150),
     allowNull: false
   },
-  horas_mensuales: {
+  horas_semanales: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  dias_por_semana: {
     type: DataTypes.INTEGER,
     allowNull: false
   },

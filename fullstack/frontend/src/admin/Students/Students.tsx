@@ -95,7 +95,7 @@ export default function Students() {
       } else {
         const newStudent = {
           ...formData,
-          usuario: formData.dni,
+          usuario: formData.nombre,
           contrasena: formData.dni
         }
         await studentService.createStudent(newStudent as any)
