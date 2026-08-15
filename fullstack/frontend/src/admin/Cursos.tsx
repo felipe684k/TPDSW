@@ -9,7 +9,8 @@ export default function Cursos() {
     { 
       id_curso: 1, 
       nombre_curso: 'Kids 1', 
-      horas_mensuales: 12, 
+      horas_semanales: 3,
+      dias_por_semana: 2,
       matricula: 8000, 
       nivel: 'A1 — Principiante',
       cuota_asociada: { id_cuota: 1, costo_mensual: 12000, fecha_desde: '01/03/2026' }
@@ -17,7 +18,8 @@ export default function Cursos() {
     { 
       id_curso: 2, 
       nombre_curso: 'Teens 3', 
-      horas_mensuales: 16, 
+      horas_semanales: 4,
+      dias_por_semana: 2,
       matricula: 10000, 
       nivel: 'A2 — Elemental',
       cuota_asociada: { id_cuota: 2, costo_mensual: 14500, fecha_desde: '01/03/2026' }
@@ -25,7 +27,8 @@ export default function Cursos() {
     { 
       id_curso: 3, 
       nombre_curso: 'First Certificate Prep', 
-      horas_mensuales: 24, 
+      horas_semanales: 6,
+      dias_por_semana: 3,
       matricula: 15000, 
       nivel: 'B2 — Intermedio Alto',
       cuota_asociada: { id_cuota: 4, costo_mensual: 18000, fecha_desde: '01/03/2026' }
@@ -40,21 +43,18 @@ export default function Cursos() {
       fecha_desde: '01/03/2026', 
       descripcion: 'Tarifa Básica Kids ($12.000)' 
     },
-
     { 
       id_cuota: 2, 
       costo_mensual: 14500, 
       fecha_desde: '01/03/2026', 
       descripcion: 'Tarifa Teens/Adultos ($14.500)' 
     },
-
     { 
       id_cuota: 3, 
       costo_mensual: 16000, 
       fecha_desde: '01/03/2026', 
       descripcion: 'Tarifa Business ($16.000)' 
     },
-
     { 
       id_cuota: 4, 
       costo_mensual: 18000, 
@@ -98,13 +98,17 @@ export default function Cursos() {
               </div>
 
               {/* Atributos propios del Curso */}
-              <div className="grid grid-cols-2 gap-2 mt-4 bg-[#17181e] p-3 rounded-lg border border-slate-800/60">
+              <div className="grid grid-cols-3 gap-2 mt-4 bg-[#17181e] p-3 rounded-lg border border-slate-800/60">
                 <div>
-                  <span className="text-[10px] text-slate-400 block">Horas Mensuales</span>
-                  <span className="text-xs font-semibold text-slate-300 font-mono">{curso.horas_mensuales} hs</span>
+                  <span className="text-[10px] text-slate-400 block">Horas Sem.</span>
+                  <span className="text-xs font-semibold text-slate-300 font-mono">{curso.horas_semanales} hs</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">Valor Matrícula</span>
+                  <span className="text-[10px] text-slate-400 block">Días x Sem.</span>
+                  <span className="text-xs font-semibold text-slate-300 font-mono">{curso.dias_por_semana}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block">Matrícula</span>
                   <span className="text-xs font-semibold text-slate-300">${curso.matricula.toLocaleString('es-AR')}</span>
                 </div>
               </div>
@@ -114,7 +118,7 @@ export default function Cursos() {
             <div className="pt-3 border-t border-slate-800/60 flex justify-between items-end">
               <div>
                 <span className="text-[10px] text-slate-400 block">Valor Cuota Vinculado (ID #{curso.cuota_asociada.id_cuota})</span>
-                <span className="text-sm font-bold text-slate-950">${curso.cuota_asociada.costo_mensual.toLocaleString('es-AR')}</span>
+                <span className="text-sm font-bold text-slate-100">${curso.cuota_asociada.costo_mensual.toLocaleString('es-AR')}</span>
                 <span className="text-[9px] text-slate-400 block mt-0.5">Válido desde: {curso.cuota_asociada.fecha_desde}</span>
               </div>
               <div className="flex gap-2 pb-1">
@@ -147,71 +151,65 @@ export default function Cursos() {
             </div>
 
             {/* Formulario (Scrollable) */}
-            <form className="flex-1 overflow-y-auto p-5 space-y-5">
+            <form className="flex-1 overflow-y-auto p-5 space-y-4">
               
-              {/* Sección Curso */}
-              <div className="space-y-3">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Entidad: Curso</div>
-                
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-slate-400">Nombre del Curso *</label>
-                  <input 
-                    type="text" required placeholder="Ej. Kids 1" 
-                    className="border border-slate-800 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold text-slate-400">Horas Mensuales *</label>
-                    <input 
-                      type="number" required placeholder="16" 
-                      className="border border-slate-800 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold text-slate-400">Matrícula ($) *</label>
-                    <input 
-                      type="number" required placeholder="10000" 
-                      className="border border-slate-800 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold text-slate-400">Nivel *</label>
-                    <select 
-                      required 
-                      className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] outline-none focus:border-indigo-500"
-                    >
-                      <option value="">— Elegir —</option>
-                      <option value="A1">A1</option>
-                      <option value="A2">A2</option>
-                      <option value="B1">B1</option>
-                      <option value="B2">B2</option>
-                    </select>
-                  </div>
-                </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-400">Nombre del Curso *</label>
+                <input 
+                  type="text" required placeholder="Ej. Kids 1" 
+                  className="border border-slate-800 bg-[#1c1d24] text-slate-200 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
+                />
+              </div>
+              
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-400">Nivel *</label>
+                <select 
+                  required 
+                  className="border border-slate-800 bg-[#1c1d24] text-slate-200 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
+                >
+                  <option value="">— Elegir —</option>
+                  <option value="A1">A1</option>
+                  <option value="A2">A2</option>
+                  <option value="B1">B1</option>
+                  <option value="B2">B2</option>
+                  <option value="C1">C1</option>
+                  <option value="C2">C2</option>
+                </select>
               </div>
 
-              {/* Relación con ValorCuota existente */}
-              <div className="space-y-3">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Relación: Seleccionar Valor Cuota Vigente</div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-slate-400">Seleccione la Cuota Pre-registrada *</label>
-                  <select 
-                    required 
-                    className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] outline-none focus:border-indigo-500"
-                  >
-                    <option value="">— Seleccionar Tarifa de Cuota Existente —</option>
-                    {cuotasDisponibles.map(cuota => (
-                      <option key={cuota.id_cuota} value={cuota.id_cuota}>
-                        {cuota.descripcion} (vigente desde {cuota.fecha_desde})
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-[10px] text-slate-400 mt-1">
-                    ⚠️ Debe haber registrado el valor de cuota previamente en el módulo "Valor Cuota" para poder asociarlo aquí.
-                  </span>
-                </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-400">Horas Semanales *</label>
+                <input 
+                  type="number" required placeholder="4" 
+                  className="border border-slate-800 bg-[#1c1d24] text-slate-200 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-400">Días por Semana *</label>
+                <input 
+                  type="number" required placeholder="2" 
+                  className="border border-slate-800 bg-[#1c1d24] text-slate-200 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-400">Matrícula ($) *</label>
+                <input 
+                  type="number" required placeholder="10000" 
+                  className="border border-slate-800 bg-[#1c1d24] text-slate-200 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5 pt-3 mt-2 border-t border-slate-800/60">
+                <label className="text-xs font-semibold text-indigo-400">Valor Cuota Mensual Inicial ($) *</label>
+                <input 
+                  type="number" required placeholder="15000" 
+                  className="border border-indigo-500/30 bg-[#1c1d24] text-slate-200 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
+                />
+                <span className="text-[10px] text-slate-500">
+                  Este valor será la tarifa vigente al crear el curso. Modificaciones futuras de precios se harán desde la sección "Valor Cuota".
+                </span>
               </div>
 
             </form>

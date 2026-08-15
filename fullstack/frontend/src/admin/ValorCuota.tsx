@@ -33,9 +33,7 @@ export default function ValorCuota() {
       <div className="bg-[#1c1d24] rounded-xl border border-slate-800 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-800 flex justify-between items-center">
           <div className="text-xs font-semibold text-slate-300">Tarifas del Sistema</div>
-          <span className="text-2xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded font-mono">
-            Total: {cuotasRegistradas.length}
-          </span>
+
         </div>
 
         <div className="overflow-x-auto">

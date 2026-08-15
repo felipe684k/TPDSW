@@ -115,6 +115,8 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
                   <option value="A2">A2 — Elemental</option>
                   <option value="B1">B1 — Intermedio</option>
                   <option value="B2">B2 — Intermedio Alto</option>
+                  <option value="C1">C1 — Avanzado</option>
+                  <option value="C2">C2 — Proficiente</option>
                 </select>
               </div>
             </div>
