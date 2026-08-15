@@ -11,6 +11,7 @@ import Cursos from './admin/Cursos'
 import Aulas from './admin/Aulas'
 import ValorCuota from './admin/ValorCuota'
 import Login from './auth/Login'
+import StudentDashboard from './student/StudentDashboard'
 
 export default function App() {
   // Estado para simular si el usuario ya inició sesión, persistido en localStorage
@@ -18,7 +19,18 @@ export default function App() {
     return localStorage.getItem('isLoggedIn') === 'true'
   })
 
-  // Estado que controla qué página estamos viendo, persistido en localStorage
+  // Estado que controla el rol del usuario ('ADMIN' o 'ALUMNO')
+  const [userRole, setUserRole] = useState<'ADMIN' | 'ALUMNO'>(() => {
+    return (localStorage.getItem('userRole') as any) || 'ADMIN'
+  })
+
+  // Estado que guarda la info del usuario logueado
+  const [userData, setUserData] = useState<any>(() => {
+    const saved = localStorage.getItem('userData')
+    return saved ? JSON.parse(saved) : null
+  })
+
+  // Estado que controla qué página estamos viendo en el panel admin
   const [activeTab, setActiveTab] = useState<'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'valorCuota' | 'comisiones' | 'pagos' | 'aulas'>(() => {
     return (localStorage.getItem('activeTab') as any) || 'dashboard'
   })
@@ -27,10 +39,14 @@ export default function App() {
   useEffect(() => {
     if (isLoggedIn) {
       localStorage.setItem('isLoggedIn', 'true')
+      localStorage.setItem('userRole', userRole)
+      if (userData) localStorage.setItem('userData', JSON.stringify(userData))
     } else {
       localStorage.removeItem('isLoggedIn')
+      localStorage.removeItem('userRole')
+      localStorage.removeItem('userData')
     }
-  }, [isLoggedIn])
+  }, [isLoggedIn, userRole, userData])
 
   useEffect(() => {
     localStorage.setItem('activeTab', activeTab)
@@ -99,7 +115,16 @@ export default function App() {
 
   // Si no está logueado, muestra únicamente la pantalla de Login
   if (!isLoggedIn) {
-    return <Login onLogin={() => setIsLoggedIn(true)} />
+    return <Login onLogin={(role, data) => {
+      setUserRole(role);
+      setUserData(data);
+      setIsLoggedIn(true);
+    }} />
+  }
+
+  // Si el usuario es ALUMNO, mostramos su pantalla exclusiva
+  if (userRole === 'ALUMNO') {
+    return <StudentDashboard userData={userData} onLogout={() => setIsLoggedIn(false)} />
   }
 
   return (

@@ -1,29 +1,49 @@
 import { useState } from 'react'
 
 interface LoginProps {
-  onLogin: () => void //onLogin es una funcion que recibe como parametro otro boton que cuando se presione va a cambiar el estado a "conectado"
+  onLogin: (role: 'ADMIN' | 'ALUMNO', userData: any) => void
 }
 
 export default function Login({ onLogin }: LoginProps) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {  //handlesubmit significa "manejar el envio" de un formulario
-    e.preventDefault()  //previene que se recargue la pagina al enviar el formulario 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErrorMsg(null)
     
-    // Validación estática para el usuario admin
     if (!username || !password) {
-      alert('Por favor, ingresa tu usuario y contraseña.')
+      setErrorMsg('Por favor, ingresa tu usuario y contraseña.')
       return
     }
 
-    if (username !== 'admin' || password !== '12345') {
-      alert('Usuario o contraseña incorrectos.')
-      return
-    }
+    setIsLoading(true)
 
-    // Llama a la función que cambia el estado a "conectado" en App.tsx
-    onLogin()
+    try {
+      const response = await fetch('http://localhost:3000/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario: username, contrasena: password })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setErrorMsg(data.mensaje || 'Usuario o contraseña incorrectos.')
+        setIsLoading(false)
+        return
+      }
+
+      // data.data contiene el usuario encontrado y su tipo ('ADMIN' o 'ALUMNO')
+      onLogin(data.data.tipo as 'ADMIN' | 'ALUMNO', data.data)
+      
+    } catch (error) {
+      console.error(error)
+      setErrorMsg('Error al conectar con el servidor. Verifica que el backend esté corriendo.')
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -97,15 +117,23 @@ export default function Login({ onLogin }: LoginProps) {
           {/* Botón de envío */}
           <button 
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium py-2.5 rounded-lg text-xs shadow-lg shadow-blue-600/20 transition-all"
+            disabled={isLoading}
+            className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium py-2.5 rounded-lg text-xs shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50"
           >
-            Iniciar Sesión
+            {isLoading ? 'Conectando...' : 'Iniciar Sesión'}
           </button>
         </form>
 
+        {/* Mensaje de error */}
+        {errorMsg && (
+          <div className="bg-rose-950/50 border border-rose-800/80 rounded-lg p-3 text-[11px] text-rose-400 text-center">
+            ❌ {errorMsg}
+          </div>
+        )}
+
         {/* Nota informativa para pruebas */}
         <div className="bg-slate-900/50 border border-slate-800/80 rounded-lg p-3 text-[10px] text-slate-500 text-center leading-relaxed">
-          💡 <strong>Nota del Prototipo:</strong> Ingresá con el usuario <strong>admin</strong> y contraseña <strong>12345</strong>.
+          💡 <strong>Credenciales de Prueba:</strong> Podés usar <strong>admin</strong> / <strong>12345</strong> para el panel de secretaría, o <strong>user</strong> / <strong>12345</strong> para ver el panel de alumno.
         </div>
 
       </div>

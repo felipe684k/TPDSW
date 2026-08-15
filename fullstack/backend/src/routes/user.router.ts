@@ -4,6 +4,7 @@ import * as controller from '../controllers/user.controller.js';
 const router = Router();
 
 // Routes
+router.post('/login', controller.login);
 router.get('/', controller.getAllUsers);
 router.get('/:dni', controller.getUserByDni);
 router.post('/', controller.createUser);
