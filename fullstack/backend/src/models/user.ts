@@ -3,10 +3,15 @@ import { sequelize } from '../config/database.js';
 
 //usamos sequelize para definir el modelo de la tabla usuario
 export const user = sequelize.define('Usuario', {
-  dni: {
-    type: DataTypes.STRING(15),
+  id: {
+    type: DataTypes.INTEGER,
     primaryKey: true,
-    allowNull: false
+    autoIncrement: true
+  },
+  dni: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true
   },
   nombre: {
     type: DataTypes.STRING(75),
@@ -30,7 +35,7 @@ export const user = sequelize.define('Usuario', {
     unique: true
   },
   usuario: {
-    type: DataTypes.STRING(50),
+    type: DataTypes.STRING(150),
     allowNull: false,
     unique: true
   },

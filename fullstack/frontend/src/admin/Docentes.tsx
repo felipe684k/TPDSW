@@ -8,10 +8,10 @@ export default function Docentes() {
 
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [docenteToDelete, setDocenteToDelete] = useState<string | null>(null)
+  const [docenteToDelete, setDocenteToDelete] = useState<number | null>(null)
   
-  // Si editingDni es string estamos editando, si es null estamos creando
-  const [editingDni, setEditingDni] = useState<string | null>(null)
+  // Si editingId es number estamos editando, si es null estamos creando
+  const [editingId, setEditingId] = useState<number | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -50,14 +50,34 @@ export default function Docentes() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  useEffect(() => {
+    // Si estamos creando (no editando) y el DNI tiene 8 números
+    if (!editingId && formData.dni.length >= 8) {
+      profesorService.checkDni(formData.dni).then((data) => {
+        if (data && !data.activo) {
+          // Usuario inactivo: autocompletar
+          setFormData(prev => ({
+            ...prev,
+            nombre: data.nombre || '',
+            apellido: data.apellido || '',
+            telefono: data.telefono || '',
+            fecha_nacimiento: data.fecha_nacimiento ? data.fecha_nacimiento.split('T')[0] : '',
+            email: data.email ? data.email.split('_baja_')[0] : ''
+          }));
+        }
+      }).catch(console.error);
+    }
+  }, [formData.dni, editingId]);
+
   const handleOpenModalCreate = () => {
-    setEditingDni(null)
+    setEditingId(null)
     setFormData({ apellido: '', nombre: '', dni: '', fecha_nacimiento: '', telefono: '', email: '' })
     setModalOpen(true)
   }
 
   const handleEdit = (docente: Profesor) => {
-    setEditingDni(docente.dni)
+    if (!docente.id) return;
+    setEditingId(docente.id)
     setFormData({
       apellido: docente.apellido || '',
       nombre: docente.nombre || '',
@@ -72,8 +92,8 @@ export default function Docentes() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      if (editingDni) {
-        await profesorService.updateProfesor(editingDni, formData)
+      if (editingId) {
+        await profesorService.updateProfesor(editingId, formData)
       } else {
         await profesorService.createProfesor(formData)
       }
@@ -86,8 +106,8 @@ export default function Docentes() {
     }
   }
 
-  const confirmDelete = (dni: string) => {
-    setDocenteToDelete(dni)
+  const confirmDelete = (id: number) => {
+    setDocenteToDelete(id)
     setDeleteModalOpen(true)
   }
 
@@ -160,10 +180,10 @@ export default function Docentes() {
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {filteredDocentes.length === 0 ? (
-                <tr><td colSpan={5} className="p-4 text-center text-slate-500 text-xs">No hay docentes que coincidan</td></tr>
+                <tr><td colSpan={6} className="p-4 text-center text-slate-500 text-xs">No hay docentes que coincidan</td></tr>
               ) : (
                 filteredDocentes.map((docente) => (
-                  <tr key={docente.dni} className="hover:bg-[#17181e] transition-colors">
+                  <tr key={docente.id} className="hover:bg-[#17181e] transition-colors">
                     <td className="p-3 text-xs font-semibold text-slate-200">{docente.apellido}, {docente.nombre}</td>
                     <td className="p-3 text-xs font-mono text-slate-400">{docente.dni}</td>
                     <td className="p-3 text-xs text-slate-400">{docente.telefono || '-'}</td>
@@ -171,7 +191,7 @@ export default function Docentes() {
                     <td className="p-3 text-xs flex gap-2">
                       <button onClick={() => handleEdit(docente)} className="text-indigo-400 hover:text-indigo-300 font-semibold text-2xs">Editar</button>
                       <span className="text-slate-300">|</span>
-                      <button onClick={() => confirmDelete(docente.dni)} className="text-rose-500 hover:text-rose-400 font-semibold text-2xs">Dar de Baja</button>
+                      <button onClick={() => confirmDelete(docente.id!)} className="text-rose-500 hover:text-rose-400 font-semibold text-2xs">Dar de Baja</button>
                     </td>
                   </tr>
                 ))
@@ -190,7 +210,7 @@ export default function Docentes() {
             
             <div className="p-4 border-b border-slate-800 flex justify-between items-center shrink-0">
               <h2 className="text-sm font-semibold text-slate-200">
-                {editingDni ? '👨‍🏫 Editar Docente' : '👨‍🏫 Registrar Nuevo Docente'}
+                {editingId ? '👨‍🏫 Editar Docente' : '👨‍🏫 Registrar Nuevo Docente'}
               </h2>
               <button 
                 onClick={() => setModalOpen(false)}
@@ -225,8 +245,7 @@ export default function Docentes() {
                     <label className="text-xs font-semibold text-slate-400">DNI *</label>
                     <input 
                       type="text" required maxLength={8} name="dni" value={formData.dni} onChange={handleInputChange} placeholder="30123456" 
-                      disabled={!!editingDni}
-                      className={`border border-slate-800 rounded p-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 ${editingDni ? 'bg-slate-800 text-slate-400 cursor-not-allowed' : 'bg-[#1c1d24] text-white'}`}
+                      className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
@@ -270,7 +289,7 @@ export default function Docentes() {
                   type="submit"
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium shadow-sm transition-all"
                 >
-                  {editingDni ? 'Guardar Cambios' : 'Registrar Docente'}
+                  {editingId ? 'Guardar Cambios' : 'Registrar Docente'}
                 </button>
               </div>
             </form>

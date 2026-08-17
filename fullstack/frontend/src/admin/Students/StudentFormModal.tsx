@@ -8,10 +8,10 @@ interface Props {
   formData: any;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   errorMessage: string | null;
-  editingDni: string | null;
+  editingId: number | null;
 }
 
-export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, onChange, errorMessage, editingDni }: Props) {
+export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, onChange, errorMessage, editingId }: Props) {
   if (!isOpen) return null; // Si está cerrado, no dibuja nada
 
   return (
@@ -21,7 +21,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
         {/* CABECERA */}
         <div className="p-4 border-b border-slate-800 flex justify-between items-center shrink-0">
           <h2 className="text-sm font-semibold text-slate-200">
-            {editingDni ? '✏️ Editar Alumno' : '👤 Registrar Nuevo Alumno'}
+            {editingId ? '✏️ Editar Alumno' : '👤 Registrar Nuevo Alumno'}
           </h2>
           <button
             onClick={onClose}
@@ -64,8 +64,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
                 <input
                   name="dni" value={formData.dni} onChange={onChange}
                   type="text" required maxLength={8} placeholder="Ej. 40123456"
-                  disabled={!!editingDni}
-                  className={`border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500 ${editingDni ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -101,7 +100,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
             </div>
           </div>
 
-          {!editingDni && (
+          {!editingId && (
             <div className="space-y-3">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Académico</div>
               <div className="flex flex-col gap-1">
@@ -133,7 +132,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
             type="submit" form="student-form"
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium shadow-sm transition-all"
           >
-            {editingDni ? 'Guardar Cambios' : 'Guardar Alumno'}
+            {editingId ? 'Guardar Cambios' : 'Guardar Alumno'}
           </button>
         </div>
       </div>

@@ -6,9 +6,10 @@ const router = Router();
 // Routes
 router.post('/login', controller.login);
 router.get('/', controller.getAllUsers);
-router.get('/:dni', controller.getUserByDni);
+router.get('/check-dni/:dni', controller.checkStudentDni);
+router.get('/:id', controller.getUserById);
 router.post('/', controller.createUser);
-router.put('/:dni', controller.updateUser);
-router.delete('/:dni', controller.deleteUser);
+router.put('/:id', controller.updateUser);
+router.delete('/:id', controller.deleteUser);
 
 export default router;

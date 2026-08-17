@@ -2,8 +2,8 @@ import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 
 export const UsuarioComision = sequelize.define('UsuarioComision', {
-  dni: {
-    type: DataTypes.STRING(15),
+  id_usuario: {
+    type: DataTypes.INTEGER,
     primaryKey: true,
     allowNull: false
   },

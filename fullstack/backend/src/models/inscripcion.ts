@@ -23,8 +23,8 @@ export const Inscripcion = sequelize.define('Inscripcion', {
     type: DataTypes.DECIMAL(5, 2),
     allowNull: true
   },
-  dni: {
-    type: DataTypes.STRING(15),
+  id_usuario: {
+    type: DataTypes.INTEGER,
     allowNull: false
   },
   id_comision: {

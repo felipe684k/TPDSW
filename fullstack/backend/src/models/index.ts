@@ -28,8 +28,8 @@ ValorCuota.belongsTo(Curso, { foreignKey: 'id_curso', as: 'curso' });
 Curso.hasMany(ValorCuota, { foreignKey: 'id_curso', as: 'valores_cuota' });
 
 // UsuarioNivel (M:N entre Usuario y Nivel)
-user.belongsToMany(Nivel, { through: UsuarioNivel, foreignKey: 'dni', otherKey: 'codigo_nivel', as: 'niveles' });
-Nivel.belongsToMany(user, { through: UsuarioNivel, foreignKey: 'codigo_nivel', otherKey: 'dni', as: 'usuarios' });
+user.belongsToMany(Nivel, { through: UsuarioNivel, foreignKey: 'id_usuario', otherKey: 'codigo_nivel', as: 'niveles' });
+Nivel.belongsToMany(user, { through: UsuarioNivel, foreignKey: 'codigo_nivel', otherKey: 'id_usuario', as: 'usuarios' });
 
 // Comision -> Curso, Aula, CicloLectivo
 Comision.belongsTo(Curso, { foreignKey: 'id_curso', as: 'curso' });
@@ -42,16 +42,16 @@ Comision.belongsTo(CicloLectivo, { foreignKey: 'id_ciclo_lectivo', as: 'ciclo_le
 CicloLectivo.hasMany(Comision, { foreignKey: 'id_ciclo_lectivo', as: 'comisiones' });
 
 // UsuarioComision (M:N entre Usuario y Comision)
-user.belongsToMany(Comision, { through: UsuarioComision, foreignKey: 'dni', otherKey: 'id_comision', as: 'comisiones' });
-Comision.belongsToMany(user, { through: UsuarioComision, foreignKey: 'id_comision', otherKey: 'dni', as: 'profesores' });
+user.belongsToMany(Comision, { through: UsuarioComision, foreignKey: 'id_usuario', otherKey: 'id_comision', as: 'comisiones' });
+Comision.belongsToMany(user, { through: UsuarioComision, foreignKey: 'id_comision', otherKey: 'id_usuario', as: 'profesores' });
 
 // ComisionHorario (M:N entre Comision y Horario)
 Comision.belongsToMany(Horario, { through: ComisionHorario, foreignKey: 'id_comision', otherKey: 'id_horario', as: 'horarios' });
 Horario.belongsToMany(Comision, { through: ComisionHorario, foreignKey: 'id_horario', otherKey: 'id_comision', as: 'comisiones' });
 
 // Inscripcion -> Usuario, Comision
-Inscripcion.belongsTo(user, { foreignKey: 'dni', as: 'usuario' });
-user.hasMany(Inscripcion, { foreignKey: 'dni', as: 'inscripciones' });
+Inscripcion.belongsTo(user, { foreignKey: 'id_usuario', as: 'usuario' });
+user.hasMany(Inscripcion, { foreignKey: 'id_usuario', as: 'inscripciones' });
 
 Inscripcion.belongsTo(Comision, { foreignKey: 'id_comision', as: 'comision' });
 Comision.hasMany(Inscripcion, { foreignKey: 'id_comision', as: 'inscripciones' });

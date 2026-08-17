@@ -9,11 +9,11 @@ export default function Students() {
   const [isFromBackend, setIsFromBackend] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
 
-  // ESTADO: Si editingDni es string estamos Editando, si es null estamos Creando
-  const [editingDni, setEditingDni] = useState<string | null>(null)
+  // ESTADO: Si editingId es number estamos Editando, si es null estamos Creando
+  const [editingId, setEditingId] = useState<number | null>(null)
 
-  // Estado: si studentToDelete es string se abre la ventana, si es null no se abre
-  const [studentToDelete, setStudentToDelete] = useState<string | null>(null) 
+  // Estado: si studentToDelete es number se abre la ventana, si es null no se abre
+  const [studentToDelete, setStudentToDelete] = useState<number | null>(null) 
   
   // Estado: 
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -49,15 +49,31 @@ export default function Students() {
     return (a.nombre + " " + a.apellido + " " + a.dni).toLowerCase().includes(searchQuery.toLowerCase());
   })
 
-  // Función genérica para guardar lo que se tipea en los inputs
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  useEffect(() => {
+    if (!editingId && formData.dni.length >= 8) {
+      studentService.checkDni(formData.dni).then((data) => {
+        if (data && !data.activo) {
+          setFormData(prev => ({
+            ...prev,
+            nombre: data.nombre || '',
+            apellido: data.apellido || '',
+            telefono: data.telefono || '',
+            email: data.email ? data.email.split('_baja_')[0] : '',
+            fecha_nacimiento: data.fecha_nacimiento ? data.fecha_nacimiento.split('T')[0] : ''
+          }));
+        }
+      }).catch(console.error);
+    }
+  }, [formData.dni, editingId]);
+
   // NUEVA FUNCIÓN: Abrir modal para CREAR (resetea el formulario)
   const handleOpenModalCreate = () => {
-    setEditingDni(null)
+    setEditingId(null)
     setFormData({ nombre: '', apellido: '', dni: '', telefono: '', email: '', nivel: '', fecha_nacimiento: '' })
     setIsModalOpen(true)
     setErrorMsg(null) // 
@@ -65,7 +81,8 @@ export default function Students() {
 
   // NUEVA FUNCIÓN: Abrir modal para EDITAR (carga los datos del alumno seleccionado)
   const handleEdit = (student: Student) => {
-    setEditingDni(student.dni)
+    if (!student.id) return;
+    setEditingId(student.id)
     setFormData({
       nombre: student.nombre || '',
       apellido: student.apellido || '',
@@ -78,14 +95,15 @@ export default function Students() {
     setIsModalOpen(true)
   }
 
-  // Función que envía los datos al backend (crea o actualiza según editingDni)
+  // Función que envía los datos al backend (crea o actualiza según editingId)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // Evita que la página parpadee o se recargue
     setErrorMsg(null); // Borramos errores viejos
     
     try {
-      if (editingDni) {
-        await studentService.updateStudent(editingDni, {
+      if (editingId) {
+        await studentService.updateStudent(editingId, {
+          dni: formData.dni,
           nombre: formData.nombre,
           apellido: formData.apellido,
           telefono: formData.telefono,
@@ -103,7 +121,7 @@ export default function Students() {
 
       setIsModalOpen(false)
       setFormData({ nombre: '', apellido: '', dni: '', telefono: '', email: '', nivel: '', fecha_nacimiento: '' })
-      setEditingDni(null)
+      setEditingId(null)
       fetchStudents()
       
     } catch (error) {
@@ -163,11 +181,6 @@ export default function Students() {
         <div className="p-4 border-b border-slate-800 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-300">Listado General</span>
-            {isFromBackend && (
-              <span className="text-[10px] bg-emerald-900/50 text-emerald-400 border border-emerald-800/50 px-2 py-0.5 rounded-full font-medium">
-                📡 Conectado a Backend
-              </span>
-            )}
           </div>
           <span className="text-2xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded font-mono">
             Total: {filteredStudents.length}
@@ -195,7 +208,7 @@ export default function Students() {
                 </tr>
               ) : (
                 filteredStudents.map((student) => (
-                  <tr key={student.dni} className="hover:bg-[#17181e] transition-colors">
+                  <tr key={student.id} className="hover:bg-[#17181e] transition-colors">
                     <td className="p-3 text-xs font-semibold text-slate-200">{student.apellido}, {student.nombre}</td>
                     <td className="p-3 text-xs font-mono text-slate-400">{student.dni}</td>
                     <td className="p-3 text-xs text-slate-400">{student.telefono || 'N/A'}</td>
@@ -209,8 +222,8 @@ export default function Students() {
                       </button>
                       <span className="text-slate-300">|</span>
                       <button
-                        onClick={() => setStudentToDelete(student.dni)}
-                        className="text-rose-500 hover:text-rose-400 font-semibold text-2xs cursor-pointer">Eliminar</button>
+                        onClick={() => setStudentToDelete(student.id!)}
+                        className="text-rose-500 hover:text-rose-400 font-semibold text-2xs cursor-pointer">Dar de Baja</button>
                     </td>
                   </tr>
                 )))}
@@ -226,7 +239,7 @@ export default function Students() {
         formData={formData}
         onChange={handleInputChange}
         errorMessage={errorMsg}
-        editingDni={editingDni}
+        editingId={editingId}
       />
 
       <ConfirmDeleteModal

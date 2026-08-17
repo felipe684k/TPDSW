@@ -1,4 +1,5 @@
 export interface Student {
+  id?: number;
   dni: string;
   nombre: string;
   apellido: string;
@@ -30,6 +31,18 @@ export const studentService = {
     }
   },
 
+  checkDni: async (dni: string): Promise<any> => {
+    try {
+      const response = await fetch(`${API_URL}/check-dni/${dni}`);
+      if (!response.ok) return null;
+      const json = await response.json();
+      return json.data;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  },
+
   // Crear un nuevo alumno
   createStudent: async (student: Omit<Student, 'tipo'>): Promise<Student> => {
     try {
@@ -49,10 +62,10 @@ export const studentService = {
     }
   },
 
-  // Actualizar un alumno existente por su DNI
-  updateStudent: async (dni: string, student: Partial<Student>): Promise<Student> => {
+  // Actualizar un alumno existente por su ID
+  updateStudent: async (id: number, student: Partial<Student>): Promise<Student> => {
     try {
-      const response = await fetch(`${API_URL}/${dni}`, {
+      const response = await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -67,10 +80,10 @@ export const studentService = {
     }
   },
 
-  // Eliminar un alumno por su DNI
-  deleteStudent: async (dni: string): Promise<void> => {
+  // Eliminar un alumno por su ID
+  deleteStudent: async (id: number): Promise<void> => {
     try {
-      const response = await fetch(`${API_URL}/${dni}`, {
+      const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Error al eliminar el alumno');

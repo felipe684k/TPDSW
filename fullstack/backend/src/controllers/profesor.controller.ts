@@ -39,6 +39,38 @@ export const getAllProfesores = async (req: Request, res: Response): Promise<voi
   }
 };
 
+export const checkProfesorDni = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { dni } = req.params;
+    
+    // Primero, buscamos si hay uno activo
+    let prof: any = await user.findOne({ where: { dni, tipo: 'PROFESOR', activo: true } });
+    if (prof) {
+      res.status(200).json({ status: 'ok', data: prof });
+      return;
+    }
+
+    // Segundo, buscamos si hay uno inactivo
+    prof = await user.findOne({
+      where: {
+        dni: { [Op.like]: `${dni}_baja_%` },
+        tipo: 'PROFESOR',
+        activo: false
+      }
+    });
+
+    if (prof) {
+      res.status(200).json({ status: 'ok', data: prof });
+      return;
+    }
+
+    res.status(200).json({ status: 'not_found', data: null });
+  } catch (error: any) {
+    console.error('Error al chequear DNI de profesor:', error?.message || error);
+    res.status(500).json({ status: 'db_error', mensaje: 'Error interno', data: null });
+  }
+};
+
 export const createProfesor = async (req: Request, res: Response): Promise<void> => {
   try {
     const { dni, nombre, apellido, telefono, email, fecha_nacimiento } = req.body;
@@ -48,17 +80,32 @@ export const createProfesor = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const profesorExistente: any = await user.findOne({ where: { dni } });
-    if (profesorExistente) {
-      if (!profesorExistente.activo) {
-        await user.update(
-          { nombre, apellido, telefono, email, fecha_nacimiento, tipo: 'PROFESOR', activo: true },
-          { where: { dni } }
-        );
-        res.status(200).json({ status: 'ok', mensaje: 'Profesor reactivado con éxito', data: profesorExistente });
-        return;
-      }
+    const profesorExistenteActivo: any = await user.findOne({ where: { dni, activo: true } });
+    if (profesorExistenteActivo) {
       res.status(409).json({ status: 'error', mensaje: 'Ya existe un usuario con el DNI ' + dni, data: null });
+      return;
+    }
+
+    const profesorInactivo: any = await user.findOne({
+      where: {
+        dni: { [Op.like]: `${dni}_baja_%` },
+        tipo: 'PROFESOR',
+        activo: false
+      }
+    });
+
+    if (profesorInactivo) {
+      await profesorInactivo.update({
+        nombre,
+        apellido,
+        telefono,
+        email,
+        fecha_nacimiento,
+        dni,
+        usuario: dni,
+        activo: true
+      });
+      res.status(201).json({ status: 'ok', mensaje: 'Profesor reactivado con éxito', data: profesorInactivo });
       return;
     }
 
@@ -84,16 +131,17 @@ export const createProfesor = async (req: Request, res: Response): Promise<void>
 
 export const updateProfesor = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { dni } = req.params;
-    const { nombre, apellido, telefono, email, fecha_nacimiento, activo } = req.body;
+    const { id } = req.params;
+    const { dni, nombre, apellido, telefono, email, fecha_nacimiento, activo } = req.body;
 
-    const profesorExistente = await user.findOne({ where: { dni, tipo: 'PROFESOR' } });
+    const profesorExistente = await user.findOne({ where: { id, tipo: 'PROFESOR' } });
     if (!profesorExistente) {
-      res.status(404).json({ status: 'error', mensaje: 'No se encontró el profesor con DNI ' + dni, data: null });
+      res.status(404).json({ status: 'error', mensaje: 'No se encontró el profesor con ID ' + id, data: null });
       return;
     }
 
     const datosAActualizar: any = {};
+    if (dni !== undefined) datosAActualizar.dni = dni;
     if (nombre !== undefined) datosAActualizar.nombre = nombre;
     if (apellido !== undefined) datosAActualizar.apellido = apellido;
     if (telefono !== undefined) datosAActualizar.telefono = telefono;
@@ -101,9 +149,9 @@ export const updateProfesor = async (req: Request, res: Response): Promise<void>
     if (fecha_nacimiento !== undefined) datosAActualizar.fecha_nacimiento = fecha_nacimiento;
     if (activo !== undefined) datosAActualizar.activo = activo; // Para poder pasarlo a Licencia/Inactivo sin darlo de baja lógica completa si se requiere
 
-    await user.update(datosAActualizar, { where: { dni, tipo: 'PROFESOR' } });
+    await user.update(datosAActualizar, { where: { id, tipo: 'PROFESOR' } });
 
-    res.status(200).json({ status: 'ok', mensaje: 'Profesor actualizado con éxito', data: { dni, ...datosAActualizar } });
+    res.status(200).json({ status: 'ok', mensaje: 'Profesor actualizado con éxito', data: { id, ...datosAActualizar } });
   } catch (error: any) {
     console.error('Error al actualizar profesor:', error?.message || error);
     res.status(500).json({ status: 'db_error', mensaje: 'Error interno', data: null });
@@ -112,12 +160,12 @@ export const updateProfesor = async (req: Request, res: Response): Promise<void>
 
 export const deleteProfesor = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { dni } = req.params;
+    const { id } = req.params;
     
-    const profesor: any = await user.findOne({ where: { dni, tipo: 'PROFESOR', activo: true } });
+    const profesor: any = await user.findOne({ where: { id, tipo: 'PROFESOR', activo: true } });
     
     if (!profesor) {
-      res.status(404).json({ status: 'error', mensaje: 'No se encontró un profesor activo con DNI ' + dni, data: null });
+      res.status(404).json({ status: 'error', mensaje: 'No se encontró un profesor activo con ID ' + id, data: null });
       return;
     }
 
@@ -126,9 +174,10 @@ export const deleteProfesor = async (req: Request, res: Response): Promise<void>
       { 
         activo: false,
         email: profesor.email ? `${profesor.email}_baja_${ts}` : null,
-        usuario: `${profesor.usuario}_baja_${ts}`
+        usuario: `${profesor.usuario}_baja_${ts}`,
+        dni: `${profesor.dni}_baja_${ts}`
       },
-      { where: { dni, tipo: 'PROFESOR', activo: true } }
+      { where: { id, tipo: 'PROFESOR', activo: true } }
     );
     
     res.status(200).json({ status: 'ok', mensaje: 'Profesor dado de baja con éxito', data: null });

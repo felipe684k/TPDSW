@@ -40,7 +40,7 @@ export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, message
             onClick={onConfirm}
             className="px-4 py-2 rounded font-semibold text-xs text-white bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-900/20 transition-all"
           >
-            Sí, eliminar
+            Sí, dar de baja
           </button>
         </div>
       </div>

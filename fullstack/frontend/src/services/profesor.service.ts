@@ -1,4 +1,5 @@
 export interface Profesor {
+  id?: number;
   dni: string;
   nombre: string;
   apellido: string;
@@ -33,6 +34,18 @@ export const profesorService = {
     }
   },
 
+  checkDni: async (dni: string): Promise<Profesor | null> => {
+    try {
+      const response = await fetch(`${API_URL}/check-dni/${dni}`);
+      if (!response.ok) return null;
+      const json = await response.json();
+      return json.data;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  },
+
   createProfesor: async (profesor: Partial<Profesor>): Promise<Profesor> => {
     try {
       const response = await fetch(API_URL, {
@@ -49,9 +62,9 @@ export const profesorService = {
     }
   },
 
-  updateProfesor: async (dni: string, profesor: Partial<Profesor>): Promise<Profesor> => {
+  updateProfesor: async (id: number, profesor: Partial<Profesor>): Promise<Profesor> => {
     try {
-      const response = await fetch(`${API_URL}/${dni}`, {
+      const response = await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profesor),
@@ -65,9 +78,9 @@ export const profesorService = {
     }
   },
 
-  deleteProfesor: async (dni: string): Promise<void> => {
+  deleteProfesor: async (id: number): Promise<void> => {
     try {
-      const response = await fetch(`${API_URL}/${dni}`, {
+      const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Error al dar de baja el docente');
