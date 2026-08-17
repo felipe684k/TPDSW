@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { API_BASE_URL } from '../config'
 
 export default function Topbar({ activeTab, setIsSidebarOpen }: { activeTab: string, setIsSidebarOpen: (isOpen: boolean) => void }) {
   const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking')
@@ -6,7 +7,7 @@ export default function Topbar({ activeTab, setIsSidebarOpen }: { activeTab: str
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/health')
+        const res = await fetch(`${API_BASE_URL}/health`)
         if (res.ok) {
           setBackendStatus('connected')
         } else {

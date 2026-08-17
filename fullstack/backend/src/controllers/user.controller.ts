@@ -214,18 +214,22 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
   try {
     const { dni } = req.params;
     
-    // BAJA LÓGICA: En lugar de usar destroy() y borrar los registros físicamente de las tablas 
-    // ('usuario' y 'usuario_nivel'), actualizamos el campo 'activo' a false.
-    // Esto mantiene intacto todo el historial del alumno (inscripciones, pagos, notas).
-    const [filasAfectadas] = await user.update(
-      { activo: false },
-      { where: { dni: dni, tipo: 'ALUMNO', activo: true } }
-    );
+    const alumno: any = await user.findOne({ where: { dni: dni, tipo: 'ALUMNO', activo: true } });
     
-    if (filasAfectadas === 0) {
+    if (!alumno) {
       res.status(404).json({ status: 'error', mensaje: 'No se encontró un alumno activo con DNI ' + dni, data: null });
       return;
     }
+
+    const ts = Date.now();
+    await user.update(
+      { 
+        activo: false,
+        email: alumno.email ? `${alumno.email}_baja_${ts}` : null,
+        usuario: `${alumno.usuario}_baja_${ts}`
+      },
+      { where: { dni: dni, tipo: 'ALUMNO', activo: true } }
+    );
     
     res.status(200).json({ status: 'ok', mensaje: 'Alumno dado de baja (baja lógica) con éxito', data: null });
   } catch (error: any) {

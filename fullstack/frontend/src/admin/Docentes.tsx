@@ -5,7 +5,7 @@ export default function Docentes() {
   const [modalOpen, setModalOpen] = useState(false)
   const [docentes, setDocentes] = useState<Profesor[]>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [estadoFilter, setEstadoFilter] = useState('')
+
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [docenteToDelete, setDocenteToDelete] = useState<string | null>(null)
@@ -38,15 +38,11 @@ export default function Docentes() {
 
   // Filtrado local para búsqueda instantánea
   const filteredDocentes = docentes.filter(docente => {
-    const textToSearch = `${docente.nombre} ${docente.apellido} ${docente.dni}`.toLowerCase()
-    const matchesSearch = textToSearch.includes(searchTerm.toLowerCase())
-    
-    const matchesEstado = 
-      estadoFilter === '' || 
-      (estadoFilter === 'Activo' && docente.activo) || 
-      (estadoFilter === 'Licencia' && !docente.activo)
+    // Ocultar docentes dados de baja (baja lógica)
+    if (!docente.activo) return false;
 
-    return matchesSearch && matchesEstado
+    const textToSearch = `${docente.nombre} ${docente.apellido} ${docente.dni}`.toLowerCase()
+    return textToSearch.includes(searchTerm.toLowerCase())
   })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,15 +134,7 @@ export default function Docentes() {
           />
         </div>
         <div className="flex gap-2 w-full md:w-auto">
-          <select 
-            value={estadoFilter}
-            onChange={(e) => setEstadoFilter(e.target.value)}
-            className="border border-slate-800 rounded p-2 text-xs bg-[#1c1d24] outline-none w-full md:w-36"
-          >
-            <option value="">Todos los estados</option>
-            <option value="Activo">Activo</option>
-            <option value="Licencia">En Licencia</option>
-          </select>
+          {/* El filtro de estado fue removido */}
         </div>
       </div>
 
@@ -167,13 +155,12 @@ export default function Docentes() {
                 <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">DNI</th>
                 <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Teléfono</th>
                 <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Email</th>
-                <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Estado</th>
                 <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {filteredDocentes.length === 0 ? (
-                <tr><td colSpan={6} className="p-4 text-center text-slate-500 text-xs">No hay docentes que coincidan</td></tr>
+                <tr><td colSpan={5} className="p-4 text-center text-slate-500 text-xs">No hay docentes que coincidan</td></tr>
               ) : (
                 filteredDocentes.map((docente) => (
                   <tr key={docente.dni} className="hover:bg-[#17181e] transition-colors">
@@ -181,16 +168,6 @@ export default function Docentes() {
                     <td className="p-3 text-xs font-mono text-slate-400">{docente.dni}</td>
                     <td className="p-3 text-xs text-slate-400">{docente.telefono || '-'}</td>
                     <td className="p-3 text-xs text-slate-400">{docente.email || '-'}</td>
-                    <td className="p-3 text-xs">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold ${
-                        docente.activo ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          docente.activo ? 'bg-emerald-500' : 'bg-amber-500'
-                        }`}></span>
-                        {docente.activo ? 'Activo' : 'Inactivo/Licencia'}
-                      </span>
-                    </td>
                     <td className="p-3 text-xs flex gap-2">
                       <button onClick={() => handleEdit(docente)} className="text-indigo-400 hover:text-indigo-300 font-semibold text-2xs">Editar</button>
                       <span className="text-slate-300">|</span>

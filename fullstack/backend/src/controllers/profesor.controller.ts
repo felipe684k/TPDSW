@@ -114,15 +114,22 @@ export const deleteProfesor = async (req: Request, res: Response): Promise<void>
   try {
     const { dni } = req.params;
     
-    const [filasAfectadas] = await user.update(
-      { activo: false },
-      { where: { dni, tipo: 'PROFESOR', activo: true } }
-    );
+    const profesor: any = await user.findOne({ where: { dni, tipo: 'PROFESOR', activo: true } });
     
-    if (filasAfectadas === 0) {
+    if (!profesor) {
       res.status(404).json({ status: 'error', mensaje: 'No se encontró un profesor activo con DNI ' + dni, data: null });
       return;
     }
+
+    const ts = Date.now();
+    await user.update(
+      { 
+        activo: false,
+        email: profesor.email ? `${profesor.email}_baja_${ts}` : null,
+        usuario: `${profesor.usuario}_baja_${ts}`
+      },
+      { where: { dni, tipo: 'PROFESOR', activo: true } }
+    );
     
     res.status(200).json({ status: 'ok', mensaje: 'Profesor dado de baja con éxito', data: null });
   } catch (error: any) {

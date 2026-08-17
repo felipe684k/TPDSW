@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { API_BASE_URL } from '../config'
 
 interface LoginProps {
   onLogin: (role: 'ADMIN' | 'ALUMNO', userData: any) => void
@@ -22,7 +23,7 @@ export default function Login({ onLogin }: LoginProps) {
     setIsLoading(true)
 
     try {
-      const response = await fetch(`http://${window.location.hostname}:3000/api/users/login`, {
+      const response = await fetch(`${API_BASE_URL}/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ usuario: username, contrasena: password })
