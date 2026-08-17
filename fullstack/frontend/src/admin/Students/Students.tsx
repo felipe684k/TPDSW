@@ -17,6 +17,7 @@ export default function Students() {
   
   // Estado: 
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [toast, setToast] = useState<{text: string, type: 'success' | 'danger'} | null>(null)
 
   // Estados para el formulario (vinculados a los inputs)
   const [formData, setFormData] = useState({
@@ -55,7 +56,7 @@ export default function Students() {
   }
 
   useEffect(() => {
-    if (!editingId && formData.dni.length >= 8) {
+    if (!editingId && formData.dni.length >= 7) {
       studentService.checkDni(formData.dni).then((data) => {
         if (data && !data.activo) {
           setFormData(prev => ({
@@ -77,6 +78,7 @@ export default function Students() {
     setFormData({ nombre: '', apellido: '', dni: '', telefono: '', email: '', nivel: '', fecha_nacimiento: '' })
     setIsModalOpen(true)
     setErrorMsg(null) // 
+    setToast(null)
   }
 
   // NUEVA FUNCIÓN: Abrir modal para EDITAR (carga los datos del alumno seleccionado)
@@ -121,6 +123,10 @@ export default function Students() {
 
       setIsModalOpen(false)
       setFormData({ nombre: '', apellido: '', dni: '', telefono: '', email: '', nivel: '', fecha_nacimiento: '' })
+      
+      setToast({ text: editingId ? "Alumno actualizado con éxito" : "Alumno registrado con éxito", type: 'success' })
+      setTimeout(() => setToast(null), 3000)
+      
       setEditingId(null)
       fetchStudents()
       
@@ -136,6 +142,8 @@ export default function Students() {
     if (studentToDelete) {
       try {
         await studentService.deleteStudent(studentToDelete)
+        setToast({ text: "Alumno dado de baja con éxito", type: 'danger' })
+        setTimeout(() => setToast(null), 3000)
         fetchStudents() // Recargamos lista al borrar
         setStudentToDelete(null)
       } catch (error) {
@@ -161,6 +169,17 @@ export default function Students() {
           ➕ Registrar Alumno
         </button>
       </div>
+
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-50 bg-[#1c1d24] border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
+          toast.type === 'success' 
+            ? 'border-emerald-500/50 text-emerald-400 shadow-emerald-900/20' 
+            : 'border-rose-500/50 text-rose-400 shadow-rose-900/20'
+        }`}>
+          <span className="text-lg">{toast.type === 'success' ? '✅' : '🗑️'}</span>
+          <span className="font-medium text-sm tracking-wide">{toast.text}</span>
+        </div>
+      )}
 
       {/* Buscador y filtros rápidos */}
       <div className="bg-[#1c1d24] p-4 rounded-xl border border-slate-800 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">

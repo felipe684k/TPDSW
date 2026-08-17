@@ -3,11 +3,13 @@ import cors from 'cors';
 import { sequelize } from './models/index.js';
 
 // Sincronizar modelos con la base de datos (crea las tablas que falten automáticamente)
-sequelize.sync()
+sequelize.sync({ alter: true })
   .then(() => console.log('✅ Tablas de la base de datos sincronizadas'))
   .catch((err) => console.error('❌ Error sincronizando tablas:', err));
 import userRouter from './routes/user.router.js';
 import profesorRouter from './routes/profesor.router.js';
+import cursoRouter from './routes/curso.router.js';
+import nivelRouter from './routes/nivel.router.js';
 
 const app = express();
 const PORT = 3000;
@@ -17,6 +19,8 @@ app.use(express.json());
 
 app.use('/api/users', userRouter);
 app.use('/api/profesores', profesorRouter);
+app.use('/api/cursos', cursoRouter);
+app.use('/api/niveles', nivelRouter);
 
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', mensaje: 'Backend conectado correctamente 🚀' });
@@ -31,3 +35,5 @@ app.get('/', (req: Request, res: Response) => {
 app.listen(PORT,'0.0.0.0', () => {
   console.log(`Servidor backend corriendo en: http://localhost:${PORT}`);
 });
+
+// Trigger restart

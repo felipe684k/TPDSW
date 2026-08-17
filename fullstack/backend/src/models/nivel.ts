@@ -14,11 +14,7 @@ export const Nivel = sequelize.define('Nivel', {
   codigo_nivel_siguiente: {
     type: DataTypes.INTEGER,
     allowNull: true
-  },
-  fecha_desde_siguiente: {
-    type: DataTypes.DATEONLY,
-    allowNull: true
-  }
+
 }, {
   tableName: 'nivel',
   timestamps: false

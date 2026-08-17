@@ -1,9 +1,7 @@
 -- Script para insertar 20 alumnos de prueba en la tabla usuario
 -- Podés copiar todo esto y pegarlo en MySQL Workbench o DBeaver y darle al botón del rayito (Ejecutar)
 
-drop database if exists academic_management;
-create database academic_management character set utf8mb4 collate utf8mb4_spanish_ci;
-use academic_management;
+use tpdsw_db;
 
 INSERT INTO usuario (dni, nombre, apellido, telefono, fecha_nacimiento, email, usuario, contrasena, tipo, activo) VALUES
 ('40123456', 'Lucía', 'González', '2214567890', '1998-05-12', 'lucia.g@email.com', '40123456', '40123456', 'ALUMNO', true),

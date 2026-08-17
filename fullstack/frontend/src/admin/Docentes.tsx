@@ -9,6 +9,7 @@ export default function Docentes() {
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [docenteToDelete, setDocenteToDelete] = useState<number | null>(null)
+  const [toast, setToast] = useState<{text: string, type: 'success' | 'danger'} | null>(null)
   
   // Si editingId es number estamos editando, si es null estamos creando
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -51,8 +52,8 @@ export default function Docentes() {
   }
 
   useEffect(() => {
-    // Si estamos creando (no editando) y el DNI tiene 8 números
-    if (!editingId && formData.dni.length >= 8) {
+    // Si estamos creando (no editando) y el DNI tiene 7 o más números
+    if (!editingId && formData.dni.length >= 7) {
       profesorService.checkDni(formData.dni).then((data) => {
         if (data && !data.activo) {
           // Usuario inactivo: autocompletar
@@ -73,6 +74,7 @@ export default function Docentes() {
     setEditingId(null)
     setFormData({ apellido: '', nombre: '', dni: '', fecha_nacimiento: '', telefono: '', email: '' })
     setModalOpen(true)
+    setToast(null)
   }
 
   const handleEdit = (docente: Profesor) => {
@@ -99,6 +101,10 @@ export default function Docentes() {
       }
       setModalOpen(false)
       setFormData({ apellido: '', nombre: '', dni: '', fecha_nacimiento: '', telefono: '', email: '' })
+      
+      setToast({ text: editingId ? "Docente actualizado con éxito" : "Docente registrado con éxito", type: 'success' })
+      setTimeout(() => setToast(null), 3000)
+      
       fetchDocentes()
     } catch (error) {
       console.error('Error guardando docente', error)
@@ -115,6 +121,8 @@ export default function Docentes() {
     if (!docenteToDelete) return
     try {
       await profesorService.deleteProfesor(docenteToDelete)
+      setToast({ text: "Docente dado de baja con éxito", type: 'danger' })
+      setTimeout(() => setToast(null), 3000)
       fetchDocentes()
       setDeleteModalOpen(false)
       setDocenteToDelete(null)
@@ -140,6 +148,17 @@ export default function Docentes() {
           ➕ Registrar Docente
         </button>
       </div>
+
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-50 bg-[#1c1d24] border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
+          toast.type === 'success' 
+            ? 'border-emerald-500/50 text-emerald-400 shadow-emerald-900/20' 
+            : 'border-rose-500/50 text-rose-400 shadow-rose-900/20'
+        }`}>
+          <span className="text-lg">{toast.type === 'success' ? '✅' : '🗑️'}</span>
+          <span className="font-medium text-sm tracking-wide">{toast.text}</span>
+        </div>
+      )}
 
       {/* Barra de Búsqueda y Filtros */}
       <div className="bg-[#1c1d24] p-4 rounded-xl border border-slate-800 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">

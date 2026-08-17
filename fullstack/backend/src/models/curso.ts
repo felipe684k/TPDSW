@@ -26,6 +26,11 @@ export const Curso = sequelize.define('Curso', {
   codigo_nivel: {
     type: DataTypes.INTEGER,
     allowNull: false
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
   }
 }, {
   tableName: 'curso',
