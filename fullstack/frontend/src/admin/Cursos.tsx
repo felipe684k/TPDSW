@@ -151,7 +151,7 @@ export default function Cursos() {
       )}
 
       {/* Listado de Cursos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="flex flex-col max-w-6xl mx-auto gap-4 w-full">
         {loading ? (
           <div className="text-slate-400 text-sm">Cargando cursos...</div>
         ) : cursos.length === 0 ? (
@@ -163,53 +163,50 @@ export default function Cursos() {
               : null;
             
             return (
-              <div key={curso.id_curso} className="bg-[#1c1d24] p-5 rounded-xl border border-slate-800 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+              <div key={curso.id_curso} className="bg-[#1c1d24] p-5 rounded-xl border border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-md transition-shadow">
                 {/* Cabecera de la Tarjeta */}
-                <div>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="text-[10px] text-slate-400 block font-mono">ID: {curso.id_curso}</span>
-                      <h3 className="text-sm font-bold text-slate-100">{curso.nombre_curso}</h3>
-                    </div>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded bg-indigo-950/30 text-indigo-400 text-2xs font-semibold">
-                      {curso.nivel?.nombre || 'Nivel ' + curso.codigo_nivel}
-                    </span>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full md:w-1/4">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-mono">ID: {curso.id_curso}</span>
+                    <h3 className="text-base font-bold text-slate-100">{curso.nombre_curso}</h3>
                   </div>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded bg-indigo-950/30 text-indigo-400 text-xs font-semibold whitespace-nowrap">
+                    {curso.nivel?.nombre || 'Nivel ' + curso.codigo_nivel}
+                  </span>
+                </div>
 
-                  {/* Atributos propios del Curso */}
-                  <div className="grid grid-cols-3 gap-2 mt-4 bg-[#17181e] p-3 rounded-lg border border-slate-800/60">
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Horas Sem.</span>
-                      <span className="text-xs font-semibold text-slate-300 font-mono">{curso.horas_semanales} hs</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Días x Sem.</span>
-                      <span className="text-xs font-semibold text-slate-300 font-mono">{curso.dias_por_semana}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Matrícula</span>
-                      <span className="text-xs font-semibold text-slate-300">${Number(curso.matricula).toLocaleString('es-AR')}</span>
-                    </div>
+                {/* Atributos propios del Curso */}
+                <div className="flex flex-row justify-around items-center w-full md:w-2/4 bg-[#17181e] p-3 rounded-lg border border-slate-800/60">
+                  <div className="text-center">
+                    <span className="text-[10px] text-slate-400 block mb-1">Horas Sem.</span>
+                    <span className="text-sm font-semibold text-slate-300 font-mono">{curso.horas_semanales} hs</span>
+                  </div>
+                  <div className="text-center px-4 border-l border-r border-slate-800/60">
+                    <span className="text-[10px] text-slate-400 block mb-1">Días x Sem.</span>
+                    <span className="text-sm font-semibold text-slate-300 font-mono">{curso.dias_por_semana}</span>
+                  </div>
+                  <div className="text-center">
+                    <span className="text-[10px] text-slate-400 block mb-1">Matrícula</span>
+                    <span className="text-sm font-semibold text-slate-300">${Number(curso.matricula).toLocaleString('es-AR')}</span>
                   </div>
                 </div>
 
-                {/* Relación seleccionada de ValorCuota */}
-                <div className="pt-3 border-t border-slate-800/60 flex justify-between items-end">
+                {/* Relación seleccionada de ValorCuota y Acciones */}
+                <div className="flex flex-row justify-between items-center w-full md:w-1/4">
                   <div>
                     {cuotaActiva ? (
                       <>
-                        <span className="text-[10px] text-slate-400 block">Valor Cuota Vinculado (ID #{cuotaActiva.id_valor_cuota})</span>
-                        <span className="text-sm font-bold text-slate-100">${Number(cuotaActiva.costo_mensual).toLocaleString('es-AR')}</span>
-                        <span className="text-[9px] text-slate-400 block mt-0.5">Válido desde: {cuotaActiva.fecha_desde}</span>
+                        <span className="text-[10px] text-slate-400 block">Cuota Mensual</span>
+                        <span className="text-base font-bold text-slate-100">${Number(cuotaActiva.costo_mensual).toLocaleString('es-AR')}</span>
+                        <span className="text-[9px] text-slate-400 block mt-0.5">Desde: {cuotaActiva.fecha_desde}</span>
                       </>
                     ) : (
                       <span className="text-[10px] text-slate-500 block">Sin cuota vinculada</span>
                     )}
                   </div>
-                  <div className="flex gap-2 pb-1">
-                    <button onClick={() => handleEdit(curso)} className="text-indigo-400 hover:text-indigo-300 font-semibold text-2xs cursor-pointer">Editar</button>
-                    <span className="text-slate-700">|</span>
-                    <button onClick={() => promptDelete(curso.id_curso!)} className="text-rose-500 hover:text-rose-400 font-semibold text-2xs cursor-pointer">Desactivar</button>
+                  <div className="flex flex-col gap-2 border-l border-slate-800/60 pl-4 ml-2">
+                    <button onClick={() => handleEdit(curso)} className="text-indigo-400 hover:text-indigo-300 font-semibold text-xs cursor-pointer text-left">Editar</button>
+                    <button onClick={() => promptDelete(curso.id_curso!)} className="text-rose-500 hover:text-rose-400 font-semibold text-xs cursor-pointer text-left">Desactivar</button>
                   </div>
                 </div>
               </div>
