@@ -16,6 +16,10 @@ export const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
   port: dbPort,
   dialect: 'mysql',
   logging: false, // Set to console.log if you want to see SQL queries
+  timezone: '-03:00', // Guardar y leer fechas en hora de Argentina
+  dialectOptions: {
+    timezone: 'local',
+  },
 });
 
 sequelize

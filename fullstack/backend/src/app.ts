@@ -8,9 +8,12 @@ sequelize.sync({ alter: true })
   .catch((err) => console.error('❌ Error sincronizando tablas:', err));
 import userRouter from './routes/user.router.js';
 import profesorRouter from './routes/profesor.router.js';
-import cursoRouter from './routes/curso.router.js';
-import nivelRouter from './routes/nivel.router.js';
-import aulaRouter from './routes/aula.router.js';
+import nivelRoutes from './routes/nivel.router.js';
+import cursoRoutes from './routes/curso.router.js';
+import valorCuotaRoutes from './routes/valor_cuota.router.js';
+import aulaRoutes from './routes/aula.router.js';
+import cicloLectivoRoutes from './routes/ciclo_lectivo.router.js';
+import comisionRoutes from './routes/comision.router.js';
 
 const app = express();
 const PORT = 3000;
@@ -18,11 +21,15 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+// Configurar rutas
 app.use('/api/users', userRouter);
 app.use('/api/profesores', profesorRouter);
-app.use('/api/cursos', cursoRouter);
-app.use('/api/niveles', nivelRouter);
-app.use('/api/aulas', aulaRouter);
+app.use('/api/niveles', nivelRoutes);
+app.use('/api/cursos', cursoRoutes);
+app.use('/api/valores-cuota', valorCuotaRoutes);
+app.use('/api/aulas', aulaRoutes);
+app.use('/api/ciclos-lectivos', cicloLectivoRoutes);
+app.use('/api/comisiones', comisionRoutes);
 
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', mensaje: 'Backend conectado correctamente 🚀' });

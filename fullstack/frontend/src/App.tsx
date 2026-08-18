@@ -9,7 +9,7 @@ import Students from './admin/Students/Students'
 import Docentes from './admin/Docentes'
 import Cursos from './admin/Cursos'
 import Aulas from './admin/Aulas'
-import ValorCuota from './admin/ValorCuota'
+import CiclosLectivos from './admin/CiclosLectivos'
 import Login from './auth/Login'
 import StudentDashboard from './student/StudentDashboard'
 
@@ -31,7 +31,7 @@ export default function App() {
   })
 
   // Estado que controla qué página estamos viendo en el panel admin
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'valorCuota' | 'comisiones' | 'pagos' | 'aulas'>(() => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'comisiones' | 'pagos' | 'aulas' | 'ciclos-lectivos'>(() => {
     return (localStorage.getItem('activeTab') as any) || 'dashboard'
   })
 
@@ -176,9 +176,11 @@ export default function App() {
             <Aulas />
           )}
 
-          {activeTab === 'valorCuota' && (
-            <ValorCuota />
+          {activeTab === 'ciclos-lectivos' && (
+            <CiclosLectivos />
           )}
+
+
 
           {activeTab === 'comisiones' && (
             <Comisiones />

@@ -1,8 +1,8 @@
 import { SIDEBAR_TABS } from "./Sidebar.const"
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'valorCuota' | 'comisiones' | 'pagos' | 'aulas'
-  setActiveTab: (tab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'valorCuota' | 'comisiones' | 'pagos' | 'aulas') => void
+  activeTab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'comisiones' | 'pagos' | 'aulas' | 'ciclos-lectivos'
+  setActiveTab: (tab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'comisiones' | 'pagos' | 'aulas' | 'ciclos-lectivos') => void
   onLogout: () => void
   isSidebarOpen: boolean
   setIsSidebarOpen: (isOpen: boolean) => void
@@ -63,11 +63,13 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isSidebarOp
         </button>
 
         <button 
-          onClick={() => setActiveTab('valorCuota')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'valorCuota' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
+          onClick={() => setActiveTab('ciclos-lectivos')}
+          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'ciclos-lectivos' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
         >
-          <span>💰</span> Valor Cuota
+          <span>📅</span> Ciclos Lectivos
         </button>
+
+
 
         <button 
           onClick={() => setActiveTab('pagos')}

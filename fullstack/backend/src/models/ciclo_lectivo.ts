@@ -7,6 +7,10 @@ export const CicloLectivo = sequelize.define('CicloLectivo', {
     autoIncrement: true,
     primaryKey: true,
   },
+  nombre: {
+    type: DataTypes.STRING(100),
+    allowNull: false
+  },
   fecha_desde: {
     type: DataTypes.DATEONLY,
     allowNull: false

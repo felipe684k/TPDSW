@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
 import { cursoService, type Curso } from '../services/curso.service'
 import { nivelService, type Nivel } from '../services/nivel.service'
+import { valorCuotaService } from '../services/valorCuota.service'
 
 export default function Cursos() {
   const [modalOpen, setModalOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [historyModalOpen, setHistoryModalOpen] = useState(false)
+  const [updateCuotaModalOpen, setUpdateCuotaModalOpen] = useState(false)
   
   const [cursos, setCursos] = useState<Curso[]>([])
   const [niveles, setNiveles] = useState<Nivel[]>([])
@@ -12,8 +15,18 @@ export default function Cursos() {
   
   const [editingId, setEditingId] = useState<number | null>(null)
   const [cursoToDelete, setCursoToDelete] = useState<number | null>(null)
+  const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null)
+  const [newCuotaAmount, setNewCuotaAmount] = useState('')
   
   const [toast, setToast] = useState<{text: string, type: 'success' | 'danger'} | null>(null)
+
+  const formatDate = (isoString: string) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    // Verificar si es una fecha inválida
+    if (isNaN(date.getTime())) return isoString; 
+    return date.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+  }
 
   const [formData, setFormData] = useState({
     nombre_curso: '',
@@ -122,6 +135,25 @@ export default function Cursos() {
     }
   }
 
+  const handleUpdateCuota = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedCurso || !selectedCurso.id_curso) return
+    try {
+      const today = new Date().toISOString()
+      await valorCuotaService.createValorCuota({
+        id_curso: selectedCurso.id_curso,
+        costo_mensual: Number(newCuotaAmount),
+        fecha_desde: today
+      })
+      setUpdateCuotaModalOpen(false)
+      setToast({ text: "Valor de cuota actualizado", type: 'success' })
+      setTimeout(() => setToast(null), 3000)
+      fetchCursos()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <div className="space-y-6">
       
@@ -133,7 +165,7 @@ export default function Cursos() {
         </div>
         <button 
           onClick={handleOpenModalCreate} 
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all"
+          className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all"
         >
           ➕ Registrar Curso 
         </button>
@@ -150,68 +182,116 @@ export default function Cursos() {
         </div>
       )}
 
-      {/* Listado de Cursos */}
-      <div className="flex flex-col max-w-6xl mx-auto gap-4 w-full">
+      {/* Listado de Cursos Agrupados por Nivel */}
+      <div className="flex flex-col max-w-6xl mx-auto gap-8 w-full">
         {loading ? (
           <div className="text-slate-400 text-sm">Cargando cursos...</div>
         ) : cursos.length === 0 ? (
           <div className="text-slate-500 text-sm">No hay cursos registrados.</div>
         ) : (
-          cursos.map((curso) => {
-            const cuotaActiva = curso.valores_cuota && curso.valores_cuota.length > 0 
-              ? curso.valores_cuota[curso.valores_cuota.length - 1] 
-              : null;
+          (() => {
+            // Ordenar niveles por su lista enlazada (codigo_nivel_siguiente)
+            const isSiguiente = new Set(niveles.map(n => n.codigo_nivel_siguiente).filter(Boolean));
+            let current = niveles.find(n => !isSiguiente.has(n.codigo_nivel));
+            if (!current) current = niveles[0]; // fallback
             
-            return (
-              <div key={curso.id_curso} className="bg-[#1c1d24] p-5 rounded-xl border border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-md transition-shadow">
-                {/* Cabecera de la Tarjeta */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full md:w-1/4">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-mono">ID: {curso.id_curso}</span>
-                    <h3 className="text-base font-bold text-slate-100">{curso.nombre_curso}</h3>
-                  </div>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded bg-indigo-950/30 text-indigo-400 text-xs font-semibold whitespace-nowrap">
-                    {curso.nivel?.nombre || 'Nivel ' + curso.codigo_nivel}
-                  </span>
-                </div>
+            const sortedNiveles = [];
+            while (current) {
+              sortedNiveles.push(current);
+              const nextId: number | undefined | null = current.codigo_nivel_siguiente;
+              const nextCurrent: Nivel | undefined = niveles.find(n => n.codigo_nivel === nextId);
+              if (!nextCurrent || sortedNiveles.some(n => n.codigo_nivel === nextCurrent.codigo_nivel)) break;
+              current = nextCurrent;
+            }
+            
+            const sortedIds = new Set(sortedNiveles.map(n => n.codigo_nivel));
+            const disconnected = niveles.filter(n => !sortedIds.has(n.codigo_nivel));
+            const allSortedNiveles = [...sortedNiveles, ...disconnected];
 
-                {/* Atributos propios del Curso */}
-                <div className="flex flex-row justify-around items-center w-full md:w-2/4 bg-[#17181e] p-3 rounded-lg border border-slate-800/60">
-                  <div className="text-center">
-                    <span className="text-[10px] text-slate-400 block mb-1">Horas Sem.</span>
-                    <span className="text-sm font-semibold text-slate-300 font-mono">{curso.horas_semanales} hs</span>
-                  </div>
-                  <div className="text-center px-4 border-l border-r border-slate-800/60">
-                    <span className="text-[10px] text-slate-400 block mb-1">Días x Sem.</span>
-                    <span className="text-sm font-semibold text-slate-300 font-mono">{curso.dias_por_semana}</span>
-                  </div>
-                  <div className="text-center">
-                    <span className="text-[10px] text-slate-400 block mb-1">Matrícula</span>
-                    <span className="text-sm font-semibold text-slate-300">${Number(curso.matricula).toLocaleString('es-AR')}</span>
-                  </div>
-                </div>
+            return allSortedNiveles.map(nivel => {
+              const cursosDelNivel = cursos.filter(c => c.codigo_nivel === nivel.codigo_nivel);
+              if (cursosDelNivel.length === 0) return null;
 
-                {/* Relación seleccionada de ValorCuota y Acciones */}
-                <div className="flex flex-row justify-between items-center w-full md:w-1/4">
-                  <div>
-                    {cuotaActiva ? (
-                      <>
-                        <span className="text-[10px] text-slate-400 block">Cuota Mensual</span>
-                        <span className="text-base font-bold text-slate-100">${Number(cuotaActiva.costo_mensual).toLocaleString('es-AR')}</span>
-                        <span className="text-[9px] text-slate-400 block mt-0.5">Desde: {cuotaActiva.fecha_desde}</span>
-                      </>
-                    ) : (
-                      <span className="text-[10px] text-slate-500 block">Sin cuota vinculada</span>
-                    )}
+              return (
+                <div key={nivel.codigo_nivel} className="space-y-4">
+                  {/* Encabezado del Nivel */}
+                  <div className="flex items-center gap-3 border-b border-slate-800 pb-2">
+                    <span className="w-8 h-8 rounded bg-indigo-900/50 flex items-center justify-center text-indigo-400 font-bold text-sm">
+                      {nivel.nombre.charAt(0).toUpperCase()}
+                    </span>
+                    <h2 className="text-lg font-bold text-slate-200">{nivel.nombre}</h2>
                   </div>
-                  <div className="flex flex-col gap-2 border-l border-slate-800/60 pl-4 ml-2">
-                    <button onClick={() => handleEdit(curso)} className="text-indigo-400 hover:text-indigo-300 font-semibold text-xs cursor-pointer text-left">Editar</button>
-                    <button onClick={() => promptDelete(curso.id_curso!)} className="text-rose-500 hover:text-rose-400 font-semibold text-xs cursor-pointer text-left">Desactivar</button>
+
+                  {/* Tarjetas de Cursos del Nivel */}
+                  <div className="space-y-3">
+                    {cursosDelNivel.map((curso) => {
+                      const sortedCuotas = curso.valores_cuota ? [...curso.valores_cuota].sort((a, b) => new Date(a.fecha_desde).getTime() - new Date(b.fecha_desde).getTime()) : []
+                      const cuotaActiva = sortedCuotas.length > 0 ? sortedCuotas[sortedCuotas.length - 1] : null;
+                      
+                      return (
+                        <div key={curso.id_curso} className="bg-[#1c1d24] p-5 rounded-xl border border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-md transition-shadow">
+                          {/* Cabecera de la Tarjeta */}
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full md:w-1/4">
+                            <div>
+                              <h3 className="text-base font-bold text-slate-100">{curso.nombre_curso}</h3>
+                            </div>
+                          </div>
+
+                          {/* Atributos propios del Curso */}
+                          <div className="flex flex-row justify-around items-center w-full md:w-2/4 bg-[#17181e] p-3 rounded-lg border border-slate-800/60">
+                            <div className="text-center">
+                              <span className="text-[10px] text-slate-400 block mb-1">Horas Sem.</span>
+                              <span className="text-sm font-semibold text-slate-300 font-mono">{curso.horas_semanales} hs</span>
+                            </div>
+                            <div className="text-center px-4 border-l border-r border-slate-800/60">
+                              <span className="text-[10px] text-slate-400 block mb-1">Días x Sem.</span>
+                              <span className="text-sm font-semibold text-slate-300 font-mono">{curso.dias_por_semana}</span>
+                            </div>
+                            <div className="text-center">
+                              <span className="text-[10px] text-slate-400 block mb-1">Matrícula</span>
+                              <span className="text-sm font-semibold text-slate-300">${Number(curso.matricula).toLocaleString('es-AR')}</span>
+                            </div>
+                          </div>
+
+                          {/* Relación seleccionada de ValorCuota y Acciones */}
+                          <div className="flex flex-row justify-between items-center w-full md:w-1/4">
+                            <div>
+                              {cuotaActiva ? (
+                                <>
+                                  <span className="text-[10px] text-slate-400 block">Cuota Actual</span>
+                                  <span className="text-base font-bold text-emerald-400">${Number(cuotaActiva.costo_mensual).toLocaleString('es-AR')}</span>
+                                  <div className="flex gap-2 mt-1">
+                                    <button 
+                                      onClick={() => { setSelectedCurso(curso); setNewCuotaAmount(''); setUpdateCuotaModalOpen(true); }}
+                                      className="cursor-pointer text-[9px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded"
+                                    >
+                                      Actualizar
+                                    </button>
+                                    <button 
+                                      onClick={() => { setSelectedCurso(curso); setHistoryModalOpen(true); }}
+                                      className="cursor-pointer text-[9px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded"
+                                    >
+                                      Historial
+                                    </button>
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="text-[10px] text-slate-500 block">Sin cuota</span>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-2 border-l border-slate-800/60 pl-4 ml-2">
+                              <button onClick={() => handleEdit(curso)} className="text-indigo-400 hover:text-indigo-300 font-semibold text-xs cursor-pointer text-left">Editar</button>
+                              <button onClick={() => promptDelete(curso.id_curso!)} className="text-rose-500 hover:text-rose-400 font-semibold text-xs cursor-pointer text-left">Desactivar</button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
-              </div>
-            )
-          })
+              )
+            })
+          })()
         )}
       </div>
 
@@ -301,7 +381,7 @@ export default function Cursos() {
                     className="border border-indigo-500/30 bg-[#1c1d24] text-slate-200 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
                   />
                   <span className="text-[10px] text-slate-500">
-                    Este valor será la tarifa vigente al crear el curso. Modificaciones futuras de precios se harán desde la sección "Valor Cuota".
+                    Este valor será la tarifa vigente al crear el curso. Modificaciones futuras de precios se harán desde las opciones del curso.
                   </span>
                 </div>
               )}
@@ -356,6 +436,75 @@ export default function Cursos() {
           </div>
         </div>
       )}
+
+      {/* MODAL ACTUALIZAR CUOTA */}
+      {updateCuotaModalOpen && selectedCurso && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-6 z-50">
+          <div className="bg-[#1c1d24] rounded-xl shadow-xl w-full max-w-sm flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-[#17181e]">
+              <h3 className="text-sm font-bold text-slate-100">Actualizar Cuota</h3>
+              <button onClick={() => setUpdateCuotaModalOpen(false)} className="text-slate-500 hover:text-slate-300">✕</button>
+            </div>
+            <form onSubmit={handleUpdateCuota} className="p-5 flex flex-col gap-4">
+              <div>
+                <p className="text-xs text-slate-400 mb-1">Curso</p>
+                <p className="text-sm font-medium text-slate-200">{selectedCurso.nombre_curso}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-400 block mb-1">Nuevo Costo Mensual ($)</label>
+                <input 
+                  type="number" required placeholder="Ej. 18000" min="0" step="0.01"
+                  value={newCuotaAmount} onChange={e => setNewCuotaAmount(e.target.value)}
+                  className="w-full border border-slate-800 bg-[#1c1d24] text-slate-200 rounded p-2 text-sm outline-none focus:border-emerald-500"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">La fecha de inicio se registrará automáticamente con la fecha y hora actual.</p>
+              </div>
+              <div className="flex gap-2 mt-2">
+                <button type="button" onClick={() => setUpdateCuotaModalOpen(false)} className="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-medium">Cancelar</button>
+                <button type="submit" className="flex-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-medium">Guardar Cuota</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL HISTORIAL DE CUOTAS */}
+      {historyModalOpen && selectedCurso && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-start justify-center p-6 pt-20 z-50">
+          <div className="bg-[#1c1d24] rounded-xl shadow-xl w-full max-w-md flex flex-col overflow-hidden max-h-[80vh]">
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-[#17181e] shrink-0">
+              <div>
+                <h3 className="text-sm font-bold text-slate-100">Historial de Cuotas</h3>
+                <p className="text-xs text-slate-400">{selectedCurso.nombre_curso}</p>
+              </div>
+              <button onClick={() => setHistoryModalOpen(false)} className="text-slate-500 hover:text-slate-300">✕</button>
+            </div>
+            <div className="overflow-y-auto p-4">
+              {(!selectedCurso.valores_cuota || selectedCurso.valores_cuota.length === 0) ? (
+                <p className="text-sm text-slate-500 text-center py-4">No hay historial de cuotas para este curso.</p>
+              ) : (
+                <div className="space-y-3">
+                  {[...selectedCurso.valores_cuota]
+                    .sort((a, b) => new Date(b.fecha_desde).getTime() - new Date(a.fecha_desde).getTime())
+                    .map((cuota, idx) => (
+                      <div key={idx} className="flex justify-between items-center p-3 rounded-lg border border-slate-800 bg-[#17181e]">
+                        <div>
+                          <p className="text-sm font-bold text-emerald-400">${Number(cuota.costo_mensual).toLocaleString('es-AR')}</p>
+                          <p className="text-xs text-slate-500">Desde: {formatDate(cuota.fecha_desde)}</p>
+                        </div>
+                        {idx === 0 && <span className="text-[10px] font-medium bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">Vigente</span>}
+                      </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-slate-800 bg-[#17181e] shrink-0 text-right">
+              <button onClick={() => setHistoryModalOpen(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-medium">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

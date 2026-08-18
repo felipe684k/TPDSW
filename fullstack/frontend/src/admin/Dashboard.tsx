@@ -5,7 +5,7 @@ import { API_BASE_URL } from '../config'
 
 interface DashboardProps {
   inscripciones?: Inscripcion[]
-  setActiveTab: (tab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'valorCuota' | 'comisiones' | 'pagos' | 'aulas') => void
+  setActiveTab: (tab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'comisiones' | 'pagos' | 'aulas' | 'ciclos-lectivos') => void
 }
 
 export default function Dashboard({ setActiveTab }: DashboardProps) {

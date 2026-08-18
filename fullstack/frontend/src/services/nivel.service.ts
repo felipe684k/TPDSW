@@ -3,6 +3,7 @@ import { API_BASE_URL } from '../config';
 export interface Nivel {
   codigo_nivel: number;
   nombre: string;
+  codigo_nivel_siguiente?: number | null;
 }
 
 const API_URL = `${API_BASE_URL}/niveles`;

@@ -12,7 +12,7 @@ export const ValorCuota = sequelize.define('ValorCuota', {
     allowNull: false
   },
   fecha_desde: {
-    type: DataTypes.DATEONLY,
+    type: DataTypes.DATE,
     allowNull: false
   },
   costo_mensual: {
