@@ -10,6 +10,7 @@ import userRouter from './routes/user.router.js';
 import profesorRouter from './routes/profesor.router.js';
 import cursoRouter from './routes/curso.router.js';
 import nivelRouter from './routes/nivel.router.js';
+import aulaRouter from './routes/aula.router.js';
 
 const app = express();
 const PORT = 3000;
@@ -21,6 +22,7 @@ app.use('/api/users', userRouter);
 app.use('/api/profesores', profesorRouter);
 app.use('/api/cursos', cursoRouter);
 app.use('/api/niveles', nivelRouter);
+app.use('/api/aulas', aulaRouter);
 
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', mensaje: 'Backend conectado correctamente 🚀' });
