@@ -36,7 +36,7 @@ export const getAllPagos = async (req: Request, res: Response): Promise<void> =>
 };
 
 /**
- * Obtener el estado de cuenta (cuotas devengadas hasta el mes actual y pagadas) de un alumno
+ * Obtener el estado de cuenta de un alumno por su ID de usuario
  */
 export const getEstadoCuentaAlumno = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -70,11 +70,15 @@ export const getEstadoCuentaAlumno = async (req: Request, res: Response): Promis
     });
 
     if (!inscripciones || inscripciones.length === 0) {
-      res.status(200).json({ status: 'ok', mensaje: 'El alumno no posee inscripciones activas', data: { inscripciones: [], cuotas: [] } });
+      res.status(200).json({ 
+        status: 'ok', 
+        mensaje: 'El alumno no posee inscripciones registradas', 
+        data: { inscripciones: [], cuotas: [] } 
+      });
       return;
     }
 
-    // Los meses lectivos oficiales en Argentina van de Marzo (mes 3) a Diciembre (mes 12)
+    // Meses del ciclo lectivo (Marzo a Diciembre)
     const mesesAcademicos = [
       { nombre: 'Marzo', mesNum: 3 },
       { nombre: 'Abril', mesNum: 4 },
@@ -89,14 +93,13 @@ export const getEstadoCuentaAlumno = async (req: Request, res: Response): Promis
     ];
 
     const now = new Date();
-    const currentMonthNum = now.getMonth() + 1; // Ej: 8 para Agosto
-    const currentYear = now.getFullYear(); // Ej: 2026
+    const currentMonthNum = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
 
     const resultadoCuotas: any[] = [];
 
     for (const insc of inscripciones) {
       const curso = insc.comision?.curso;
-      // Obtener el monto base de la cuota desde ValorCuota o Curso
       let montoBase = 12000;
       if (curso) {
         if (curso.valores_cuota && curso.valores_cuota.length > 0) {
@@ -107,9 +110,6 @@ export const getEstadoCuentaAlumno = async (req: Request, res: Response): Promis
       }
 
       const pagosRegistrados: any[] = insc.pagos || [];
-
-      // Mostramos las cuotas del ciclo lectivo desde Marzo hasta el mes actual,
-      // más cualquier cuota futura si ya tiene un pago registrado en la BD.
       const mesesAMostrar = mesesAcademicos.filter(m => m.mesNum <= currentMonthNum || pagosRegistrados.some(p => p.mes_cuota?.toLowerCase() === m.nombre.toLowerCase()));
 
       mesesAMostrar.forEach((m) => {
@@ -154,14 +154,36 @@ export const getEstadoCuentaAlumno = async (req: Request, res: Response): Promis
 };
 
 /**
- * Registrar un nuevo pago de cuota o matrícula
+ * Registrar un nuevo pago de cuota
  */
 export const registrarPago = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id_inscripcion, mes_cuota, monto, recargo, descuento, estado, fecha_pago } = req.body;
 
-    if (!id_inscripcion || !mes_cuota || monto === undefined) {
-      res.status(400).json({ status: 'error', mensaje: 'Faltan campos obligatorios (id_inscripcion, mes_cuota, monto)', data: null });
+    const numInscripcionId = typeof id_inscripcion === 'number' ? id_inscripcion : parseInt(id_inscripcion, 10);
+
+    if (!numInscripcionId || isNaN(numInscripcionId)) {
+      res.status(400).json({ 
+        status: 'error', 
+        mensaje: 'Se requiere una inscripción previa válida para registrar un pago.', 
+        data: null 
+      });
+      return;
+    }
+
+    // Validar que la inscripción exista previamente en la base de datos
+    const inscripcionExistente = await Inscripcion.findByPk(numInscripcionId);
+    if (!inscripcionExistente) {
+      res.status(404).json({ 
+        status: 'error', 
+        mensaje: 'No se encontró la inscripción especificada en la base de datos.', 
+        data: null 
+      });
+      return;
+    }
+
+    if (!mes_cuota || monto === undefined) {
+      res.status(400).json({ status: 'error', mensaje: 'Faltan campos obligatorios (mes_cuota, monto)', data: null });
       return;
     }
 
@@ -171,7 +193,7 @@ export const registrarPago = async (req: Request, res: Response): Promise<void> 
     // Verificar si ya existe un registro de pago para esta inscripción y mes
     const pagoExistente: any = await Pago.findOne({
       where: {
-        id_inscripcion,
+        id_inscripcion: numInscripcionId,
         mes_cuota
       }
     });
@@ -192,7 +214,7 @@ export const registrarPago = async (req: Request, res: Response): Promise<void> 
 
     // Crear nuevo pago
     const nuevoPago = await Pago.create({
-      id_inscripcion,
+      id_inscripcion: numInscripcionId,
       fecha_pago: fechaReal,
       monto: Number(monto),
       recargo: Number(recargo || 0),
@@ -209,7 +231,7 @@ export const registrarPago = async (req: Request, res: Response): Promise<void> 
 };
 
 /**
- * Obtener listado de morosos (alumnos con cuotas pendientes vencidas)
+ * Obtener listado de morosos
  */
 export const getMorosos = async (req: Request, res: Response): Promise<void> => {
   try {

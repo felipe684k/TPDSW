@@ -29,6 +29,7 @@ export default function Pagos() {
   const [alumnoSeleccionado, setAlumnoSeleccionado] = useState<number | null>(null)
   const [cuotas, setCuotas] = useState<Cuota[]>([])
   const [inscripcionId, setInscripcionId] = useState<number | null>(null)
+  const [tieneInscripcion, setTieneInscripcion] = useState<boolean>(true)
   
   const [modalPago, setModalPago] = useState<Cuota | null>(null)
   const [modalRecibo, setModalRecibo] = useState<Cuota | null>(null)
@@ -64,7 +65,6 @@ export default function Pagos() {
       console.warn('Error al cargar alumnos desde backend, usando fallback:', e)
     }
 
-    // Fallback si no hay respuesta de la DB
     setAlumnosList([
       { id: 1, nombreCompleto: 'González, Lucía', dni: '40.123.456', curso: 'Kids 1 - A', montoCuota: 12000, mesIngresoIndex: 0 },
       { id: 2, nombreCompleto: 'Ramírez, Tomás', dni: '38.901.234', curso: 'Teens 3 - Noche', montoCuota: 14500, mesIngresoIndex: 5 }
@@ -78,10 +78,16 @@ export default function Pagos() {
       const res = await fetch(`${API_BASE_URL}/pagos/alumno/${id}`)
       if (res.ok) {
         const json = await res.json()
-        if (json.data && json.data.cuotas && json.data.cuotas.length > 0) {
-          setCuotas(json.data.cuotas)
-          if (json.data.inscripciones && json.data.inscripciones.length > 0) {
-            setInscripcionId(json.data.inscripciones[0].id_inscripcion)
+        if (json.data) {
+          const inscs = json.data.inscripciones || []
+          if (inscs.length > 0) {
+            setTieneInscripcion(true)
+            setInscripcionId(inscs[0].id_inscripcion)
+            setCuotas(json.data.cuotas || [])
+          } else {
+            setTieneInscripcion(false)
+            setInscripcionId(null)
+            setCuotas([])
           }
           setCargando(false)
           return
@@ -91,9 +97,10 @@ export default function Pagos() {
       console.warn('Error al cargar cuotas desde backend:', e)
     }
 
-    // Fallback ajustado: Meses lectivos en Argentina (Marzo a Diciembre)
+    // Fallback si la API no responde
     const alumno = alumnosList.find(a => a.id === id)
     if (alumno) {
+      setTieneInscripcion(true)
       const mesesAcademicos = [
         { nombre: 'Marzo', mesNum: 3 },
         { nombre: 'Abril', mesNum: 4 },
@@ -108,8 +115,8 @@ export default function Pagos() {
       ]
 
       const now = new Date()
-      const currentMonthNum = now.getMonth() + 1 // 8 para Agosto
-      const currentYear = now.getFullYear() // 2026
+      const currentMonthNum = now.getMonth() + 1
+      const currentYear = now.getFullYear()
 
       const mesesHastaHoy = mesesAcademicos.filter(m => m.mesNum <= currentMonthNum)
 
@@ -139,6 +146,7 @@ export default function Pagos() {
       setAlumnoSeleccionado(null)
       setCuotas([])
       setInscripcionId(null)
+      setTieneInscripcion(true)
       return
     }
     setAlumnoSeleccionado(id)
@@ -164,12 +172,19 @@ export default function Pagos() {
       return
     }
 
+    const targetInscripcionId = typeof modalPago.id_inscripcion === 'number' ? modalPago.id_inscripcion : inscripcionId
+
+    if (!targetInscripcionId) {
+      alert('Este alumno no posee una inscripción activa. Debe estar inscripto a una comisión para registrar un pago.')
+      return
+    }
+
     const fechaHoy = new Date().toISOString().split('T')[0]
 
     const payload = {
-      id_inscripcion: modalPago.id_inscripcion || inscripcionId || 1,
+      id_inscripcion: targetInscripcionId,
       mes_cuota: modalPago.mes_cuota,
-      monto: modalPago.monto,
+      monto: Number(modalPago.monto),
       recargo: Number(recargo),
       descuento: Number(descuento),
       estado: 'Pagado',
@@ -188,29 +203,12 @@ export default function Pagos() {
           await cargarEstadoCuenta(alumnoSeleccionado)
         }
       } else {
-        setCuotas(cuotas.map(c => 
-          c.id === modalPago.id ? { 
-            ...c, 
-            estado: 'Pagado', 
-            metodoPago, 
-            fecha_pago: new Date().toLocaleDateString('es-AR'),
-            recargo: Number(recargo),
-            descuento: Number(descuento)
-          } : c
-        ))
+        const jsonErr = await res.json().catch(() => ({}))
+        alert(jsonErr.mensaje || 'No se pudo procesar el pago.')
       }
     } catch (err) {
-      console.warn('Error al registrar pago en backend, actualizando vista localmente:', err)
-      setCuotas(cuotas.map(c => 
-        c.id === modalPago.id ? { 
-          ...c, 
-          estado: 'Pagado', 
-          metodoPago, 
-          fecha_pago: new Date().toLocaleDateString('es-AR'),
-          recargo: Number(recargo),
-          descuento: Number(descuento)
-        } : c
-      ))
+      console.warn('Error al registrar pago:', err)
+      alert('Ocurrió un error de conexión al procesar el pago.')
     }
 
     setModalPago(null)
@@ -241,8 +239,19 @@ export default function Pagos() {
         </select>
       </div>
 
+      {/* Alerta si no tiene inscripción */}
+      {alumnoSeleccionado && !tieneInscripcion && !cargando && (
+        <div className="bg-amber-950/40 border border-amber-800/60 text-amber-300 p-4 rounded-xl text-xs flex items-center gap-3">
+          <span className="text-lg">⚠️</span>
+          <div>
+            <strong>El alumno no posee una inscripción a comisión activa.</strong>
+            <p className="text-[11px] text-amber-400/80 mt-0.5">Para poder cobrar cuotas, el alumno debe estar previamente inscripto en el módulo <em>Inscripciones</em>.</p>
+          </div>
+        </div>
+      )}
+
       {/* Panel de Cuotas */}
-      {alumnoSeleccionado && (
+      {alumnoSeleccionado && tieneInscripcion && (
         <div className="bg-[#1c1d24] rounded-xl border border-slate-800 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="p-4 border-b border-slate-800 bg-[#17181e] flex justify-between items-center">
             <div>
@@ -265,6 +274,8 @@ export default function Pagos() {
           <div className="p-5">
             {cargando ? (
               <div className="text-center py-8 text-xs text-slate-400">Cargando estado de cuenta...</div>
+            ) : cuotas.length === 0 ? (
+              <div className="text-center py-8 text-xs text-slate-500">No hay cuotas devengadas registradas para este alumno.</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {cuotas.map((cuota) => (
