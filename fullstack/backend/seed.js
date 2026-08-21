@@ -22,6 +22,7 @@ const Nivel = sequelize.define('Nivel', {
 
 async function seed() {
   try {
+    await sequelize.sync();
     const niveles = ['A1 — Principiante', 'A2 — Elemental', 'B1 — Intermedio', 'B2 — Intermedio Alto', 'C1 — Avanzado', 'C2 — Maestría'];
     for (const nombre of niveles) {
       const exists = await Nivel.findOne({ where: { nombre } });
@@ -31,9 +32,10 @@ async function seed() {
       }
     }
     console.log('Done seeding niveles');
+    process.exit(0);
   } catch(e) {
-    console.error(e);
+    console.error('Error seeding niveles:', e);
+    process.exit(1);
   }
-  process.exit(0);
 }
 seed();
