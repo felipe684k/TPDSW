@@ -36,7 +36,7 @@ export const getAllPagos = async (req: Request, res: Response): Promise<void> =>
 };
 
 /**
- * Obtener el estado de cuenta (cuotas pagadas y pendientes) de un alumno por su ID de usuario
+ * Obtener el estado de cuenta (cuotas devengadas hasta el mes actual y pagadas) de un alumno
  */
 export const getEstadoCuentaAlumno = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -74,7 +74,24 @@ export const getEstadoCuentaAlumno = async (req: Request, res: Response): Promis
       return;
     }
 
-    const meses = ['Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre', 'Enero', 'Febrero'];
+    // Los meses lectivos oficiales en Argentina van de Marzo (mes 3) a Diciembre (mes 12)
+    const mesesAcademicos = [
+      { nombre: 'Marzo', mesNum: 3 },
+      { nombre: 'Abril', mesNum: 4 },
+      { nombre: 'Mayo', mesNum: 5 },
+      { nombre: 'Junio', mesNum: 6 },
+      { nombre: 'Julio', mesNum: 7 },
+      { nombre: 'Agosto', mesNum: 8 },
+      { nombre: 'Septiembre', mesNum: 9 },
+      { nombre: 'Octubre', mesNum: 10 },
+      { nombre: 'Noviembre', mesNum: 11 },
+      { nombre: 'Diciembre', mesNum: 12 }
+    ];
+
+    const now = new Date();
+    const currentMonthNum = now.getMonth() + 1; // Ej: 8 para Agosto
+    const currentYear = now.getFullYear(); // Ej: 2026
+
     const resultadoCuotas: any[] = [];
 
     for (const insc of inscripciones) {
@@ -91,19 +108,20 @@ export const getEstadoCuentaAlumno = async (req: Request, res: Response): Promis
 
       const pagosRegistrados: any[] = insc.pagos || [];
 
-      meses.forEach((mes, idx) => {
-        const pagoExistente = pagosRegistrados.find(p => p.mes_cuota?.toLowerCase() === mes.toLowerCase());
-        const realIdx = idx + 3;
-        const monthNum = realIdx > 12 ? realIdx - 12 : realIdx;
-        const yearNum = realIdx > 12 ? 2027 : 2026;
-        const vencimiento = `10/${monthNum.toString().padStart(2, '0')}/${yearNum}`;
+      // Mostramos las cuotas del ciclo lectivo desde Marzo hasta el mes actual,
+      // más cualquier cuota futura si ya tiene un pago registrado en la BD.
+      const mesesAMostrar = mesesAcademicos.filter(m => m.mesNum <= currentMonthNum || pagosRegistrados.some(p => p.mes_cuota?.toLowerCase() === m.nombre.toLowerCase()));
+
+      mesesAMostrar.forEach((m) => {
+        const pagoExistente = pagosRegistrados.find(p => p.mes_cuota?.toLowerCase() === m.nombre.toLowerCase());
+        const vencimiento = `10/${m.mesNum.toString().padStart(2, '0')}/${currentYear}`;
 
         if (pagoExistente) {
           resultadoCuotas.push({
             id: pagoExistente.id_pago,
             id_inscripcion: insc.id_inscripcion,
             comision: insc.comision?.nombre || 'Comisión',
-            mes_cuota: mes,
+            mes_cuota: m.nombre,
             monto: Number(pagoExistente.monto),
             vencimiento,
             estado: pagoExistente.estado || 'Pagado',
@@ -113,10 +131,10 @@ export const getEstadoCuentaAlumno = async (req: Request, res: Response): Promis
           });
         } else {
           resultadoCuotas.push({
-            id: `pending_${insc.id_inscripcion}_${idx}`,
+            id: `pending_${insc.id_inscripcion}_${m.mesNum}`,
             id_inscripcion: insc.id_inscripcion,
             comision: insc.comision?.nombre || 'Comisión',
-            mes_cuota: mes,
+            mes_cuota: m.nombre,
             monto: montoBase,
             vencimiento,
             estado: 'Pendiente',
@@ -215,21 +233,36 @@ export const getMorosos = async (req: Request, res: Response): Promise<void> => 
     });
 
     const morososMap = new Map();
+    const now = new Date();
+    const currentMonthNum = now.getMonth() + 1;
+
+    const mesesAcademicos = [
+      { nombre: 'Marzo', mesNum: 3 },
+      { nombre: 'Abril', mesNum: 4 },
+      { nombre: 'Mayo', mesNum: 5 },
+      { nombre: 'Junio', mesNum: 6 },
+      { nombre: 'Julio', mesNum: 7 },
+      { nombre: 'Agosto', mesNum: 8 },
+      { nombre: 'Septiembre', mesNum: 9 },
+      { nombre: 'Octubre', mesNum: 10 },
+      { nombre: 'Noviembre', mesNum: 11 },
+      { nombre: 'Diciembre', mesNum: 12 }
+    ];
+
+    const mesesVencidos = mesesAcademicos.filter(m => m.mesNum <= currentMonthNum);
 
     for (const insc of inscripciones) {
       const userObj = insc.usuario;
       if (!userObj) continue;
 
       const pagos: any[] = insc.pagos || [];
-      const mesesTranscurridos = ['Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto'];
-      
       const cuotasImpagas: string[] = [];
       let deudaTotal = 0;
 
-      for (const mes of mesesTranscurridos) {
-        const pagado = pagos.some(p => p.mes_cuota?.toLowerCase() === mes.toLowerCase() && p.estado === 'Pagado');
+      for (const m of mesesVencidos) {
+        const pagado = pagos.some(p => p.mes_cuota?.toLowerCase() === m.nombre.toLowerCase() && p.estado === 'Pagado');
         if (!pagado) {
-          cuotasImpagas.push(mes);
+          cuotasImpagas.push(m.nombre);
           deudaTotal += 12000;
         }
       }
