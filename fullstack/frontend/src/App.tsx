@@ -12,6 +12,7 @@ import Aulas from './admin/Aulas'
 import CiclosLectivos from './admin/CiclosLectivos'
 import Login from './auth/Login'
 import StudentDashboard from './student/StudentDashboard'
+import Niveles from './admin/Niveles'
 
 export default function App() {
   // Estado para simular si el usuario ya inició sesión, persistido en localStorage
@@ -31,7 +32,7 @@ export default function App() {
   })
 
   // Estado que controla qué página estamos viendo en el panel admin
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'comisiones' | 'pagos' | 'aulas' | 'ciclos-lectivos'>(() => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'comisiones' | 'pagos' | 'aulas' | 'ciclos-lectivos' | 'niveles'>(() => {
     return (localStorage.getItem('activeTab') as any) || 'dashboard'
   })
 
@@ -174,6 +175,10 @@ export default function App() {
 
           {activeTab === 'aulas' && (
             <Aulas />
+          )}
+
+          {activeTab === 'niveles' && (
+            <Niveles />
           )}
 
           {activeTab === 'ciclos-lectivos' && (

@@ -14,6 +14,7 @@ import valorCuotaRoutes from './routes/valor_cuota.router.js';
 import aulaRoutes from './routes/aula.router.js';
 import cicloLectivoRoutes from './routes/ciclo_lectivo.router.js';
 import comisionRoutes from './routes/comision.router.js';
+import pagoRouter from './routes/pago.router.js';
 
 const app = express();
 const PORT = 3000;
@@ -30,6 +31,7 @@ app.use('/api/valores-cuota', valorCuotaRoutes);
 app.use('/api/aulas', aulaRoutes);
 app.use('/api/ciclos-lectivos', cicloLectivoRoutes);
 app.use('/api/comisiones', comisionRoutes);
+app.use('/api/pagos', pagoRouter);
 
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', mensaje: 'Backend conectado correctamente 🚀' });

@@ -1,8 +1,8 @@
 import { SIDEBAR_TABS } from "./Sidebar.const"
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'comisiones' | 'pagos' | 'aulas' | 'ciclos-lectivos'
-  setActiveTab: (tab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'comisiones' | 'pagos' | 'aulas' | 'ciclos-lectivos') => void
+  activeTab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'comisiones' | 'pagos' | 'aulas' | 'ciclos-lectivos' | 'niveles'
+  setActiveTab: (tab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'comisiones' | 'pagos' | 'aulas' | 'ciclos-lectivos' | 'niveles') => void
   onLogout: () => void
   isSidebarOpen: boolean
   setIsSidebarOpen: (isOpen: boolean) => void
@@ -60,6 +60,13 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isSidebarOp
           className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'aulas' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
         >
           <span>🏫</span> Aulas
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('niveles')}
+          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'niveles' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
+        >
+          <span>📈</span> Niveles
         </button>
 
         <button 
