@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Inscripcion } from './Inscripciones'
 import { studentService } from '../services/student.service'
+import { pagoService } from '../services/pago.service'
 import { API_BASE_URL } from '../config'
 
 interface DashboardProps {
@@ -27,9 +28,8 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
       .then(json => setComisionesCount(json.data?.length || 0))
       .catch(() => setComisionesCount(0))
       
-    fetch(`${API_BASE_URL}/pagos/morosos`)
-      .then(res => res.json())
-      .then(json => setMorososCount(json.data?.length || 0))
+    pagoService.getMorosos()
+      .then(data => setMorososCount(data.length))
       .catch(() => setMorososCount(0))
   }, [])
 

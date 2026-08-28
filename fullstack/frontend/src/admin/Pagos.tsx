@@ -1,19 +1,6 @@
 import { useState, useEffect } from 'react'
 import { API_BASE_URL } from '../config'
-
-interface Cuota {
-  id: number | string
-  id_inscripcion?: number
-  comision?: string
-  mes_cuota: string
-  monto: number
-  vencimiento: string
-  estado: string
-  fecha_pago: string | null
-  recargo: number
-  descuento: number
-  metodoPago?: string
-}
+import { pagoService, type Cuota } from '../services/pago.service'
 
 interface Alumno {
   id: number
@@ -71,28 +58,23 @@ export default function Pagos() {
     ])
   }
 
-  // Cargar estado de cuenta / cuotas de un alumno
+  // Cargar estado de cuenta / cuotas de un alumno (HTTP en pago.service.ts)
   const cargarEstadoCuenta = async (id: number) => {
     setCargando(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/pagos/alumno/${id}`)
-      if (res.ok) {
-        const json = await res.json()
-        if (json.data) {
-          const inscs = json.data.inscripciones || []
-          if (inscs.length > 0) {
-            setTieneInscripcion(true)
-            setInscripcionId(inscs[0].id_inscripcion)
-            setCuotas(json.data.cuotas || [])
-          } else {
-            setTieneInscripcion(false)
-            setInscripcionId(null)
-            setCuotas([])
-          }
-          setCargando(false)
-          return
-        }
+      const data = await pagoService.getEstadoCuentaAlumno(id)
+      const inscs = data.inscripciones || []
+      if (inscs.length > 0) {
+        setTieneInscripcion(true)
+        setInscripcionId(inscs[0].id_inscripcion)
+        setCuotas(data.cuotas || [])
+      } else {
+        setTieneInscripcion(false)
+        setInscripcionId(null)
+        setCuotas([])
       }
+      setCargando(false)
+      return
     } catch (e) {
       console.warn('Error al cargar cuotas desde backend:', e)
     }
@@ -192,23 +174,14 @@ export default function Pagos() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/pagos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-
-      if (res.ok) {
-        if (alumnoSeleccionado) {
-          await cargarEstadoCuenta(alumnoSeleccionado)
-        }
-      } else {
-        const jsonErr = await res.json().catch(() => ({}))
-        alert(jsonErr.mensaje || 'No se pudo procesar el pago.')
+      await pagoService.registrarPago(payload)
+      if (alumnoSeleccionado) {
+        await cargarEstadoCuenta(alumnoSeleccionado)
       }
     } catch (err) {
       console.warn('Error al registrar pago:', err)
-      alert('Ocurrió un error de conexión al procesar el pago.')
+      const mensaje = err instanceof Error ? err.message : 'Ocurrió un error de conexión al procesar el pago.'
+      alert(mensaje)
     }
 
     setModalPago(null)
