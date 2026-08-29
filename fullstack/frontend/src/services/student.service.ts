@@ -1,14 +1,14 @@
 export interface Student {
   id?: number;
   dni: string;
-  nombre: string;
-  apellido: string;
-  telefono?: string;
-  fecha_nacimiento?: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  birth_date?: string;
   email?: string;
-  usuario: string;
-  contrasena: string;
-  tipo: 'ALUMNO' | 'PROFESOR' | 'ADMIN';
+  username: string;
+  password: string;
+  role: 'STUDENT' | 'PROFESSOR' | 'ADMIN';
 }
 
 import { API_BASE_URL } from '../config';
@@ -16,14 +16,12 @@ import { API_BASE_URL } from '../config';
 const API_URL = `${API_BASE_URL}/users`;
 
 export const studentService = {
-  // Obtener todos los alumnos
-  // Nota: Como la API devuelve todos los usuarios, filtramos solo los que son ALUMNO
+  // Get all students (API already filters by STUDENT role)
   getStudents: async (): Promise<Student[]> => {
     try {
       const response = await fetch(API_URL);
-      if (!response.ok) throw new Error('Error al obtener los alumnos');
+      if (!response.ok) throw new Error('Error fetching students');
       const json = await response.json();
-      // El backend devuelve los datos dentro de una propiedad 'data' y ya filtrados por 'ALUMNO'
       return json.data || [];
     } catch (error) {
       console.error(error);
@@ -43,18 +41,17 @@ export const studentService = {
     }
   },
 
-  // Crear un nuevo alumno
-  createStudent: async (student: Omit<Student, 'tipo'>): Promise<Student> => {
+  // Create a new student
+  createStudent: async (student: Omit<Student, 'role'>): Promise<Student> => {
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        // Nos aseguramos de forzar el tipo a 'ALUMNO'
-        body: JSON.stringify({ ...student, tipo: 'ALUMNO' }),
+        body: JSON.stringify({ ...student, role: 'STUDENT' }),
       });
-      if (!response.ok) throw new Error('Error al crear el alumno');
+      if (!response.ok) throw new Error('Error creating student');
       return await response.json();
     } catch (error) {
       console.error(error);
@@ -62,7 +59,7 @@ export const studentService = {
     }
   },
 
-  // Actualizar un alumno existente por su ID
+  // Update an existing student by ID
   updateStudent: async (id: number, student: Partial<Student>): Promise<Student> => {
     try {
       const response = await fetch(`${API_URL}/${id}`, {
@@ -72,7 +69,7 @@ export const studentService = {
         },
         body: JSON.stringify(student),
       });
-      if (!response.ok) throw new Error('Error al actualizar el alumno');
+      if (!response.ok) throw new Error('Error updating student');
       return await response.json();
     } catch (error) {
       console.error(error);
@@ -80,13 +77,13 @@ export const studentService = {
     }
   },
 
-  // Eliminar un alumno por su ID
+  // Delete a student by ID
   deleteStudent: async (id: number): Promise<void> => {
     try {
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
       });
-      if (!response.ok) throw new Error('Error al eliminar el alumno');
+      if (!response.ok) throw new Error('Error deleting student');
     } catch (error) {
       console.error(error);
       throw error;

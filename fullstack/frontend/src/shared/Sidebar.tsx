@@ -1,8 +1,8 @@
 import { SIDEBAR_TABS } from "./Sidebar.const"
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'comisiones' | 'pagos' | 'aulas' | 'ciclos-lectivos' | 'niveles'
-  setActiveTab: (tab: 'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'comisiones' | 'pagos' | 'aulas' | 'ciclos-lectivos' | 'niveles') => void
+  activeTab: 'dashboard' | 'enrollments' | 'students' | 'professors' | 'courses' | 'sections' | 'payments' | 'classrooms' | 'academic-years' | 'levels'
+  setActiveTab: (tab: 'dashboard' | 'enrollments' | 'students' | 'professors' | 'courses' | 'sections' | 'payments' | 'classrooms' | 'academic-years' | 'levels') => void
   onLogout: () => void
   isSidebarOpen: boolean
   setIsSidebarOpen: (isOpen: boolean) => void
@@ -11,7 +11,7 @@ interface SidebarProps {
 export default function Sidebar({ activeTab, setActiveTab, onLogout, isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
   return (
     <>
-      {/* Overlay oscuro para cerrar el menú tocando afuera en mobile */}
+      {/* Dark overlay to close menu by tapping outside on mobile */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
@@ -23,8 +23,8 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isSidebarOp
       <div className="p-5 flex items-center gap-3 border-b border-slate-900">
         <div className="w-9 h-9 rounded bg-indigo-600 flex items-center justify-center text-lg text-white font-bold">🎓</div>
         <div>
-          <strong className="block text-sm text-slate-100 font-bold">Instituto de Inglés</strong>
-          <span className="block text-xs text-slate-500">Gestión de Cursos</span>
+          <strong className="block text-sm text-slate-100 font-bold">English Institute</strong>
+          <span className="block text-xs text-slate-500">Course Management</span>
         </div>
       </div>
 
@@ -39,87 +39,85 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isSidebarOp
         </button>
 
         <div className="h-px bg-slate-900 my-2"></div>
-        <span className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider font-bold text-slate-400">Académico</span>
+        <span className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider font-bold text-slate-400">Academic</span>
 
         <button 
-          onClick={() => setActiveTab('cursos')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'cursos' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
+          onClick={() => setActiveTab('courses')}
+          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'courses' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
         >
-          <span>📚</span> Cursos
+          <span>📚</span> Courses
         </button>
 
         <button 
-          onClick={() => setActiveTab('comisiones')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === SIDEBAR_TABS.COMISIONES ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
+          onClick={() => setActiveTab('sections')}
+          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === SIDEBAR_TABS.SECTIONS ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
         >
-          <span>🏷️</span> Comisiones
+          <span>🏷️</span> Sections
         </button>
 
         <button 
-          onClick={() => setActiveTab('aulas')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'aulas' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
+          onClick={() => setActiveTab('classrooms')}
+          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'classrooms' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
         >
-          <span>🏫</span> Aulas
+          <span>🏫</span> Classrooms
         </button>
 
         <button 
-          onClick={() => setActiveTab('niveles')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'niveles' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
+          onClick={() => setActiveTab('levels')}
+          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'levels' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
         >
-          <span>📈</span> Niveles
+          <span>📈</span> Levels
         </button>
 
         <button 
-          onClick={() => setActiveTab('ciclos-lectivos')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'ciclos-lectivos' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
+          onClick={() => setActiveTab('academic-years')}
+          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'academic-years' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
         >
-          <span>📅</span> Ciclos Lectivos
-        </button>
-
-
-
-        <button 
-          onClick={() => setActiveTab('pagos')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'pagos' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
-        >
-          <span>💳</span> Pagos
+          <span>📅</span> Academic Years
         </button>
 
         <button 
-          onClick={() => setActiveTab('inscripciones')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'inscripciones' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
+          onClick={() => setActiveTab('payments')}
+          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'payments' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
         >
-          <span>📝</span> Inscripciones
+          <span>💳</span> Payments
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('enrollments')}
+          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'enrollments' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
+        >
+          <span>📝</span> Enrollments
         </button>
         
         <button 
-          onClick={() => setActiveTab('alumnos')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'alumnos' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
+          onClick={() => setActiveTab('students')}
+          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'students' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
         >
-          <span>👥</span> Alumnos
+          <span>👥</span> Students
         </button>
         
         <button 
-          onClick={() => setActiveTab('docentes')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'docentes' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
+          onClick={() => setActiveTab('professors')}
+          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'professors' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
         >
-          <span>👨‍🏫</span> Docentes
+          <span>👨‍🏫</span> Professors
         </button>
 
       </nav>
 
-      {/* Pie del Sidebar modificado para incluir el botón de Cerrar Sesión */}
+      {/* Sidebar Footer */}
       <div className="p-4 border-t border-slate-900 flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white">SC</div>
           <div className="text-left">
-            <strong className="block text-xs text-slate-200 font-semibold">Secretaría</strong>
+            <strong className="block text-xs text-slate-200 font-semibold">Secretariat</strong>
             <span className="block text-[10px] text-slate-500">Admin</span>
           </div>
         </div>
         <button 
           onClick={onLogout}
-          title="Cerrar Sesión" 
+          title="Logout" 
           className="cursor-pointer w-7 h-7 bg-slate-900 hover:bg-rose-950 text-slate-400 hover:text-rose-400 rounded flex items-center justify-center text-xs transition-colors"
         >
           🚪

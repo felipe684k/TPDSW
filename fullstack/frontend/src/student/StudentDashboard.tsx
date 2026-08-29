@@ -8,15 +8,14 @@ interface StudentDashboardProps {
 export default function StudentDashboard({ userData, onLogout }: StudentDashboardProps) {
   const [showData, setShowData] = useState(false);
 
-  // Datos mockeados para los cursos y cuotas, ya que aún no hay endpoints para esto
-  const cursos = [
-    { id: 1, nombre: 'Inglés Avanzado B2', horario: 'Lunes y Miércoles 18:00 - 20:00', docente: 'Prof. Sarah Connor', aula: 'Aula 3' },
-    { id: 2, nombre: 'Conversación C1', horario: 'Viernes 17:00 - 19:00', docente: 'Prof. John Smith', aula: 'Laboratorio A' },
+  const courses = [
+    { id: 1, name: 'Advanced English B2', schedule: 'Monday and Wednesday 18:00 - 20:00', professor: 'Prof. Sarah Connor', classroom: 'Classroom 3' },
+    { id: 2, name: 'Conversation C1', schedule: 'Friday 17:00 - 19:00', professor: 'Prof. John Smith', classroom: 'Lab A' },
   ];
 
-  const cuotas = [
-    { mes: 'Agosto 2026', monto: '$15.000', estado: 'Pagado', vencimiento: '10/08/2026' },
-    { mes: 'Septiembre 2026', monto: '$15.000', estado: 'Pendiente', vencimiento: '10/09/2026' },
+  const installments = [
+    { month: 'August 2026', amount: '$15.000', status: 'Paid', due_date: '10/08/2026' },
+    { month: 'September 2026', amount: '$15.000', status: 'Pending', due_date: '10/09/2026' },
   ];
 
   return (
@@ -25,32 +24,32 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
       <div className="max-w-5xl mx-auto flex justify-between items-start md:items-center mb-6 bg-[#1c1d24] p-5 rounded-2xl border border-slate-800 shadow-sm flex-col md:flex-row gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-xl font-bold text-white shadow-lg shadow-indigo-600/30">
-            {userData?.nombre?.charAt(0) || 'A'}
+            {userData?.first_name?.charAt(0) || 'S'}
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-100">Hola, {userData?.nombre} {userData?.apellido}</h1>
-            <p className="text-sm text-slate-400 mb-2">Portal del Alumno</p>
+            <h1 className="text-xl font-bold text-slate-100">Hello, {userData?.first_name} {userData?.last_name}</h1>
+            <p className="text-sm text-slate-400 mb-2">Student Portal</p>
             <button 
               onClick={() => setShowData(!showData)}
-              className="text-xs font-semibold bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 px-3 py-1.5 rounded-lg transition-colors border border-indigo-500/20"
+              className="cursor-pointer text-xs font-semibold bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 px-3 py-1.5 rounded-lg transition-colors border border-indigo-500/20"
             >
-              {showData ? 'Ocultar mis datos ▲' : 'Ver mis datos ▼'}
+              {showData ? 'Hide my info ▲' : 'View my info ▼'}
             </button>
           </div>
         </div>
         <button 
           onClick={onLogout}
-          className="text-sm font-medium text-slate-400 hover:text-rose-400 transition-colors px-4 py-2 rounded-lg hover:bg-rose-950/30"
+          className="cursor-pointer text-sm font-medium text-slate-400 hover:text-rose-400 transition-colors px-4 py-2 rounded-lg hover:bg-rose-950/30"
         >
-          Cerrar Sesión
+          Logout
         </button>
       </div>
 
-      {/* Sección Expandible de Datos Personales */}
+      {/* Expandable Personal Information Section */}
       {showData && (
         <div className="max-w-5xl mx-auto mb-6 bg-[#1c1d24] p-6 rounded-2xl border border-slate-800 shadow-sm transition-all animate-fade-in">
           <h2 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
-            <span>👤</span> Información Personal
+            <span>👤</span> Personal Information
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
@@ -62,41 +61,41 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
               <p className="text-sm text-slate-300">{userData?.email || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">Teléfono</p>
-              <p className="text-sm text-slate-300">{userData?.telefono || 'N/A'}</p>
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">Phone</p>
+              <p className="text-sm text-slate-300">{userData?.phone || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-2">Estado Académico</p>
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-2">Academic Status</p>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/30 text-emerald-400 border border-emerald-900/50">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                Alumno Regular
+                Regular Student
               </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Grid Centralizado para Cursos y Cuotas */}
+      {/* Main Grid for Courses and Payments */}
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        {/* Cursos */}
+        {/* Courses */}
         <div className="bg-[#1c1d24] p-6 rounded-2xl border border-slate-800 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
-            <span>📚</span> Mis Cursos Actuales
+            <span>📚</span> My Current Courses
           </h2>
           <div className="space-y-4">
-            {cursos.map(curso => (
-              <div key={curso.id} className="bg-[#16171d] border border-slate-800/80 rounded-xl p-4 hover:border-indigo-500/30 transition-colors">
-                <h3 className="text-base font-bold text-slate-200 mb-2">{curso.nombre}</h3>
+            {courses.map(course => (
+              <div key={course.id} className="bg-[#16171d] border border-slate-800/80 rounded-xl p-4 hover:border-indigo-500/30 transition-colors">
+                <h3 className="text-base font-bold text-slate-200 mb-2">{course.name}</h3>
                 <div className="grid grid-cols-2 gap-4 mt-3">
                   <div className="flex items-center gap-2 text-sm text-slate-400">
-                    <span>🕒</span> {curso.horario}
+                    <span>🕒</span> {course.schedule}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-slate-400">
-                    <span>👨‍🏫</span> {curso.docente}
+                    <span>👨‍🏫</span> {course.professor}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-slate-400 col-span-2">
-                    <span>🚪</span> {curso.aula}
+                    <span>🚪</span> {course.classroom}
                   </div>
                 </div>
               </div>
@@ -104,35 +103,35 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
           </div>
         </div>
 
-        {/* Cuotas */}
+        {/* Account Status / Payments */}
         <div className="bg-[#1c1d24] p-6 rounded-2xl border border-slate-800 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
-            <span>💳</span> Estado de Cuenta
+            <span>💳</span> Account Status
           </h2>
           <div className="overflow-hidden border border-slate-800/80 rounded-xl">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-[#16171d] border-b border-slate-800/80">
-                  <th className="p-3 text-xs font-semibold text-slate-400">Período</th>
-                  <th className="p-3 text-xs font-semibold text-slate-400">Monto</th>
-                  <th className="p-3 text-xs font-semibold text-slate-400">Venc.</th>
-                  <th className="p-3 text-xs font-semibold text-slate-400">Estado</th>
+                  <th className="p-3 text-xs font-semibold text-slate-400">Period</th>
+                  <th className="p-3 text-xs font-semibold text-slate-400">Amount</th>
+                  <th className="p-3 text-xs font-semibold text-slate-400">Due Date</th>
+                  <th className="p-3 text-xs font-semibold text-slate-400">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/50">
-                {cuotas.map((cuota, idx) => (
+                {installments.map((inst, idx) => (
                   <tr key={idx} className="bg-[#1c1d24]">
-                    <td className="p-3 text-sm text-slate-300">{cuota.mes}</td>
-                    <td className="p-3 text-sm font-mono text-slate-300">{cuota.monto}</td>
-                    <td className="p-3 text-sm text-slate-400">{cuota.vencimiento}</td>
+                    <td className="p-3 text-sm text-slate-300">{inst.month}</td>
+                    <td className="p-3 text-sm font-mono text-slate-300">{inst.amount}</td>
+                    <td className="p-3 text-sm text-slate-400">{inst.due_date}</td>
                     <td className="p-3 text-sm">
-                      {cuota.estado === 'Pagado' ? (
+                      {inst.status === 'Paid' ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-950/30 text-emerald-400">
-                          Abonado
+                          Paid
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-950/30 text-amber-400">
-                          Pendiente
+                          Pending
                         </span>
                       )}
                     </td>

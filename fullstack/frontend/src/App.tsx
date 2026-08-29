@@ -1,42 +1,37 @@
 import { useState, useEffect } from 'react'
 import Sidebar from './shared/Sidebar'
-import Comisiones from './admin/Comisiones'
-import Pagos from './admin/Pagos'
+import Sections from './admin/Sections'
+import Payments from './admin/Payments'
 import Topbar from './shared/Topbar'
 import Dashboard from './admin/Dashboard'
-import Inscripciones from './admin/Inscripciones'
+import Enrollments from './admin/Enrollments'
 import Students from './admin/Students/Students'
-import Docentes from './admin/Docentes'
-import Cursos from './admin/Cursos'
-import Aulas from './admin/Aulas'
-import CiclosLectivos from './admin/CiclosLectivos'
+import Professors from './admin/Professors'
+import Courses from './admin/Courses'
+import Classrooms from './admin/Classrooms'
+import AcademicYears from './admin/AcademicYears'
 import Login from './auth/Login'
 import StudentDashboard from './student/StudentDashboard'
-import Niveles from './admin/Niveles'
+import Levels from './admin/Levels'
 
 export default function App() {
-  // Estado para simular si el usuario ya inició sesión, persistido en localStorage
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('isLoggedIn') === 'true'
   })
 
-  // Estado que controla el rol del usuario ('ADMIN' o 'ALUMNO')
-  const [userRole, setUserRole] = useState<'ADMIN' | 'ALUMNO'>(() => {
+  const [userRole, setUserRole] = useState<'ADMIN' | 'STUDENT'>(() => {
     return (localStorage.getItem('userRole') as any) || 'ADMIN'
   })
 
-  // Estado que guarda la info del usuario logueado
   const [userData, setUserData] = useState<any>(() => {
     const saved = localStorage.getItem('userData')
     return saved ? JSON.parse(saved) : null
   })
 
-  // Estado que controla qué página estamos viendo en el panel admin
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inscripciones' | 'alumnos' | 'docentes' | 'cursos' | 'comisiones' | 'pagos' | 'aulas' | 'ciclos-lectivos' | 'niveles'>(() => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'enrollments' | 'students' | 'professors' | 'courses' | 'sections' | 'payments' | 'classrooms' | 'academic-years' | 'levels'>(() => {
     return (localStorage.getItem('activeTab') as any) || 'dashboard'
   })
 
-  // Guardar en localStorage cada vez que cambian
   useEffect(() => {
     if (isLoggedIn) {
       localStorage.setItem('isLoggedIn', 'true')
@@ -53,68 +48,61 @@ export default function App() {
     localStorage.setItem('activeTab', activeTab)
   }, [activeTab])
 
-  // Estado para controlar el menú lateral en celulares
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
-  // Datos globales que se comparten entre componentes
-  const [inscripciones, setInscripciones] = useState([
+  const [enrollments, setEnrollments] = useState([
     {
       id: 1,
-      apellido: 'González',
-      nombre: 'Lucía',
+      last_name: 'González',
+      first_name: 'Lucía',
       dni: '40.123.456',
-      comision: 'B1 — Mañana',
-      nivel: 'B1',
-      fecha: '02/07/2026',
-      estado: 'Activa'
+      section: 'B1 — Mañana',
+      level: 'B1',
+      date: '07/02/2026',
+      status: 'Active'
     },
-
     {
       id: 2,
-      apellido: 'Ramírez',
-      nombre: 'Tomás',
+      last_name: 'Ramírez',
+      first_name: 'Tomás',
       dni: '38.901.234',
-      comision: 'A2 — Tarde',
-      nivel: 'A2',
-      fecha: '01/07/2026',
-      estado: 'Pendiente'
+      section: 'A2 — Tarde',
+      level: 'A2',
+      date: '07/01/2026',
+      status: 'Pending'
     },
-
     {
       id: 3,
-      apellido: 'Fernández',
-      nombre: 'Valentina',
+      last_name: 'Fernández',
+      first_name: 'Valentina',
       dni: '42.567.890',
-      comision: 'A1 — Noche',
-      nivel: 'A1',
-      fecha: '30/06/2026',
-      estado: 'Activa'
+      section: 'A1 — Noche',
+      level: 'A1',
+      date: '06/30/2026',
+      status: 'Active'
     },
-
     {
       id: 4,
-      apellido: 'López',
-      nombre: 'Mateo',
+      last_name: 'López',
+      first_name: 'Mateo',
       dni: '41.234.567',
-      comision: 'B2 — Mañana',
-      nivel: 'B2',
-      fecha: '29/06/2026',
-      estado: 'Moroso'
+      section: 'B2 — Mañana',
+      level: 'B2',
+      date: '06/29/2026',
+      status: 'Overdue'
     },
-
     {
       id: 5,
-      apellido: 'Perez',
-      nombre: 'Antonella',
+      last_name: 'Perez',
+      first_name: 'Antonella',
       dni: '39.876.543',
-      comision: 'A2 — Mañana',
-      nivel: 'A2',
-      fecha: '28/06/2026',
-      estado: 'Activa'
+      section: 'A2 — Mañana',
+      level: 'A2',
+      date: '06/28/2026',
+      status: 'Active'
     }
   ])
 
-  // Si no está logueado, muestra únicamente la pantalla de Login
   if (!isLoggedIn) {
     return <Login onLogin={(role, data) => {
       setUserRole(role);
@@ -123,82 +111,65 @@ export default function App() {
     }} />
   }
 
-  // Si el usuario es ALUMNO, mostramos su pantalla exclusiva
-  if (userRole === 'ALUMNO') {
+  if (userRole === 'STUDENT') {
     return <StudentDashboard userData={userData} onLogout={() => setIsLoggedIn(false)} />
   }
 
   return (
     <div className="flex h-screen bg-[#16171d] text-slate-200 font-sans overflow-hidden">
-
-      {/* Nuestro componente de menú lateral */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => setIsLoggedIn(false)} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
       <main className="flex-1 flex flex-col overflow-hidden">
-
-        {/* Nuestro componente de barra superior */}
         <Topbar activeTab={activeTab} setIsSidebarOpen={setIsSidebarOpen} />
 
-        {/* El contenedor principal donde mostramos una página u otra */}
         <div className="flex-1 overflow-y-auto p-6">
-
           {activeTab === 'dashboard' && (
             <Dashboard
-              inscripciones={inscripciones}
+              enrollments={enrollments}
               setActiveTab={setActiveTab}
             />
           )}
-          {/*
-          Lo que hace el && es que evalua la primera expresion y si es true, 
-          muestra la segunda, pero si es falso el && no se gasta en evaluar la segunda opcion
-          porque ya sabe que sera falsa la operacion
-          */}
 
-          {activeTab === 'inscripciones' && (
-            <Inscripciones
-              inscripciones={inscripciones}
-              setInscripciones={setInscripciones}
+          {activeTab === 'enrollments' && (
+            <Enrollments
+              enrollments={enrollments}
+              setEnrollments={setEnrollments}
             />
           )}
 
-          {activeTab === 'alumnos' && (
+          {activeTab === 'students' && (
             <Students />
           )}
 
-          {activeTab === 'docentes' && (
-            <Docentes />
+          {activeTab === 'professors' && (
+            <Professors />
           )}
 
-          {activeTab === 'cursos' && (
-            <Cursos />
+          {activeTab === 'courses' && (
+            <Courses />
           )}
 
-          {activeTab === 'aulas' && (
-            <Aulas />
+          {activeTab === 'classrooms' && (
+            <Classrooms />
           )}
 
-          {activeTab === 'niveles' && (
-            <Niveles />
+          {activeTab === 'levels' && (
+            <Levels />
           )}
 
-          {activeTab === 'ciclos-lectivos' && (
-            <CiclosLectivos />
+          {activeTab === 'academic-years' && (
+            <AcademicYears />
           )}
 
-
-
-          {activeTab === 'comisiones' && (
-            <Comisiones />
+          {activeTab === 'sections' && (
+            <Sections />
           )}
 
-          {activeTab === 'pagos' && (
-            <Pagos />
+          {activeTab === 'payments' && (
+            <Payments />
           )}
-
-
         </div>
       </main>
-
     </div>
   )
 }

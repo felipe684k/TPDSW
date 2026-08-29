@@ -1,12 +1,12 @@
 interface Props {
-  isOpen: boolean;                  // El cable que le dice si tiene que mostrarse o no
-  onClose: () => void;              // El cable para el botón Cancelar
-  onConfirm: () => void;            // El cable para el botón Sí, Eliminar
-  message?: string;                 // Un cable opcional por si queremos cambiar el texto
+  isOpen: boolean;                  
+  onClose: () => void;              
+  onConfirm: () => void;            
+  message?: string;                 
 }
 
-export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, message: message }: Props) {
-  if (!isOpen) return null; // Si no está abierta, no dibuja nada
+export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, message }: Props) {
+  if (!isOpen) return null; 
 
   return (
     <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
@@ -15,7 +15,7 @@ export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, message
         <div className="absolute top-4 right-4">
           <button
             onClick={onClose}
-            className="w-7 h-7 bg-slate-900 hover:bg-rose-950/30 hover:text-rose-400 rounded flex items-center justify-center text-sm text-slate-500 transition-colors"
+            className="w-7 h-7 bg-slate-900 hover:bg-rose-950/30 hover:text-rose-400 rounded flex items-center justify-center text-sm text-slate-500 transition-colors cursor-pointer"
           >
             ✕
           </button>
@@ -24,23 +24,23 @@ export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, message
         <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl mx-auto mb-4 mt-2">
           ⚠️
         </div>
-        <h3 className="text-lg font-bold text-slate-100 mb-2">¿Estás seguro?</h3>
+        <h3 className="text-lg font-bold text-slate-100 mb-2">Are you sure?</h3>
         <p className="text-sm text-slate-400 mb-6">
-          {message || "Esta acción dará de baja el registro del sistema. ¿Deseas continuar?"}
+          {message || "This action will deactivate the record from the system. Do you want to continue?"}
         </p>
         
         <div className="flex gap-3 justify-center">
           <button 
             onClick={onClose}
-            className="px-4 py-2 rounded font-semibold text-xs text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors"
+            className="px-4 py-2 rounded font-semibold text-xs text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
           >
-            Cancelar
+            Cancel
           </button>
           <button 
             onClick={onConfirm}
-            className="px-4 py-2 rounded font-semibold text-xs text-white bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-900/20 transition-all"
+            className="px-4 py-2 rounded font-semibold text-xs text-white bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-900/20 transition-all cursor-pointer"
           >
-            Sí, dar de baja
+            Yes, deactivate
           </button>
         </div>
       </div>

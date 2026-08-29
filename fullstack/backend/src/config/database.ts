@@ -16,7 +16,7 @@ export const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
   port: dbPort,
   dialect: 'mysql',
   logging: false, // Set to console.log if you want to see SQL queries
-  timezone: '-03:00', // Guardar y leer fechas en hora de Argentina
+  timezone: '-03:00', // Read and write dates in Argentina timezone
   dialectOptions: {
     timezone: 'local',
   },
@@ -24,5 +24,6 @@ export const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
 
 sequelize
   .authenticate()
-  .then(() => console.log('✅ Conexión a MySQL exitosa'))
-  .catch((err) => console.error('❌ Error al conectar:', err));
+  .then(() => console.log('✅ MySQL connection successful'))
+  .catch((err) => console.error('❌ Database connection error:', err));
+

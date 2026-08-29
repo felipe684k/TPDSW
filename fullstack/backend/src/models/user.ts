@@ -1,8 +1,7 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 
-//usamos sequelize para definir el modelo de la tabla usuario
-export const user = sequelize.define('Usuario', {
+export const User = sequelize.define('User', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -13,20 +12,20 @@ export const user = sequelize.define('Usuario', {
     allowNull: false,
     unique: true
   },
-  nombre: {
+  first_name: {
     type: DataTypes.STRING(75),
     allowNull: false
   },
-  apellido: {
+  last_name: {
     type: DataTypes.STRING(75),
     allowNull: false
   },
-  telefono: {
+  phone: {
     type: DataTypes.STRING(30),
     allowNull: true
   },
-  fecha_nacimiento: {
-    type: DataTypes.DATEONLY, // Maneja fechas en formato YYYY-MM-DD (sin hora)
+  birth_date: {
+    type: DataTypes.DATEONLY,
     allowNull: true
   },
   email: {
@@ -34,28 +33,27 @@ export const user = sequelize.define('Usuario', {
     allowNull: true,
     unique: true
   },
-  usuario: {
+  username: {
     type: DataTypes.STRING(150),
     allowNull: false,
     unique: true
   },
-  contrasena: {
+  password: {
     type: DataTypes.STRING(255),
     allowNull: false
   },
-  tipo: {
-    type: DataTypes.ENUM('ALUMNO', 'PROFESOR', 'ADMIN'),
+  role: {
+    type: DataTypes.ENUM('STUDENT', 'PROFESSOR', 'ADMIN'),
     allowNull: false
   },
-  // Campo para controlar la baja lógica del usuario (true = activo / visible, false = inactivo / dado de baja)
-  activo: {
+  active: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: true
   }
 }, {
-  tableName: 'usuario',
+  tableName: 'user',
   timestamps: false
 });
 
-export default user;
+export default User;

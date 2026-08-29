@@ -8,33 +8,33 @@ const sequelize = new Sequelize(process.env.DB_NAME || 'tpdsw_db', process.env.D
   logging: false,
 });
 
-const Nivel = sequelize.define('Nivel', {
-  codigo_nivel: {
+const Level = sequelize.define('Level', {
+  level_code: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
-  nombre: {
+  name: {
     type: DataTypes.STRING(100),
     allowNull: false
   }
-}, { tableName: 'nivel', timestamps: false });
+}, { tableName: 'level', timestamps: false });
 
 async function seed() {
   try {
     await sequelize.sync();
-    const niveles = ['A1 — Principiante', 'A2 — Elemental', 'B1 — Intermedio', 'B2 — Intermedio Alto', 'C1 — Avanzado', 'C2 — Maestría'];
-    for (const nombre of niveles) {
-      const exists = await Nivel.findOne({ where: { nombre } });
+    const levels = ['A1 — Beginner', 'A2 — Elementary', 'B1 — Intermediate', 'B2 — Upper Intermediate', 'C1 — Advanced', 'C2 — Mastery'];
+    for (const name of levels) {
+      const exists = await Level.findOne({ where: { name } });
       if (!exists) {
-        await Nivel.create({ nombre });
-        console.log(`Seeded: ${nombre}`);
+        await Level.create({ name });
+        console.log(`Seeded: ${name}`);
       }
     }
-    console.log('Done seeding niveles');
+    console.log('Done seeding levels');
     process.exit(0);
   } catch(e) {
-    console.error('Error seeding niveles:', e);
+    console.error('Error seeding levels:', e);
     process.exit(1);
   }
 }

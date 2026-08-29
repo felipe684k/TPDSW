@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { studentService, type Student as Student } from '../../services/student.service'
+import { studentService, type Student } from '../../services/student.service'
 import ConfirmDeleteModal from '../../shared/ConfirmDeleteModal'
 import StudentFormModal from './StudentFormModal'
 
@@ -9,45 +9,38 @@ export default function Students() {
   const [isFromBackend, setIsFromBackend] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
 
-  // ESTADO: Si editingId es number estamos Editando, si es null estamos Creando
   const [editingId, setEditingId] = useState<number | null>(null)
-
-  // Estado: si studentToDelete es number se abre la ventana, si es null no se abre
   const [studentToDelete, setStudentToDelete] = useState<number | null>(null) 
   
-  // Estado: 
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [toast, setToast] = useState<{text: string, type: 'success' | 'danger'} | null>(null)
 
-  // Estados para el formulario (vinculados a los inputs)
   const [formData, setFormData] = useState({
-    nombre: '',
-    apellido: '',
+    first_name: '',
+    last_name: '',
     dni: '',
-    telefono: '',
+    phone: '',
     email: '',
-    nivel: '',
-    fecha_nacimiento: ''
+    level_code: '',
+    birth_date: ''
   })
 
-  // Cargar alumnos apenas se abre la pantalla
   useEffect(() => {
     fetchStudents()
   }, [])
 
   const fetchStudents = async () => {
     try {
-      const datos = await studentService.getStudents()
-      setStudents(datos)
+      const data = await studentService.getStudents()
+      setStudents(data)
       setIsFromBackend(true)
     } catch (error) {
-      console.error("Error al cargar alumnos", error)
+      console.error("Error loading students", error)
     }
   }
 
-  // Filtrado de búsqueda rápido en la tabla
-  const filteredStudents = students.filter(a => {
-    return (a.nombre + " " + a.apellido + " " + a.dni).toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredStudents = students.filter(student => {
+    return (student.first_name + " " + student.last_name + " " + student.dni).toLowerCase().includes(searchQuery.toLowerCase());
   })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -58,96 +51,91 @@ export default function Students() {
   useEffect(() => {
     if (!editingId && formData.dni.length >= 7) {
       studentService.checkDni(formData.dni).then((data) => {
-        if (data && !data.activo) {
+        if (data && !data.active) {
           setFormData(prev => ({
             ...prev,
-            nombre: data.nombre || '',
-            apellido: data.apellido || '',
-            telefono: data.telefono || '',
-            email: data.email ? data.email.split('_baja_')[0] : '',
-            fecha_nacimiento: data.fecha_nacimiento ? data.fecha_nacimiento.split('T')[0] : ''
+            first_name: data.first_name || '',
+            last_name: data.last_name || '',
+            phone: data.phone || '',
+            email: data.email ? data.email.split('_deleted_')[0] : '',
+            birth_date: data.birth_date ? data.birth_date.split('T')[0] : ''
           }));
         }
       }).catch(console.error);
     }
   }, [formData.dni, editingId]);
 
-  // NUEVA FUNCIÓN: Abrir modal para CREAR (resetea el formulario)
   const handleOpenModalCreate = () => {
     setEditingId(null)
-    setFormData({ nombre: '', apellido: '', dni: '', telefono: '', email: '', nivel: '', fecha_nacimiento: '' })
+    setFormData({ first_name: '', last_name: '', dni: '', phone: '', email: '', level_code: '', birth_date: '' })
     setIsModalOpen(true)
-    setErrorMsg(null) // 
+    setErrorMsg(null)
     setToast(null)
   }
 
-  // NUEVA FUNCIÓN: Abrir modal para EDITAR (carga los datos del alumno seleccionado)
   const handleEdit = (student: Student) => {
     if (!student.id) return;
     setEditingId(student.id)
     setFormData({
-      nombre: student.nombre || '',
-      apellido: student.apellido || '',
+      first_name: student.first_name || '',
+      last_name: student.last_name || '',
       dni: student.dni || '',
-      telefono: student.telefono || '',
+      phone: student.phone || '',
       email: student.email || '',
-      nivel: (student as any).nivel_actual || '',
-      fecha_nacimiento: student.fecha_nacimiento ? student.fecha_nacimiento.split('T')[0] : ''
+      level_code: (student as any).level_code || '',
+      birth_date: student.birth_date ? student.birth_date.split('T')[0] : ''
     })
     setIsModalOpen(true)
   }
 
-  // Función que envía los datos al backend (crea o actualiza según editingId)
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Evita que la página parpadee o se recargue
-    setErrorMsg(null); // Borramos errores viejos
+    e.preventDefault();
+    setErrorMsg(null);
     
     try {
       if (editingId) {
         await studentService.updateStudent(editingId, {
           dni: formData.dni,
-          nombre: formData.nombre,
-          apellido: formData.apellido,
-          telefono: formData.telefono,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          phone: formData.phone,
           email: formData.email,
-          fecha_nacimiento: formData.fecha_nacimiento
+          birth_date: formData.birth_date
         })
       } else {
         const newStudent = {
           ...formData,
-          usuario: formData.nombre,
-          contrasena: formData.dni
+          username: formData.first_name,
+          password: formData.dni
         }
         await studentService.createStudent(newStudent as any)
       }
 
       setIsModalOpen(false)
-      setFormData({ nombre: '', apellido: '', dni: '', telefono: '', email: '', nivel: '', fecha_nacimiento: '' })
+      setFormData({ first_name: '', last_name: '', dni: '', phone: '', email: '', level_code: '', birth_date: '' })
       
-      setToast({ text: editingId ? "Alumno actualizado con éxito" : "Alumno registrado con éxito", type: 'success' })
+      setToast({ text: editingId ? "Student updated successfully" : "Student registered successfully", type: 'success' })
       setTimeout(() => setToast(null), 3000)
       
       setEditingId(null)
       fetchStudents()
       
     } catch (error) {
-      console.error("Error al guardar alumno", error)
-      // En vez de alert(), guardamos el error en nuestra variable
-      setErrorMsg("No se pudo guardar el alumno. Verifique que el DNI y/o Email no esté repetido o intente nuevamente.")
+      console.error("Error saving student", error)
+      setErrorMsg("Could not save student. Please verify DNI and/or Email is not duplicate or try again.")
     }
   }
 
-  // Función para borrar (Baja Lógica)
   const handleDelete = async () => {
     if (studentToDelete) {
       try {
         await studentService.deleteStudent(studentToDelete)
-        setToast({ text: "Alumno dado de baja con éxito", type: 'danger' })
+        setToast({ text: "Student deactivated successfully", type: 'danger' })
         setTimeout(() => setToast(null), 3000)
-        fetchStudents() // Recargamos lista al borrar
+        fetchStudents()
         setStudentToDelete(null)
       } catch (error) {
-        console.error("Error al eliminar", error)
+        console.error("Error deleting student", error)
       }
     }
   }
@@ -155,18 +143,18 @@ export default function Students() {
   return (
     <div className="space-y-6">
 
-      {/* Cabecera de la sección */}
+      {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-100">Alumnos</h1>
-          <p className="text-xs text-slate-500 mt-1">Administración de alumnos del instituto.</p>
+          <h1 className="text-xl font-bold tracking-tight text-slate-100">Students</h1>
+          <p className="text-xs text-slate-500 mt-1">Administration of institute's students.</p>
         </div>
 
         <button
           onClick={handleOpenModalCreate}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all cursor-pointer"
         >
-          ➕ Registrar Alumno
+          ➕ Register Student
         </button>
       </div>
 
@@ -181,13 +169,13 @@ export default function Students() {
         </div>
       )}
 
-      {/* Buscador y filtros rápidos */}
+      {/* Search */}
       <div className="bg-[#1c1d24] p-4 rounded-xl border border-slate-800 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
         <div className="relative w-full md:w-80">
           <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs">🔍</span>
           <input
             type="text"
-            placeholder="Buscar por DNI, apellido o nombre..."
+            placeholder="Search by DNI, last name or first name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-8 pr-3 py-2 border border-slate-800 rounded text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
@@ -195,11 +183,11 @@ export default function Students() {
         </div>
       </div>
 
-      {/* Tabla de Alumnos */}
+      {/* Students Table */}
       <div className="bg-[#1c1d24] rounded-xl border border-slate-800 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-800 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-300">Listado General</span>
+            <span className="text-xs font-semibold text-slate-300">General List</span>
           </div>
           <span className="text-2xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded font-mono">
             Total: {filteredStudents.length}
@@ -210,11 +198,11 @@ export default function Students() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[#17181e] border-b border-slate-800">
-                <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Alumno</th>
+                <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Student</th>
                 <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">DNI</th>
-                <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Teléfono</th>
+                <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Phone</th>
                 <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Email</th>
-                <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Acciones</th>
+                <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Actions</th>
               </tr>
             </thead>
 
@@ -222,27 +210,27 @@ export default function Students() {
               {filteredStudents.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-xs text-slate-400">
-                    {isFromBackend ? 'No hay alumnos registrados que coincidan con la búsqueda.' : 'Cargando alumnos...'}
+                    {isFromBackend ? 'No registered students match the search.' : 'Loading students...'}
                   </td>
                 </tr>
               ) : (
                 filteredStudents.map((student) => (
                   <tr key={student.id} className="hover:bg-[#17181e] transition-colors">
-                    <td className="p-3 text-xs font-semibold text-slate-200">{student.apellido}, {student.nombre}</td>
+                    <td className="p-3 text-xs font-semibold text-slate-200">{student.last_name}, {student.first_name}</td>
                     <td className="p-3 text-xs font-mono text-slate-400">{student.dni}</td>
-                    <td className="p-3 text-xs text-slate-400">{student.telefono || 'N/A'}</td>
+                    <td className="p-3 text-xs text-slate-400">{student.phone || 'N/A'}</td>
                     <td className="p-3 text-xs text-slate-400">{student.email || 'N/A'}</td>
                     <td className="p-3 text-xs flex gap-2">
                       <button 
                         onClick={() => handleEdit(student)}
                         className="text-indigo-400 hover:text-indigo-300 font-semibold text-2xs cursor-pointer"
                       >
-                        Editar
+                        Edit
                       </button>
                       <span className="text-slate-300">|</span>
                       <button
                         onClick={() => setStudentToDelete(student.id!)}
-                        className="text-rose-500 hover:text-rose-400 font-semibold text-2xs cursor-pointer">Dar de Baja</button>
+                        className="text-rose-500 hover:text-rose-400 font-semibold text-2xs cursor-pointer">Deactivate</button>
                     </td>
                   </tr>
                 )))}
@@ -265,7 +253,7 @@ export default function Students() {
         isOpen={studentToDelete != null}
         onClose={() => setStudentToDelete(null)}
         onConfirm={handleDelete}
-        message='Esta acción dará de baja al alumno del sistema. ¿Estás seguro de continuar?'
+        message="This action will deactivate the student from the system. Are you sure you want to continue?"
       />
     </div>
   )

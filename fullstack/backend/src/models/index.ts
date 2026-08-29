@@ -1,78 +1,78 @@
 import { sequelize } from '../config/database.js';
 
-import user from './user.js';
-import Nivel from './nivel.js';
-import Curso from './curso.js';
-import ValorCuota from './valor_cuota.js';
-import UsuarioNivel from './usuario_nivel.js';
-import Aula from './aula.js';
-import CicloLectivo from './ciclo_lectivo.js';
-import Comision from './comision.js';
-import UsuarioComision from './usuario_comision.js';
-import Horario from './horario.js';
-import ComisionHorario from './comision_horario.js';
-import Inscripcion from './inscripcion.js';
-import Pago from './pago.js';
+import User from './user.js';
+import Level from './level.js';
+import Course from './course.js';
+import TuitionFee from './tuition_fee.js';
+import UserLevel from './user_level.js';
+import Classroom from './classroom.js';
+import AcademicYear from './academic_year.js';
+import Section from './section.js';
+import UserSection from './user_section.js';
+import Schedule from './schedule.js';
+import SectionSchedule from './section_schedule.js';
+import Enrollment from './enrollment.js';
+import Payment from './payment.js';
 
-// Relaciones
-// Nivel recursivo
-Nivel.belongsTo(Nivel, { as: 'Siguiente', foreignKey: 'codigo_nivel_siguiente' });
-Nivel.hasMany(Nivel, { as: 'Anteriores', foreignKey: 'codigo_nivel_siguiente' });
+// Relationships
+// Recursive Level
+Level.belongsTo(Level, { as: 'NextLevel', foreignKey: 'next_level_code' });
+Level.hasMany(Level, { as: 'PreviousLevels', foreignKey: 'next_level_code' });
 
-// Curso -> Nivel
-Curso.belongsTo(Nivel, { foreignKey: 'codigo_nivel', as: 'nivel' });
-Nivel.hasMany(Curso, { foreignKey: 'codigo_nivel', as: 'cursos' });
+// Course -> Level
+Course.belongsTo(Level, { foreignKey: 'level_code', as: 'level' });
+Level.hasMany(Course, { foreignKey: 'level_code', as: 'courses' });
 
-// ValorCuota -> Curso
-ValorCuota.belongsTo(Curso, { foreignKey: 'id_curso', as: 'curso' });
-Curso.hasMany(ValorCuota, { foreignKey: 'id_curso', as: 'valores_cuota' });
+// TuitionFee -> Course
+TuitionFee.belongsTo(Course, { foreignKey: 'id_course', as: 'course' });
+Course.hasMany(TuitionFee, { foreignKey: 'id_course', as: 'tuition_fees' });
 
-// UsuarioNivel (M:N entre Usuario y Nivel)
-user.belongsToMany(Nivel, { through: UsuarioNivel, foreignKey: 'id_usuario', otherKey: 'codigo_nivel', as: 'niveles' });
-Nivel.belongsToMany(user, { through: UsuarioNivel, foreignKey: 'codigo_nivel', otherKey: 'id_usuario', as: 'usuarios' });
+// UserLevel (M:N between User and Level)
+User.belongsToMany(Level, { through: UserLevel, foreignKey: 'id_user', otherKey: 'level_code', as: 'levels' });
+Level.belongsToMany(User, { through: UserLevel, foreignKey: 'level_code', otherKey: 'id_user', as: 'users' });
 
-// Comision -> Curso, Aula, CicloLectivo
-Comision.belongsTo(Curso, { foreignKey: 'id_curso', as: 'curso' });
-Curso.hasMany(Comision, { foreignKey: 'id_curso', as: 'comisiones' });
+// Section -> Course, Classroom, AcademicYear
+Section.belongsTo(Course, { foreignKey: 'id_course', as: 'course' });
+Course.hasMany(Section, { foreignKey: 'id_course', as: 'sections' });
 
-Comision.belongsTo(Aula, { foreignKey: 'id_aula', as: 'aula' });
-Aula.hasMany(Comision, { foreignKey: 'id_aula', as: 'comisiones' });
+Section.belongsTo(Classroom, { foreignKey: 'id_classroom', as: 'classroom' });
+Classroom.hasMany(Section, { foreignKey: 'id_classroom', as: 'sections' });
 
-Comision.belongsTo(CicloLectivo, { foreignKey: 'id_ciclo_lectivo', as: 'ciclo_lectivo' });
-CicloLectivo.hasMany(Comision, { foreignKey: 'id_ciclo_lectivo', as: 'comisiones' });
+Section.belongsTo(AcademicYear, { foreignKey: 'id_academic_year', as: 'academic_year' });
+AcademicYear.hasMany(Section, { foreignKey: 'id_academic_year', as: 'sections' });
 
-// UsuarioComision (M:N entre Usuario y Comision)
-user.belongsToMany(Comision, { through: UsuarioComision, foreignKey: 'id_usuario', otherKey: 'id_comision', as: 'comisiones' });
-Comision.belongsToMany(user, { through: UsuarioComision, foreignKey: 'id_comision', otherKey: 'id_usuario', as: 'profesores' });
+// UserSection (M:N between User and Section)
+User.belongsToMany(Section, { through: UserSection, foreignKey: 'id_user', otherKey: 'id_section', as: 'sections' });
+Section.belongsToMany(User, { through: UserSection, foreignKey: 'id_section', otherKey: 'id_user', as: 'professors' });
 
-// ComisionHorario (M:N entre Comision y Horario)
-Comision.belongsToMany(Horario, { through: ComisionHorario, foreignKey: 'id_comision', otherKey: 'id_horario', as: 'horarios' });
-Horario.belongsToMany(Comision, { through: ComisionHorario, foreignKey: 'id_horario', otherKey: 'id_comision', as: 'comisiones' });
+// SectionSchedule (M:N between Section and Schedule)
+Section.belongsToMany(Schedule, { through: SectionSchedule, foreignKey: 'id_section', otherKey: 'id_schedule', as: 'schedules' });
+Schedule.belongsToMany(Section, { through: SectionSchedule, foreignKey: 'id_schedule', otherKey: 'id_section', as: 'sections' });
 
-// Inscripcion -> Usuario, Comision
-Inscripcion.belongsTo(user, { foreignKey: 'id_usuario', as: 'usuario' });
-user.hasMany(Inscripcion, { foreignKey: 'id_usuario', as: 'inscripciones' });
+// Enrollment -> User, Section
+Enrollment.belongsTo(User, { foreignKey: 'id_user', as: 'user' });
+User.hasMany(Enrollment, { foreignKey: 'id_user', as: 'enrollments' });
 
-Inscripcion.belongsTo(Comision, { foreignKey: 'id_comision', as: 'comision' });
-Comision.hasMany(Inscripcion, { foreignKey: 'id_comision', as: 'inscripciones' });
+Enrollment.belongsTo(Section, { foreignKey: 'id_section', as: 'section' });
+Section.hasMany(Enrollment, { foreignKey: 'id_section', as: 'enrollments' });
 
-// Pago -> Inscripcion
-Pago.belongsTo(Inscripcion, { foreignKey: 'id_inscripcion', as: 'inscripcion' });
-Inscripcion.hasMany(Pago, { foreignKey: 'id_inscripcion', as: 'pagos' });
+// Payment -> Enrollment
+Payment.belongsTo(Enrollment, { foreignKey: 'id_enrollment', as: 'enrollment' });
+Enrollment.hasMany(Payment, { foreignKey: 'id_enrollment', as: 'payments' });
 
 export {
   sequelize,
-  user as Usuario,
-  Nivel,
-  Curso,
-  ValorCuota,
-  UsuarioNivel,
-  Aula,
-  CicloLectivo,
-  Comision,
-  UsuarioComision,
-  Horario,
-  ComisionHorario,
-  Inscripcion,
-  Pago
+  User,
+  Level,
+  Course,
+  TuitionFee,
+  UserLevel,
+  Classroom,
+  AcademicYear,
+  Section,
+  UserSection,
+  Schedule,
+  SectionSchedule,
+  Enrollment,
+  Payment
 };
