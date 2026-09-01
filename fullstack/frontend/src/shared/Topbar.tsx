@@ -31,7 +31,7 @@ export default function Topbar({ activeTab, setIsSidebarOpen }: { activeTab: str
         >
           ☰
         </button>
-        <span>Home</span>
+        <span>Inicio</span>
         <span>›</span>
         <strong className="text-slate-300 font-semibold capitalize">{activeTab}</strong>
       </div>
@@ -43,15 +43,15 @@ export default function Topbar({ activeTab, setIsSidebarOpen }: { activeTab: str
             backendStatus === 'disconnected' ? 'bg-rose-500' : 'bg-amber-500'
           }`} />
           <span className="hidden md:block text-slate-400">
-            {backendStatus === 'connected' ? 'API Connected' :
-             backendStatus === 'disconnected' ? 'API Offline' : 'Verifying...'}
+            {backendStatus === 'connected' ? 'API Conectada' :
+             backendStatus === 'disconnected' ? 'API Desconectada' : 'Verificando...'}
           </span>
         </div>
 
         <button className="w-8 h-8 border border-slate-800 rounded flex items-center justify-center text-sm hover:bg-[#17181e] text-slate-300">🔔</button>
         <div className="flex items-center gap-2 px-2 py-1 border border-slate-800 rounded hover:bg-[#17181e] cursor-pointer">
           <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white shrink-0">SC</div>
-          <span className="hidden md:block text-xs font-semibold text-slate-300">Secretariat</span>
+          <span className="hidden md:block text-xs font-semibold text-slate-300">Secretaría</span>
         </div>
       </div>
     </header>

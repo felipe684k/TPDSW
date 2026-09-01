@@ -16,7 +16,7 @@ export default function Login({ onLogin }: LoginProps) {
     setErrorMsg(null)
     
     if (!username || !password) {
-      setErrorMsg('Please enter your username and password.')
+      setErrorMsg('Por favor ingresa tu nombre de usuario y contraseña.')
       return
     }
 
@@ -32,7 +32,7 @@ export default function Login({ onLogin }: LoginProps) {
       const data = await response.json()
 
       if (!response.ok) {
-        setErrorMsg(data.message || 'Incorrect username or password.')
+        setErrorMsg(data.message || 'Nombre de usuario o contraseña incorrectos.')
         setIsLoading(false)
         return
       }
@@ -41,7 +41,7 @@ export default function Login({ onLogin }: LoginProps) {
       
     } catch (error) {
       console.error(error)
-      setErrorMsg('Error connecting to the server. Please verify the backend is running.')
+      setErrorMsg('Error al conectar al servidor. Por favor verifica que el backend esté corriendo.')
       setIsLoading(false)
     }
   }
@@ -57,10 +57,10 @@ export default function Login({ onLogin }: LoginProps) {
             🎓
           </div>
           <h2 className="text-xl font-bold tracking-tight text-slate-100">
-            English Institute
+            Instituto de Inglés
           </h2>
           <p className="text-xs text-slate-500">
-            Log in to your account to manage the academic year
+            Inicia sesión en tu cuenta para gestionar el ciclo lectivo
           </p>
         </div>
 
@@ -70,14 +70,14 @@ export default function Login({ onLogin }: LoginProps) {
           {/* Username Field */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-400">
-              Username
+              Nombre de usuario
             </label>
             <input 
               type="text" 
               required
               value={username}
               onChange={e => setUsername(e.target.value)}
-              placeholder="e.g. admin"
+              placeholder="ej. admin"
               className="bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
             />
           </div>
@@ -86,10 +86,10 @@ export default function Login({ onLogin }: LoginProps) {
           <div className="flex flex-col gap-1.5">
             <div className="flex justify-between items-center">
               <label className="text-xs font-semibold text-slate-400">
-                Password
+                Contraseña
               </label>
               <a href="#" className="text-[10px] text-indigo-400 hover:underline">
-                Forgot it?
+                ¿La olvidaste?
               </a>
             </div>
             <input 
@@ -110,7 +110,7 @@ export default function Login({ onLogin }: LoginProps) {
               className="w-3.5 h-3.5 rounded border-slate-800 bg-slate-900 text-indigo-400 focus:ring-indigo-500"
             />
             <label htmlFor="remember" className="text-[10px] text-slate-500 select-none cursor-pointer">
-              Remember my session on this device
+              Recordar mi sesión en este dispositivo
             </label>
           </div>
 
@@ -120,7 +120,7 @@ export default function Login({ onLogin }: LoginProps) {
             disabled={isLoading}
             className="cursor-pointer w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium py-2.5 rounded-lg text-xs shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50"
           >
-            {isLoading ? 'Connecting...' : 'Log In'}
+            {isLoading ? 'Conectando...' : 'Iniciar Sesión'}
           </button>
         </form>
 
@@ -133,7 +133,7 @@ export default function Login({ onLogin }: LoginProps) {
 
         {/* Informative note */}
         <div className="bg-slate-900/50 border border-slate-800/80 rounded-lg p-3 text-[10px] text-slate-500 text-center leading-relaxed">
-          💡 <strong>Test Credentials:</strong> You can use <strong>admin</strong> / <strong>12345</strong> for the secretariat panel, or <strong>user</strong> / <strong>12345</strong> to view the student panel.
+          💡 <strong>Credenciales de prueba:</strong> Puedes usar <strong>admin</strong> / <strong>12345</strong> para el panel de secretaría, o <strong>user</strong> / <strong>12345</strong> para ver el panel de alumno.
         </div>
 
       </div>

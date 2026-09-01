@@ -17,21 +17,33 @@ const Level = sequelize.define('Level', {
   name: {
     type: DataTypes.STRING(100),
     allowNull: false
+  },
+  next_level_code: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 }, { tableName: 'level', timestamps: false });
 
 async function seed() {
   try {
     await sequelize.sync();
-    const levels = ['A1 — Beginner', 'A2 — Elementary', 'B1 — Intermediate', 'B2 — Upper Intermediate', 'C1 — Advanced', 'C2 — Mastery'];
-    for (const name of levels) {
-      const exists = await Level.findOne({ where: { name } });
-      if (!exists) {
-        await Level.create({ name });
+    const levelsData = ['A1 - Principiante', 'A2 - Elemental', 'B1 - Intermedio', 'B2 - Intermedio Alto', 'C1 - Avanzado', 'C2 - Maestria'];
+    const createdLevels = [];
+    
+    for (const name of levelsData) {
+      let level = await Level.findOne({ where: { name } });
+      if (!level) {
+        level = await Level.create({ name });
         console.log(`Seeded: ${name}`);
       }
+      createdLevels.push(level);
     }
-    console.log('Done seeding levels');
+    
+    for (let i = 0; i < createdLevels.length - 1; i++) {
+      await createdLevels[i].update({ next_level_code: createdLevels[i + 1].level_code });
+    }
+    
+    console.log('Done seeding levels with next_level_code');
     process.exit(0);
   } catch(e) {
     console.error('Error seeding levels:', e);

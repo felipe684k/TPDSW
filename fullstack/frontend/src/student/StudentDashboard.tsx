@@ -14,8 +14,8 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
   ];
 
   const installments = [
-    { month: 'August 2026', amount: '$15.000', status: 'Paid', due_date: '10/08/2026' },
-    { month: 'September 2026', amount: '$15.000', status: 'Pending', due_date: '10/09/2026' },
+    { month: 'Agosto 2026', amount: '$15.000', status: 'Paid', due_date: '10/08/2026' },
+    { month: 'Septiembre 2026', amount: '$15.000', status: 'Pending', due_date: '10/09/2026' },
   ];
 
   return (
@@ -27,13 +27,13 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
             {userData?.first_name?.charAt(0) || 'S'}
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-100">Hello, {userData?.first_name} {userData?.last_name}</h1>
-            <p className="text-sm text-slate-400 mb-2">Student Portal</p>
+            <h1 className="text-xl font-bold text-slate-100">Hola, {userData?.first_name} {userData?.last_name}</h1>
+            <p className="text-sm text-slate-400 mb-2">Portal del Alumno</p>
             <button 
               onClick={() => setShowData(!showData)}
               className="cursor-pointer text-xs font-semibold bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 px-3 py-1.5 rounded-lg transition-colors border border-indigo-500/20"
             >
-              {showData ? 'Hide my info ▲' : 'View my info ▼'}
+              {showData ? 'Ocultar mi información ▲' : 'Ver mi información ▼'}
             </button>
           </div>
         </div>
@@ -41,7 +41,7 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
           onClick={onLogout}
           className="cursor-pointer text-sm font-medium text-slate-400 hover:text-rose-400 transition-colors px-4 py-2 rounded-lg hover:bg-rose-950/30"
         >
-          Logout
+          Cerrar Sesión
         </button>
       </div>
 
@@ -49,7 +49,7 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
       {showData && (
         <div className="max-w-5xl mx-auto mb-6 bg-[#1c1d24] p-6 rounded-2xl border border-slate-800 shadow-sm transition-all animate-fade-in">
           <h2 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
-            <span>👤</span> Personal Information
+            <span>👤</span> Información Personal
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
@@ -61,14 +61,14 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
               <p className="text-sm text-slate-300">{userData?.email || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">Phone</p>
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">Teléfono</p>
               <p className="text-sm text-slate-300">{userData?.phone || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-2">Academic Status</p>
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-2">Estado Académico</p>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/30 text-emerald-400 border border-emerald-900/50">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                Regular Student
+                Alumno Regular
               </span>
             </div>
           </div>
@@ -81,7 +81,7 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
         {/* Courses */}
         <div className="bg-[#1c1d24] p-6 rounded-2xl border border-slate-800 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
-            <span>📚</span> My Current Courses
+            <span>📚</span> Mis Cursos Actuales
           </h2>
           <div className="space-y-4">
             {courses.map(course => (
@@ -106,16 +106,16 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
         {/* Account Status / Payments */}
         <div className="bg-[#1c1d24] p-6 rounded-2xl border border-slate-800 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
-            <span>💳</span> Account Status
+            <span>💳</span> Estado de Cuenta
           </h2>
           <div className="overflow-hidden border border-slate-800/80 rounded-xl">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-[#16171d] border-b border-slate-800/80">
-                  <th className="p-3 text-xs font-semibold text-slate-400">Period</th>
-                  <th className="p-3 text-xs font-semibold text-slate-400">Amount</th>
-                  <th className="p-3 text-xs font-semibold text-slate-400">Due Date</th>
-                  <th className="p-3 text-xs font-semibold text-slate-400">Status</th>
+                  <th className="p-3 text-xs font-semibold text-slate-400">Período</th>
+                  <th className="p-3 text-xs font-semibold text-slate-400">Monto</th>
+                  <th className="p-3 text-xs font-semibold text-slate-400">Vencimiento</th>
+                  <th className="p-3 text-xs font-semibold text-slate-400">Estado</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/50">
@@ -127,11 +127,11 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
                     <td className="p-3 text-sm">
                       {inst.status === 'Paid' ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-950/30 text-emerald-400">
-                          Paid
+                          Pagado
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-950/30 text-amber-400">
-                          Pending
+                          Pendiente
                         </span>
                       )}
                     </td>

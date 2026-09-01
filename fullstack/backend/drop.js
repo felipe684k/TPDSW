@@ -4,7 +4,7 @@ dotenv.config();
 const sequelize = new Sequelize(process.env.DB_NAME || 'tpdsw_db', process.env.DB_USER || 'root', process.env.DB_PASSWORD || '', { host: process.env.DB_HOST || 'localhost', dialect: 'mysql', logging: false });
 async function drop() {
   try {
-    await sequelize.query('ALTER TABLE level DROP COLUMN fecha_desde_siguiente;');
+    await sequelize.query('ALTER TABLE level DROP COLUMN next_start_date;');
     console.log('Column dropped successfully.');
   } catch (e) {
     if (e.message.includes("check that column/key exists")) {

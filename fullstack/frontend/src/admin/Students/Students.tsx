@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { studentService, type Student } from '../../services/student.service'
 import ConfirmDeleteModal from '../../shared/ConfirmDeleteModal'
 import StudentFormModal from './StudentFormModal'
+import DataTable from '../../shared/components/DataTable'
 
 export default function Students() {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -114,7 +115,7 @@ export default function Students() {
       setIsModalOpen(false)
       setFormData({ first_name: '', last_name: '', dni: '', phone: '', email: '', level_code: '', birth_date: '' })
       
-      setToast({ text: editingId ? "Student updated successfully" : "Student registered successfully", type: 'success' })
+      setToast({ text: editingId ? "Alumno actualizado exitosamente" : "Alumno registrado exitosamente", type: 'success' })
       setTimeout(() => setToast(null), 3000)
       
       setEditingId(null)
@@ -122,7 +123,7 @@ export default function Students() {
       
     } catch (error) {
       console.error("Error saving student", error)
-      setErrorMsg("Could not save student. Please verify DNI and/or Email is not duplicate or try again.")
+      setErrorMsg("No se pudo guardar el alumno. Por favor verifique que el DNI y/o Email no estén duplicados o intente nuevamente.")
     }
   }
 
@@ -130,7 +131,7 @@ export default function Students() {
     if (studentToDelete) {
       try {
         await studentService.deleteStudent(studentToDelete)
-        setToast({ text: "Student deactivated successfully", type: 'danger' })
+        setToast({ text: "Alumno desactivado exitosamente", type: 'danger' })
         setTimeout(() => setToast(null), 3000)
         fetchStudents()
         setStudentToDelete(null)
@@ -140,21 +141,59 @@ export default function Students() {
     }
   }
 
+  const columns = [
+    {
+      header: 'Alumno',
+      render: (s: Student) => <span className="font-semibold text-slate-200">{s.last_name}, {s.first_name}</span>,
+    },
+    {
+      header: 'DNI',
+      render: (s: Student) => <span className="font-mono text-slate-400">{s.dni}</span>,
+    },
+    {
+      header: 'Teléfono',
+      render: (s: Student) => <span className="text-slate-400">{s.phone || 'N/A'}</span>,
+    },
+    {
+      header: 'Email',
+      render: (s: Student) => <span className="text-slate-400">{s.email || 'N/A'}</span>,
+    },
+    {
+      header: 'Acciones',
+      render: (s: Student) => (
+        <div className="flex gap-2">
+          <button 
+            onClick={() => handleEdit(s)}
+            className="text-indigo-400 hover:text-indigo-300 font-semibold text-2xs cursor-pointer"
+          >
+            Editar
+          </button>
+          <span className="text-slate-300">|</span>
+          <button
+            onClick={() => setStudentToDelete(s.id!)}
+            className="text-rose-500 hover:text-rose-400 font-semibold text-2xs cursor-pointer"
+          >
+            Desactivar
+          </button>
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-6">
-
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-100">Students</h1>
-          <p className="text-xs text-slate-500 mt-1">Administration of institute's students.</p>
+          <h1 className="text-xl font-bold tracking-tight text-slate-100">Alumnos</h1>
+          <p className="text-xs text-slate-500 mt-1">Administración de los alumnos del instituto.</p>
         </div>
 
         <button
           onClick={handleOpenModalCreate}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all cursor-pointer"
         >
-          ➕ Register Student
+          ➕ Registrar Alumno
         </button>
       </div>
 
@@ -175,7 +214,7 @@ export default function Students() {
           <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs">🔍</span>
           <input
             type="text"
-            placeholder="Search by DNI, last name or first name..."
+            placeholder="Buscar por DNI, apellido o nombre..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-8 pr-3 py-2 border border-slate-800 rounded text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
@@ -183,61 +222,13 @@ export default function Students() {
         </div>
       </div>
 
-      {/* Students Table */}
-      <div className="bg-[#1c1d24] rounded-xl border border-slate-800 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-800 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-300">General List</span>
-          </div>
-          <span className="text-2xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded font-mono">
-            Total: {filteredStudents.length}
-          </span>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#17181e] border-b border-slate-800">
-                <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Student</th>
-                <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">DNI</th>
-                <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Phone</th>
-                <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Email</th>
-                <th className="p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-slate-800/60">
-              {filteredStudents.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-xs text-slate-400">
-                    {isFromBackend ? 'No registered students match the search.' : 'Loading students...'}
-                  </td>
-                </tr>
-              ) : (
-                filteredStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-[#17181e] transition-colors">
-                    <td className="p-3 text-xs font-semibold text-slate-200">{student.last_name}, {student.first_name}</td>
-                    <td className="p-3 text-xs font-mono text-slate-400">{student.dni}</td>
-                    <td className="p-3 text-xs text-slate-400">{student.phone || 'N/A'}</td>
-                    <td className="p-3 text-xs text-slate-400">{student.email || 'N/A'}</td>
-                    <td className="p-3 text-xs flex gap-2">
-                      <button 
-                        onClick={() => handleEdit(student)}
-                        className="text-indigo-400 hover:text-indigo-300 font-semibold text-2xs cursor-pointer"
-                      >
-                        Edit
-                      </button>
-                      <span className="text-slate-300">|</span>
-                      <button
-                        onClick={() => setStudentToDelete(student.id!)}
-                        className="text-rose-500 hover:text-rose-400 font-semibold text-2xs cursor-pointer">Deactivate</button>
-                    </td>
-                  </tr>
-                )))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <DataTable 
+        title="Lista General"
+        columns={columns}
+        data={filteredStudents}
+        totalCount={filteredStudents.length}
+        emptyMessage={isFromBackend ? 'Ningún alumno registrado coincide con la búsqueda.' : 'Cargando alumnos...'}
+      />
 
       <StudentFormModal 
         isOpen={isModalOpen}
@@ -253,7 +244,7 @@ export default function Students() {
         isOpen={studentToDelete != null}
         onClose={() => setStudentToDelete(null)}
         onConfirm={handleDelete}
-        message="This action will deactivate the student from the system. Are you sure you want to continue?"
+        message="Esta acción desactivará al alumno del sistema. ¿Estás seguro de que deseas continuar?"
       />
     </div>
   )

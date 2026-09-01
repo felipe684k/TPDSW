@@ -132,29 +132,29 @@ export default function Payments() {
     loadAccountStatus(id)
   }
 
-  const handleOpenPaymentModal = (cuota: Installment) => {
-    setPaymentModal(cuota)
+  const handleOpenPaymentModal = (installment: Installment) => {
+    setPaymentModal(installment)
     setPaymentMethod('')
     setSurcharge(0)
     setDiscount(0)
   }
 
-  const handleVerRecibo = (cuota: Installment) => {
-    setReceiptModal(cuota)
+  const handleVerRecibo = (installment: Installment) => {
+    setReceiptModal(installment)
   }
 
   const handleProcessPayment = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!paymentModal) return
     if (!paymentMethod) {
-      alert('Please select a payment method')
+      alert('Por favor selecciona un método de pago')
       return
     }
 
     const targetEnrollmentId = typeof paymentModal.id_enrollment === 'number' ? paymentModal.id_enrollment : enrollmentId
 
     if (!targetEnrollmentId) {
-      alert('This student does not have an active enrollment. They must be enrolled in a section to register a payment.')
+      alert('Este alumno no tiene una inscripción activa. Debe estar inscripto en una comisión para registrar un pago.')
       return
     }
 
@@ -176,8 +176,8 @@ export default function Payments() {
         await loadAccountStatus(selectedStudent)
       }
     } catch (err) {
-      console.warn('Error registering payment:', err)
-      const msg = err instanceof Error ? err.message : 'A connection error occurred while processing the payment.'
+      console.warn('Error al registrar el pago:', err)
+      const msg = err instanceof Error ? err.message : 'Ocurrió un error de conexión al procesar el pago.'
       alert(msg)
     }
 
@@ -190,19 +190,19 @@ export default function Payments() {
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-100">Tuition Collection</h1>
-          <p className="text-xs text-slate-500 mt-1">Monthly payment management for the 2026 Academic Year.</p>
+          <h1 className="text-xl font-bold tracking-tight text-slate-100">Cobro de Cuotas</h1>
+          <p className="text-xs text-slate-500 mt-1">Gestión de pagos mensuales para el Ciclo Lectivo 2026.</p>
         </div>
       </div>
 
       {/* Student Selector */}
       <div className="bg-[#1c1d24] p-5 rounded-xl border border-slate-800 shadow-sm flex flex-col gap-3">
-        <label className="text-xs font-semibold text-slate-300">Search Enrolled Student</label>
+        <label className="text-xs font-semibold text-slate-300">Buscar Alumno Inscripto</label>
         <select 
           onChange={handleSelectStudent}
           className="border border-slate-800 rounded-lg p-3 text-sm bg-[#17181e] text-slate-200 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all max-w-md"
         >
-          <option value="">— Select Student —</option>
+          <option value="">— Seleccionar Alumno —</option>
           {studentsList.map(a => (
             <option key={a.id} value={a.id}>{a.fullName} (DNI: {a.dni}) - {a.course}</option>
           ))}
@@ -214,8 +214,8 @@ export default function Payments() {
         <div className="bg-amber-950/40 border border-amber-800/60 text-amber-300 p-4 rounded-xl text-xs flex items-center gap-3">
           <span className="text-lg">⚠️</span>
           <div>
-            <strong>The student does not have an active section enrollment.</strong>
-            <p className="text-[11px] text-amber-400/80 mt-0.5">To collect tuition, the student must be previously enrolled in the <em>Enrollments</em> module.</p>
+            <strong>El alumno no tiene una inscripción activa en comisiones.</strong>
+            <p className="text-[11px] text-amber-400/80 mt-0.5">Para cobrar cuotas, el alumno debe ser inscripto previamente en el módulo de <em>Inscripciones</em>.</p>
           </div>
         </div>
       )}
@@ -225,16 +225,16 @@ export default function Payments() {
         <div className="bg-[#1c1d24] rounded-xl border border-slate-800 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="p-4 border-b border-slate-800 bg-[#17181e] flex justify-between items-center">
             <div>
-              <h2 className="text-sm font-bold text-slate-200">Account Status - {currentStudent?.fullName}</h2>
+              <h2 className="text-sm font-bold text-slate-200">Estado de Cuenta - {currentStudent?.fullName}</h2>
               <div className="flex gap-2 items-center mt-1">
-                <p className="text-xs text-slate-500">Academic Year 2026 (March - December)</p>
+                <p className="text-xs text-slate-500">Ciclo Lectivo 2026 (Marzo - Diciembre)</p>
                 <span className="text-[10px] font-semibold bg-indigo-950/40 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-800/40">
-                  {installments.length} Accrued Installments
+                  {installments.length} Cuotas Devengadas
                 </span>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-xs text-slate-500 block">Past Due Debt to Date</span>
+              <span className="text-xs text-slate-500 block">Deuda Vencida a la Fecha</span>
               <span className="text-lg font-bold text-rose-500">
                 ${installments.filter(c => c.status === 'Pending').reduce((acc, c) => acc + c.amount, 0).toLocaleString('en-US')}
               </span>
@@ -243,43 +243,43 @@ export default function Payments() {
           
           <div className="p-5">
             {loading ? (
-              <div className="text-center py-8 text-xs text-slate-400">Loading account status...</div>
+              <div className="text-center py-8 text-xs text-slate-400">Cargando estado de cuenta...</div>
             ) : installments.length === 0 ? (
-              <div className="text-center py-8 text-xs text-slate-500">No accrued installments registered for this student.</div>
+              <div className="text-center py-8 text-xs text-slate-500">No hay cuotas devengadas registradas para este alumno.</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {installments.map((cuota) => (
-                  <div key={cuota.id} className={`p-4 rounded-xl border ${cuota.status === 'Paid' ? 'border-emerald-800/40 bg-emerald-950/10' : 'border-slate-800 bg-[#1c1d24]'} shadow-sm flex flex-col justify-between space-y-4`}>
+                {installments.map((installment) => (
+                  <div key={installment.id} className={`p-4 rounded-xl border ${installment.status === 'Paid' ? 'border-emerald-800/40 bg-emerald-950/10' : 'border-slate-800 bg-[#1c1d24]'} shadow-sm flex flex-col justify-between space-y-4`}>
                     <div className="flex justify-between items-start">
                       <div>
-                        <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">{cuota.installment_month} 2026</span>
-                        <span className="block text-[10px] text-slate-500">Due: {cuota.due_date}</span>
+                        <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">{installment.installment_month} 2026</span>
+                        <span className="block text-[10px] text-slate-500">Vencimiento: {installment.due_date}</span>
                       </div>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        cuota.status === 'Paid' ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700/50' : 'bg-amber-900/40 text-amber-400 border border-amber-700/50'
+                        installment.status === 'Paid' ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700/50' : 'bg-amber-900/40 text-amber-400 border border-amber-700/50'
                       }`}>
-                        {cuota.status}
+                        {installment.status === 'Paid' ? 'Pagado' : 'Pendiente'}
                       </span>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-2 text-[10px] bg-[#17181e]/50 p-2 rounded border border-slate-800/60">
                       <div>
-                        <span className="text-slate-400 block">Base Fee</span>
-                        <span className="font-semibold text-slate-300">${cuota.amount.toLocaleString('en-US')}</span>
+                        <span className="text-slate-400 block">Cuota Base</span>
+                        <span className="font-semibold text-slate-300">${installment.amount.toLocaleString('en-US')}</span>
                       </div>
-                      {cuota.status === 'Paid' && (
+                      {installment.status === 'Paid' && (
                         <>
                           <div>
-                            <span className="text-slate-400 block">Payment Date</span>
-                            <span className="font-semibold text-slate-300">{cuota.payment_date || 'Settled'}</span>
+                            <span className="text-slate-400 block">Fecha de Pago</span>
+                            <span className="font-semibold text-slate-300">{installment.payment_date || 'Saldado'}</span>
                           </div>
                           <div>
-                            <span className="text-slate-400 block">Surcharge</span>
-                            <span className="font-semibold text-rose-400">+${cuota.surcharge}</span>
+                            <span className="text-slate-400 block">Recargo</span>
+                            <span className="font-semibold text-rose-400">+${installment.surcharge}</span>
                           </div>
                           <div>
-                            <span className="text-slate-400 block">Discount</span>
-                            <span className="font-semibold text-emerald-400">-${cuota.discount}</span>
+                            <span className="text-slate-400 block">Descuento</span>
+                            <span className="font-semibold text-emerald-400">-${installment.discount}</span>
                           </div>
                         </>
                       )}
@@ -288,22 +288,22 @@ export default function Payments() {
                     <div className="flex justify-between items-end pt-2 border-t border-slate-800/60">
                       <div>
                         <span className="block text-[10px] text-slate-500">Total</span>
-                        <span className="text-lg font-bold text-slate-100">${(cuota.amount + cuota.surcharge - cuota.discount).toLocaleString('en-US')}</span>
+                        <span className="text-lg font-bold text-slate-100">${(installment.amount + installment.surcharge - installment.discount).toLocaleString('en-US')}</span>
                       </div>
                       
-                      {cuota.status === 'Pending' ? (
+                      {installment.status === 'Pending' ? (
                         <button 
-                          onClick={() => handleOpenPaymentModal(cuota)}
+                          onClick={() => handleOpenPaymentModal(installment)}
                           className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-xs font-medium shadow-sm transition-colors cursor-pointer"
                         >
-                          Pay
+                          Cobrar
                         </button>
                       ) : (
                         <button 
-                          onClick={() => handleVerRecibo(cuota)}
+                          onClick={() => handleVerRecibo(installment)}
                           className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded text-xs font-medium transition-colors cursor-pointer flex items-center gap-1"
                         >
-                          📄 View Receipt
+                          📄 Ver Recibo
                         </button>
                       )}
                     </div>
@@ -320,26 +320,26 @@ export default function Payments() {
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-6 z-50 animate-in fade-in duration-200">
           <div className="bg-[#1c1d24] rounded-xl shadow-xl w-full max-w-sm border border-slate-800">
             <div className="p-4 border-b border-slate-800 flex justify-between items-center">
-              <h2 className="text-sm font-bold text-slate-200">Register Tuition Payment</h2>
+              <h2 className="text-sm font-bold text-slate-200">Registrar Pago de Cuota</h2>
               <button onClick={() => setPaymentModal(null)} className="text-slate-400 hover:text-white text-xs">✕</button>
             </div>
             
             <form onSubmit={handleProcessPayment} className="p-5 space-y-4">
               <div className="bg-[#17181e] border border-slate-800/60 rounded-lg p-3 text-center mb-2">
-                <span className="block text-xs text-slate-500 uppercase tracking-wider">Tuition for {paymentModal.installment_month} 2026</span>
+                <span className="block text-xs text-slate-500 uppercase tracking-wider">Cuota de {paymentModal.installment_month} 2026</span>
                 <span className="text-2xl font-bold text-slate-100">${(paymentModal.amount + surcharge - discount).toLocaleString('en-US')}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-slate-400">Surcharge ($)</label>
+                  <label className="text-xs font-semibold text-slate-400">Recargo ($)</label>
                   <input 
                     type="number" min="0" value={surcharge} onChange={e => setSurcharge(Number(e.target.value))}
                     className="border border-slate-700 rounded p-2 text-sm bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-slate-400">Discount ($)</label>
+                  <label className="text-xs font-semibold text-slate-400">Descuento ($)</label>
                   <input 
                     type="number" min="0" value={discount} onChange={e => setDiscount(Number(e.target.value))}
                     className="border border-slate-700 rounded p-2 text-sm bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
@@ -348,15 +348,15 @@ export default function Payments() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-400">Payment Method *</label>
+                <label className="text-xs font-semibold text-slate-400">Método de Pago *</label>
                 <select 
                   required value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}
                   className="border border-slate-700 rounded p-2.5 text-sm bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
                 >
-                  <option value="">— Select —</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Debit/Credit Card">Debit/Credit Card</option>
+                  <option value="">— Seleccionar —</option>
+                  <option value="Cash">Efectivo</option>
+                  <option value="Bank Transfer">Transferencia Bancaria</option>
+                  <option value="Debit/Credit Card">Tarjeta de Débito/Crédito</option>
                 </select>
               </div>
               
@@ -365,13 +365,13 @@ export default function Payments() {
                   type="button" onClick={() => setPaymentModal(null)}
                   className="flex-1 py-2 border border-slate-800 bg-[#1c1d24] hover:bg-[#17181e] text-slate-400 rounded text-xs font-medium transition-colors cursor-pointer"
                 >
-                  Cancel
+                  Cancelar
                 </button>
                 <button 
                   type="submit"
                   className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-medium shadow-sm transition-colors cursor-pointer"
                 >
-                  Confirm Collection
+                  Confirmar Cobro
                 </button>
               </div>
             </form>
@@ -388,12 +388,12 @@ export default function Payments() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg">🏛️</span>
-                  <h2 className="text-sm font-bold text-slate-100 uppercase tracking-wider">Institute of Languages</h2>
+                  <h2 className="text-sm font-bold text-slate-100 uppercase tracking-wider">Instituto de Idiomas</h2>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-0.5">Official Payment Receipt</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Recibo Oficial de Pago</p>
               </div>
               <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-bold px-2.5 py-1 rounded border border-emerald-800/50">
-                PAID ✅
+                PAGADO ✅
               </span>
             </div>
 
@@ -401,11 +401,11 @@ export default function Payments() {
             <div className="p-5 space-y-4 text-xs">
               <div className="flex justify-between items-center bg-[#17181e]/60 p-3 rounded-lg border border-slate-800/60">
                 <div>
-                  <span className="text-slate-500 text-[10px] uppercase block font-semibold">Receipt No.</span>
+                  <span className="text-slate-500 text-[10px] uppercase block font-semibold">Nº Recibo</span>
                   <span className="font-mono font-bold text-indigo-400">#REC-2026-{receiptModal.id}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-slate-500 text-[10px] uppercase block font-semibold">Issue Date</span>
+                  <span className="text-slate-500 text-[10px] uppercase block font-semibold">Fecha de Emisión</span>
                   <span className="font-semibold text-slate-300">{receiptModal.payment_date || new Date().toLocaleDateString('en-US')}</span>
                 </div>
               </div>
@@ -413,50 +413,55 @@ export default function Payments() {
               {/* Student and Course Detail */}
               <div className="space-y-2 border-b border-slate-800/80 pb-3">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Student:</span>
-                  <span className="font-semibold text-slate-200">{currentStudent?.fullName || 'Registered Student'}</span>
+                  <span className="text-slate-400">Alumno:</span>
+                  <span className="font-semibold text-slate-200">{currentStudent?.fullName || 'Alumno Registrado'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">DNI:</span>
                   <span className="font-mono text-slate-300">{currentStudent?.dni || '-'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Section / Course:</span>
-                  <span className="font-semibold text-indigo-300">{receiptModal.section || currentStudent?.course || 'Language Course'}</span>
+                  <span className="text-slate-400">Comisión / Curso:</span>
+                  <span className="font-semibold text-indigo-300">{receiptModal.section || currentStudent?.course || 'Curso de Idioma'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Paid Concept:</span>
-                  <span className="font-medium text-slate-200">Tuition {receiptModal.installment_month} 2026</span>
+                  <span className="text-slate-400">Concepto Abonado:</span>
+                  <span className="font-medium text-slate-200">Cuota {receiptModal.installment_month} 2026</span>
                 </div>
               </div>
 
               {/* Financial Breakdown */}
               <div className="space-y-2 pt-1">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Base Fee:</span>
+                  <span className="text-slate-400">Cuota Base:</span>
                   <span className="text-slate-300">${receiptModal.amount.toLocaleString('en-US')}</span>
                 </div>
                 {receiptModal.surcharge > 0 && (
                   <div className="flex justify-between text-rose-400">
-                    <span>Late Fee:</span>
+                    <span>Recargo por Mora:</span>
                     <span>+${receiptModal.surcharge.toLocaleString('en-US')}</span>
                   </div>
                 )}
                 {receiptModal.discount > 0 && (
                   <div className="flex justify-between text-emerald-400">
-                    <span>Discount Applied:</span>
+                    <span>Descuento Aplicado:</span>
                     <span>-${receiptModal.discount.toLocaleString('en-US')}</span>
                   </div>
                 )}
                 {receiptModal.paymentMethod && (
                   <div className="flex justify-between text-slate-400">
-                    <span>Payment Method:</span>
-                    <span className="capitalize text-slate-300">{receiptModal.paymentMethod}</span>
+                    <span>Método de Pago:</span>
+                    <span className="capitalize text-slate-300">
+                      {receiptModal.paymentMethod === 'Cash' ? 'Efectivo' : 
+                       receiptModal.paymentMethod === 'Bank Transfer' ? 'Transferencia Bancaria' : 
+                       receiptModal.paymentMethod === 'Debit/Credit Card' ? 'Tarjeta de Débito/Crédito' : 
+                       receiptModal.paymentMethod}
+                    </span>
                   </div>
                 )}
                 
                 <div className="flex justify-between items-center text-sm font-bold pt-3 border-t border-slate-800 text-slate-100">
-                  <span>Total Paid:</span>
+                  <span>Total Abonado:</span>
                   <span className="text-emerald-400 text-base">
                     ${(receiptModal.amount + receiptModal.surcharge - receiptModal.discount).toLocaleString('en-US')}
                   </span>
@@ -471,14 +476,14 @@ export default function Payments() {
                 onClick={() => setReceiptModal(null)}
                 className="px-4 py-2 border border-slate-800 bg-[#1c1d24] hover:bg-slate-800 text-slate-400 rounded text-xs font-medium transition-colors cursor-pointer"
               >
-                Close
+                Cerrar
               </button>
               <button 
                 type="button" 
                 onClick={() => window.print()}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium shadow-sm transition-colors cursor-pointer flex items-center gap-1.5"
               >
-                🖨️ Print Receipt
+                🖨️ Imprimir Recibo
               </button>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { SIDEBAR_TABS } from "./Sidebar.const"
+import SidebarButton from "./SidebarButton"
 
 interface SidebarProps {
   activeTab: 'dashboard' | 'enrollments' | 'students' | 'professors' | 'courses' | 'sections' | 'payments' | 'classrooms' | 'academic-years' | 'levels'
@@ -9,9 +10,21 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeTab, setActiveTab, onLogout, isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
+  const tabs = [
+    { id: 'dashboard', label: 'Panel', icon: '🏠', section: 'General' },
+    { id: 'divider', section: 'Académico' },
+    { id: 'courses', label: 'Cursos', icon: '📚' },
+    { id: SIDEBAR_TABS.SECTIONS, label: 'Comisiones', icon: '🏷️' },
+    { id: 'classrooms', label: 'Aulas', icon: '🏫' },
+    { id: 'academic-years', label: 'Ciclos Lectivos', icon: '📅' },
+    { id: 'payments', label: 'Pagos', icon: '💳' },
+    { id: 'enrollments', label: 'Inscripciones', icon: '📝' },
+    { id: 'students', label: 'Alumnos', icon: '👥' },
+    { id: 'professors', label: 'Profesores', icon: '👨‍🏫' },
+  ] as const;
+
   return (
     <>
-      {/* Dark overlay to close menu by tapping outside on mobile */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
@@ -23,101 +36,59 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isSidebarOp
       <div className="p-5 flex items-center gap-3 border-b border-slate-900">
         <div className="w-9 h-9 rounded bg-indigo-600 flex items-center justify-center text-lg text-white font-bold">🎓</div>
         <div>
-          <strong className="block text-sm text-slate-100 font-bold">English Institute</strong>
-          <span className="block text-xs text-slate-500">Course Management</span>
+          <strong className="block text-sm text-slate-100 font-bold">Instituto de Inglés</strong>
+          <span className="block text-xs text-slate-500">Gestión de Cursos</span>
         </div>
       </div>
 
-      <nav className="flex-1 p-3 flex flex-col gap-1">
-        <span className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-slate-400">General</span>
-        
-        <button 
-          onClick={() => setActiveTab('dashboard')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'dashboard' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
-        >
-          <span>🏠</span> Dashboard
-        </button>
+      <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full">
+        {tabs.map((tab, index) => {
+          if (tab.id === 'divider') {
+            return (
+              <div key={`div-${index}`}>
+                <div className="h-px bg-slate-900 my-2"></div>
+                <span className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider font-bold text-slate-400">{tab.section}</span>
+              </div>
+            );
+          }
 
-        <div className="h-px bg-slate-900 my-2"></div>
-        <span className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider font-bold text-slate-400">Academic</span>
+          if (tab.section && tab.id !== 'divider') {
+            return (
+              <div key={tab.id}>
+                <span className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-slate-400">{tab.section}</span>
+                <SidebarButton 
+                  icon={tab.icon} 
+                  label={tab.label!} 
+                  isActive={activeTab === tab.id} 
+                  onClick={() => setActiveTab(tab.id as any)} 
+                />
+              </div>
+            )
+          }
 
-        <button 
-          onClick={() => setActiveTab('courses')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'courses' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
-        >
-          <span>📚</span> Courses
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('sections')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === SIDEBAR_TABS.SECTIONS ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
-        >
-          <span>🏷️</span> Sections
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('classrooms')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'classrooms' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
-        >
-          <span>🏫</span> Classrooms
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('levels')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'levels' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
-        >
-          <span>📈</span> Levels
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('academic-years')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'academic-years' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
-        >
-          <span>📅</span> Academic Years
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('payments')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'payments' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
-        >
-          <span>💳</span> Payments
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('enrollments')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'enrollments' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
-        >
-          <span>📝</span> Enrollments
-        </button>
-        
-        <button 
-          onClick={() => setActiveTab('students')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'students' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
-        >
-          <span>👥</span> Students
-        </button>
-        
-        <button 
-          onClick={() => setActiveTab('professors')}
-          className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all ${activeTab === 'professors' ? 'bg-indigo-600/20 text-white font-medium border-l-2 border-indigo-500' : 'hover:bg-slate-900 hover:text-slate-200'}`}
-        >
-          <span>👨‍🏫</span> Professors
-        </button>
-
+          return (
+            <SidebarButton 
+              key={tab.id}
+              icon={tab.icon} 
+              label={tab.label!} 
+              isActive={activeTab === tab.id} 
+              onClick={() => setActiveTab(tab.id as any)} 
+            />
+          );
+        })}
       </nav>
 
-      {/* Sidebar Footer */}
       <div className="p-4 border-t border-slate-900 flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white">SC</div>
           <div className="text-left">
-            <strong className="block text-xs text-slate-200 font-semibold">Secretariat</strong>
-            <span className="block text-[10px] text-slate-500">Admin</span>
+            <strong className="block text-xs text-slate-200 font-semibold">Secretaría</strong>
+            <span className="block text-[10px] text-slate-500">Administrador</span>
           </div>
         </div>
         <button 
           onClick={onLogout}
-          title="Logout" 
+          title="Cerrar Sesión" 
           className="cursor-pointer w-7 h-7 bg-slate-900 hover:bg-rose-950 text-slate-400 hover:text-rose-400 rounded flex items-center justify-center text-xs transition-colors"
         >
           🚪

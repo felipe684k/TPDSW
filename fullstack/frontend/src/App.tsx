@@ -12,7 +12,6 @@ import Classrooms from './admin/Classrooms'
 import AcademicYears from './admin/AcademicYears'
 import Login from './auth/Login'
 import StudentDashboard from './student/StudentDashboard'
-import Levels from './admin/Levels'
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -41,6 +40,7 @@ export default function App() {
       localStorage.removeItem('isLoggedIn')
       localStorage.removeItem('userRole')
       localStorage.removeItem('userData')
+      localStorage.removeItem('activeTab')
     }
   }, [isLoggedIn, userRole, userData])
 
@@ -108,6 +108,7 @@ export default function App() {
       setUserRole(role);
       setUserData(data);
       setIsLoggedIn(true);
+      setActiveTab('dashboard');
     }} />
   }
 
@@ -151,10 +152,6 @@ export default function App() {
 
           {activeTab === 'classrooms' && (
             <Classrooms />
-          )}
-
-          {activeTab === 'levels' && (
-            <Levels />
           )}
 
           {activeTab === 'academic-years' && (
