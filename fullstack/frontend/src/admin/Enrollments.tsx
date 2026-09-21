@@ -28,35 +28,35 @@ export default function Enrollments({ enrollments, setEnrollments }: Enrollments
   const columns = [
     {
       header: 'Alumno',
-      render: (i: Enrollment) => <span className="font-semibold text-slate-200">{i.last_name}, {i.first_name}</span>,
+      render: (i: Enrollment) => <span className="font-semibold text-slate-700">{i.last_name}, {i.first_name}</span>,
     },
     {
       header: 'DNI',
-      render: (i: Enrollment) => <span className="font-mono text-slate-400">{i.dni}</span>,
+      render: (i: Enrollment) => <span className="font-mono text-slate-500">{i.dni}</span>,
     },
     {
       header: 'Comisión',
-      render: (i: Enrollment) => <span className="text-slate-400">{i.section}</span>,
+      render: (i: Enrollment) => <span className="text-slate-500">{i.section}</span>,
     },
     {
       header: 'Nivel',
       render: (i: Enrollment) => (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold bg-indigo-950/30 text-indigo-400">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold bg-indigo-50 text-indigo-400">
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>{i.level}
         </span>
       ),
     },
     {
       header: 'Fecha',
-      render: (i: Enrollment) => <span className="text-slate-400">{i.date}</span>,
+      render: (i: Enrollment) => <span className="text-slate-500">{i.date}</span>,
     },
     {
       header: 'Asistencia',
-      render: (i: Enrollment) => <span className="font-semibold text-slate-400">{i.attendance_percentage || '0%'}</span>,
+      render: (i: Enrollment) => <span className="font-semibold text-slate-500">{i.attendance_percentage || '0%'}</span>,
     },
     {
       header: 'Nota Final',
-      render: (i: Enrollment) => <span className="font-semibold text-slate-400">{i.final_grade || '-'}</span>,
+      render: (i: Enrollment) => <span className="font-semibold text-slate-500">{i.final_grade || '-'}</span>,
     },
     {
       header: 'Estado',
@@ -90,7 +90,7 @@ export default function Enrollments({ enrollments, setEnrollments }: Enrollments
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-100">Inscripciones</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-800">Inscripciones</h1>
           <p className="text-xs text-slate-500 mt-1">Lista general de todos los alumnos inscriptos en el instituto.</p>
         </div>
       </div>

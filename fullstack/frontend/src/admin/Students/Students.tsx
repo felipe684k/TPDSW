@@ -5,6 +5,7 @@ import StudentFormModal from './StudentFormModal'
 import PaymentModal from './PaymentModal'
 import EnrollModal from './EnrollModal'
 import DataTable from '../../shared/components/DataTable'
+import { theme } from '../../utils/theme'
 
 export default function Students() {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -148,19 +149,19 @@ export default function Students() {
   const columns = [
     {
       header: 'Alumno',
-      render: (s: Student) => <span className="font-semibold text-slate-200">{s.last_name}, {s.first_name}</span>,
+      render: (s: Student) => <span className="font-semibold text-slate-700">{s.last_name}, {s.first_name}</span>,
     },
     {
       header: 'DNI',
-      render: (s: Student) => <span className="font-mono text-slate-400">{s.dni}</span>,
+      render: (s: Student) => <span className="font-mono text-slate-500">{s.dni}</span>,
     },
     {
       header: 'Teléfono',
-      render: (s: Student) => <span className="text-slate-400">{s.phone || 'N/A'}</span>,
+      render: (s: Student) => <span className="text-slate-500">{s.phone || 'N/A'}</span>,
     },
     {
       header: 'Email',
-      render: (s: Student) => <span className="text-slate-400">{s.email || 'N/A'}</span>,
+      render: (s: Student) => <span className="text-slate-500">{s.email || 'N/A'}</span>,
     },
     {
       header: 'Acciones',
@@ -172,21 +173,21 @@ export default function Students() {
           >
             💰 Pagar
           </button>
-          <span className="text-slate-300">|</span>
+          <span className="text-slate-600">|</span>
           <button 
             onClick={() => setEnrollStudentId(s.id!)}
             className="text-blue-400 hover:text-blue-300 font-semibold text-2xs cursor-pointer"
           >
             📝 Inscribir
           </button>
-          <span className="text-slate-300">|</span>
+          <span className="text-slate-600">|</span>
           <button 
             onClick={() => handleEdit(s)}
             className="text-indigo-400 hover:text-indigo-300 font-semibold text-2xs cursor-pointer"
           >
             Editar
           </button>
-          <span className="text-slate-300">|</span>
+          <span className="text-slate-600">|</span>
           <button
             onClick={() => setStudentToDelete(s.id!)}
             className="text-rose-500 hover:text-rose-400 font-semibold text-2xs cursor-pointer"
@@ -203,20 +204,20 @@ export default function Students() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-100">Alumnos</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-800">Alumnos</h1>
           <p className="text-xs text-slate-500 mt-1">Administración de los alumnos del instituto.</p>
         </div>
 
         <button
           onClick={handleOpenModalCreate}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all cursor-pointer"
+          className={theme.button.primary}
         >
-          ➕ Registrar Alumno
+          + Registrar Alumno
         </button>
       </div>
 
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 bg-[#1c1d24] border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
+        <div className={`fixed bottom-6 right-6 z-50 bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
           toast.type === 'success' 
             ? 'border-emerald-500/50 text-emerald-400 shadow-emerald-900/20' 
             : 'border-rose-500/50 text-rose-400 shadow-rose-900/20'
@@ -227,15 +228,15 @@ export default function Students() {
       )}
 
       {/* Search */}
-      <div className="bg-[#1c1d24] p-4 rounded-xl border border-slate-800 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
         <div className="relative w-full md:w-80">
-          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs">🔍</span>
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 text-xs">🔍</span>
           <input
             type="text"
             placeholder="Buscar por DNI, apellido o nombre..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 border border-slate-800 rounded text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
+            className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded text-xs bg-white text-slate-700 outline-none focus:border-indigo-500"
           />
         </div>
       </div>

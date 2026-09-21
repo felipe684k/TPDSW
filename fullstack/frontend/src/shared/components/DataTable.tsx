@@ -1,4 +1,5 @@
 import React from 'react';
+import { theme } from '../../utils/theme';
 
 interface Column<T> {
   header: string;
@@ -18,11 +19,11 @@ interface DataTableProps<T> {
 
 export default function DataTable<T>({ columns, data, title, totalCount, emptyMessage = 'No hay datos disponibles.' }: DataTableProps<T>) {
   return (
-    <div className="bg-[#1c1d24] rounded-xl border border-slate-800 shadow-sm overflow-hidden">
-      <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-[#17181e]">
-        <div className="text-xs font-semibold text-slate-300">{title}</div>
+    <div className={theme.table.wrapper}>
+      <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white">
+        <div className="text-xs font-semibold text-slate-700">{title}</div>
         {totalCount !== undefined && (
-          <span className="text-2xs text-slate-400 bg-[#1c1d24] border border-slate-800 px-2 py-0.5 rounded font-mono">
+          <span className="text-2xs text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded font-mono">
             Total: {totalCount}
           </span>
         )}
@@ -30,11 +31,11 @@ export default function DataTable<T>({ columns, data, title, totalCount, emptyMe
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-[#17181e] border-b border-slate-800">
+            <tr>
               {columns.map((col, index) => (
                 <th
                   key={index}
-                  className={`p-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider ${
+                  className={`p-3 ${theme.table.header} ${
                     col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''
                   }`}
                 >
@@ -43,20 +44,20 @@ export default function DataTable<T>({ columns, data, title, totalCount, emptyMe
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-slate-100 bg-white">
             {data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="p-4 text-center text-xs text-slate-500">
+                <td colSpan={columns.length} className={theme.table.empty}>
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
               data.map((item, rowIndex) => (
-                <tr key={rowIndex} className="hover:bg-[#17181e] transition-colors">
+                <tr key={rowIndex} className={theme.table.row}>
                   {columns.map((col, colIndex) => (
                     <td
                       key={colIndex}
-                      className={`p-3 text-xs ${col.className || 'text-slate-400'} ${
+                      className={`p-3 text-xs ${col.className || theme.table.cellText} ${
                         col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''
                       }`}
                     >

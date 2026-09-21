@@ -3,6 +3,7 @@ import { classroomService, type Classroom } from '../services/classroom.service'
 import DataTable from '../shared/components/DataTable'
 import Modal from '../shared/components/Modal'
 import FormInput from '../shared/components/FormInput'
+import { theme } from '../utils/theme'
 
 export default function Classrooms() {
   const [classrooms, setClassrooms] = useState<Classroom[]>([])
@@ -70,7 +71,7 @@ export default function Classrooms() {
     {
       header: 'Nombre del Espacio',
       render: (c: Classroom) => (
-        <span className="flex items-center gap-2 font-semibold text-slate-200">
+        <span className="flex items-center gap-2 font-semibold text-slate-700">
           <span className="text-sm">🏫</span> {c.name}
         </span>
       ),
@@ -85,7 +86,7 @@ export default function Classrooms() {
       render: (c: Classroom) => (
         <button 
           onClick={() => handleOpenModal(c)}
-          className="text-slate-400 hover:text-indigo-400 transition-colors"
+          className="text-slate-500 hover:text-indigo-400 transition-colors"
         >
           ✎ Editar
         </button>
@@ -97,14 +98,14 @@ export default function Classrooms() {
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-100">Aulas y Espacios</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-800">Aulas y Espacios</h1>
           <p className="text-xs text-slate-500 mt-1">Ver la infraestructura física del instituto.</p>
         </div>
         <button 
           onClick={() => handleOpenModal()} 
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all"
+          className={theme.button.primary}
         >
-          ➕ Registrar Aula
+          + Registrar Aula
         </button>
       </div>
 
@@ -130,7 +131,7 @@ export default function Classrooms() {
           <>
             <button 
               type="button" onClick={() => setModalOpen(false)}
-              className="px-4 py-2 border border-slate-800 bg-[#1c1d24] hover:bg-[#17181e] text-slate-400 rounded text-xs font-medium transition-colors"
+              className="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 rounded text-xs font-medium transition-colors"
             >
               Cancelar
             </button>

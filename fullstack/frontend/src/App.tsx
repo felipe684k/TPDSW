@@ -11,6 +11,8 @@ import AcademicYears from './admin/AcademicYears'
 import Login from './auth/Login'
 import StudentDashboard from './student/StudentDashboard'
 
+import { theme } from './utils/theme'
+
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('isLoggedIn') === 'true'
@@ -115,13 +117,13 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen bg-[#16171d] text-slate-200 font-sans overflow-hidden">
+    <div className={`flex h-screen text-slate-800 font-sans overflow-hidden ${theme.layout.appBackground}`}>
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => setIsLoggedIn(false)} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
       <main className="flex-1 flex flex-col overflow-hidden">
         <Topbar activeTab={activeTab} setIsSidebarOpen={setIsSidebarOpen} />
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className={`flex-1 overflow-y-auto p-6 ${theme.layout.mainContainer}`}>
           {activeTab === 'dashboard' && (
             <Dashboard
               enrollments={enrollments}

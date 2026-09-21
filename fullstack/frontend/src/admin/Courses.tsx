@@ -6,6 +6,7 @@ import Modal from '../shared/components/Modal'
 import FormInput from '../shared/components/FormInput'
 import FormSelect from '../shared/components/FormSelect'
 import CourseSections from './Courses/CourseSections'
+import { theme } from '../utils/theme'
 
 export default function Courses() {
   const [modalOpen, setModalOpen] = useState(false)
@@ -164,19 +165,19 @@ export default function Courses() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-100">Cursos</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-800">Cursos</h1>
           <p className="text-xs text-slate-500 mt-1">Gestión del catálogo de cursos y sus tarifas.</p>
         </div>
         <button 
           onClick={handleOpenModalCreate} 
-          className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all"
+          className={theme.button.primary}
         >
-          ➕ Registrar Curso 
+          + Registrar Curso 
         </button>
       </div>
 
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 bg-[#1c1d24] border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
+        <div className={`fixed bottom-6 right-6 z-50 bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
           toast.type === 'success' 
             ? 'border-emerald-500/50 text-emerald-400 shadow-emerald-900/20' 
             : 'border-rose-500/50 text-rose-400 shadow-rose-900/20'
@@ -189,7 +190,7 @@ export default function Courses() {
       {/* Courses list by level */}
       <div className="flex flex-col max-w-6xl mx-auto gap-8 w-full">
         {loading ? (
-          <div className="text-slate-400 text-sm">Cargando cursos...</div>
+          <div className="text-slate-500 text-sm">Cargando cursos...</div>
         ) : courses.length === 0 ? (
           <div className="text-slate-500 text-sm">No hay cursos registrados.</div>
         ) : (
@@ -219,11 +220,11 @@ export default function Courses() {
               return (
                 <div key={level.level_code} className="space-y-4">
                   {/* Level Header */}
-                  <div className="flex items-center gap-3 border-b border-slate-800 pb-2">
-                    <span className="w-8 h-8 rounded bg-indigo-900/50 flex items-center justify-center text-indigo-400 font-bold text-sm">
+                  <div className="flex items-center gap-3 border-b border-slate-200 pb-2">
+                    <span className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
                       {level.name.charAt(0).toUpperCase()}
                     </span>
-                    <h2 className="text-lg font-bold text-slate-200">{level.name}</h2>
+                    <h2 className="text-lg font-bold text-slate-700">{level.name}</h2>
                   </div>
 
                   {/* Level Course Cards */}
@@ -233,34 +234,34 @@ export default function Courses() {
                       const activeFee = sortedFees.length > 0 ? sortedFees[sortedFees.length - 1] : null;
                       
                       return (
-                        <div key={course.id_course} className="bg-[#1c1d24] rounded-xl border border-slate-800 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+                        <div key={course.id_course} className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow">
                           {/* Card Header (Clickable Folder) */}
                           <button 
                             onClick={() => setExpandedCourse(expandedCourse === course.id_course ? null : course.id_course!)}
-                            className="w-full p-5 flex flex-col md:flex-row items-center justify-between gap-6 cursor-pointer text-left"
+                            className="w-full p-5 flex flex-col md:flex-row items-center justify-between gap-6 cursor-pointer text-left focus:outline-none"
                           >
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full md:w-1/4">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-indigo-950/50 flex items-center justify-center text-indigo-400 border border-indigo-900/30">
+                                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-500 border border-amber-200">
                                   {expandedCourse === course.id_course ? '📂' : '📁'}
                                 </div>
-                                <h3 className="text-base font-bold text-slate-100">{course.course_name}</h3>
+                                <h3 className="text-base font-bold text-slate-800">{course.course_name}</h3>
                               </div>
                             </div>
 
                             {/* Course Attributes */}
-                            <div className="flex flex-row justify-around items-center w-full md:w-2/4 bg-[#17181e] p-3 rounded-lg border border-slate-800/60">
+                            <div className="flex flex-row justify-around items-center w-full md:w-2/4 bg-slate-50 p-3 rounded-lg border border-slate-200">
                               <div className="text-center">
-                                <span className="text-[10px] text-slate-400 block mb-1">Horas Semanales</span>
-                                <span className="text-sm font-semibold text-slate-300 font-mono">{course.weekly_hours} hrs</span>
+                                <span className="text-[10px] text-slate-500 block mb-1">Horas Semanales</span>
+                                <span className="text-sm font-semibold text-slate-600 font-mono">{course.weekly_hours} hrs</span>
                               </div>
-                              <div className="text-center px-4 border-l border-r border-slate-800/60">
-                                <span className="text-[10px] text-slate-400 block mb-1">Días x Semana</span>
-                                <span className="text-sm font-semibold text-slate-300 font-mono">{course.days_per_week}</span>
+                              <div className="text-center px-4 border-l border-r border-slate-200">
+                                <span className="text-[10px] text-slate-500 block mb-1">Días x Semana</span>
+                                <span className="text-sm font-semibold text-slate-600 font-mono">{course.days_per_week}</span>
                               </div>
                               <div className="text-center">
-                                <span className="text-[10px] text-slate-400 block mb-1">Matrícula</span>
-                                <span className="text-sm font-semibold text-slate-300">${Number(course.registration_fee).toLocaleString('en-US')}</span>
+                                <span className="text-[10px] text-slate-500 block mb-1">Matrícula</span>
+                                <span className="text-sm font-semibold text-slate-600">${Number(course.registration_fee).toLocaleString('en-US')}</span>
                               </div>
                             </div>
 
@@ -269,18 +270,18 @@ export default function Courses() {
                               <div>
                                 {activeFee ? (
                                   <>
-                                    <span className="text-[10px] text-slate-400 block">Cuota Actual</span>
-                                    <span className="text-base font-bold text-emerald-400">${Number(activeFee.monthly_cost).toLocaleString('en-US')}</span>
+                                    <span className="text-[10px] text-slate-500 block">Cuota Actual</span>
+                                    <span className="text-base font-bold text-emerald-600">${Number(activeFee.monthly_cost).toLocaleString('en-US')}</span>
                                     <div className="flex gap-2 mt-1">
                                       <div 
                                         onClick={(e) => { e.stopPropagation(); setSelectedCourse(course); setNewTuitionFeeAmount(''); setUpdateTuitionFeeModalOpen(true); }}
-                                        className="cursor-pointer text-[9px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded"
+                                        className="cursor-pointer text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded border border-slate-200 transition-colors"
                                       >
                                         Actualizar
                                       </div>
                                       <div 
                                         onClick={(e) => { e.stopPropagation(); setSelectedCourse(course); setHistoryModalOpen(true); }}
-                                        className="cursor-pointer text-[9px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded"
+                                        className="cursor-pointer text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded border border-slate-200 transition-colors"
                                       >
                                         Historial
                                       </div>
@@ -290,9 +291,19 @@ export default function Courses() {
                                   <span className="text-[10px] text-slate-500 block">Sin cuota</span>
                                 )}
                               </div>
-                              <div className="flex flex-col gap-2 border-l border-slate-800/60 pl-4 ml-2">
-                                <div onClick={(e) => { e.stopPropagation(); handleEdit(course); }} className="text-indigo-400 hover:text-indigo-300 font-semibold text-xs cursor-pointer text-left">Editar</div>
-                                <div onClick={(e) => { e.stopPropagation(); promptDelete(course.id_course!); }} className="text-rose-500 hover:text-rose-400 font-semibold text-xs cursor-pointer text-left">Desactivar</div>
+                              <div className="flex flex-col gap-1 border-l border-slate-200 pl-4 ml-4">
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleEdit(course); }} 
+                                  className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                                >
+                                  Editar
+                                </button>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); promptDelete(course.id_course!); }} 
+                                  className="text-xs font-semibold text-rose-500 hover:text-rose-700"
+                                >
+                                  Desactivar
+                                </button>
                               </div>
                             </div>
                           </button>
@@ -323,7 +334,7 @@ export default function Courses() {
           <>
             <button 
               type="button" onClick={() => setModalOpen(false)}
-              className="cursor-pointer px-4 py-2 border border-slate-800 bg-[#1c1d24] hover:bg-[#17181e] text-slate-400 rounded text-xs font-medium transition-colors"
+              className="cursor-pointer px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 rounded text-xs font-medium transition-colors"
             >
               Cancelar
             </button>
@@ -377,13 +388,13 @@ export default function Courses() {
           />
 
           {!editingId && (
-            <div className="flex flex-col gap-1.5 pt-3 mt-2 border-t border-slate-800/60">
+            <div className="flex flex-col gap-1.5 pt-3 mt-2 border-t border-slate-200">
               <label className="text-xs font-semibold text-indigo-400">Cuota Mensual Inicial ($) *</label>
               <input 
                 type="number" required placeholder="15000" min="0" step="0.01"
                 value={formData.initial_tuition_fee}
                 onChange={e => setFormData({...formData, initial_tuition_fee: e.target.value})}
-                className="border border-indigo-500/30 rounded p-2.5 text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
+                className="border border-indigo-500/30 rounded p-2.5 text-xs bg-white text-slate-700 outline-none focus:border-indigo-500"
               />
               <span className="text-[10px] text-slate-500">
                 Este valor será la cuota activa al crear el curso. Las actualizaciones de precio futuras pueden hacerse desde las acciones del curso.
@@ -402,7 +413,7 @@ export default function Courses() {
           <div className="flex gap-2 w-full">
             <button 
               onClick={() => setDeleteModalOpen(false)}
-              className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-medium transition-colors cursor-pointer"
+              className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition-colors cursor-pointer"
             >
               Cancelar
             </button>
@@ -419,8 +430,8 @@ export default function Courses() {
           <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl mx-auto mb-3">
             ⚠️
           </div>
-          <h3 className="text-lg font-bold text-slate-100 mb-2">Desactivar Curso</h3>
-          <p className="text-xs text-slate-400 mb-2">¿Estás seguro que deseas desactivar este curso? Quedará oculto de las listas activas.</p>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">Desactivar Curso</h3>
+          <p className="text-xs text-slate-500 mb-2">¿Estás seguro que deseas desactivar este curso? Quedará oculto de las listas activas.</p>
         </div>
       </Modal>
 
@@ -431,22 +442,22 @@ export default function Courses() {
         maxWidth="max-w-sm"
         footer={
           <>
-            <button type="button" onClick={() => setUpdateTuitionFeeModalOpen(false)} className="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-medium">Cancelar</button>
+            <button type="button" onClick={() => setUpdateTuitionFeeModalOpen(false)} className="flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium">Cancelar</button>
             <button type="submit" form="tuitionFeeForm" className="flex-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-medium">Guardar Cuota</button>
           </>
         }
       >
         <form id="tuitionFeeForm" onSubmit={handleUpdateTuitionFee} className="flex flex-col gap-4">
           <div>
-            <p className="text-xs text-slate-400 mb-1">Curso</p>
-            <p className="text-sm font-medium text-slate-200">{selectedCourse?.course_name}</p>
+            <p className="text-xs text-slate-500 mb-1">Curso</p>
+            <p className="text-sm font-medium text-slate-700">{selectedCourse?.course_name}</p>
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-400 block mb-1">Nuevo Costo Mensual ($)</label>
+            <label className="text-xs font-semibold text-slate-500 block mb-1">Nuevo Costo Mensual ($)</label>
             <input 
               type="number" required placeholder="ej. 18000" min="0" step="0.01"
               value={newTuitionFeeAmount} onChange={e => setNewTuitionFeeAmount(e.target.value)}
-              className="w-full border border-slate-800 bg-[#1c1d24] text-slate-200 rounded p-2 text-sm outline-none focus:border-emerald-500"
+              className="w-full border border-slate-200 bg-white text-slate-700 rounded p-2 text-sm outline-none focus:border-emerald-500"
             />
             <p className="text-[10px] text-slate-500 mt-1">La fecha de inicio se registrará automáticamente con la fecha y hora actual.</p>
           </div>
@@ -459,12 +470,12 @@ export default function Courses() {
         title="Historial de Cuotas"
         maxWidth="max-w-md"
         footer={
-          <button onClick={() => setHistoryModalOpen(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-medium w-full text-right">Cerrar</button>
+          <button onClick={() => setHistoryModalOpen(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium w-full text-right">Cerrar</button>
         }
       >
         <div>
           {selectedCourse && (
-            <p className="text-xs text-slate-400 mb-4">{selectedCourse.course_name}</p>
+            <p className="text-xs text-slate-500 mb-4">{selectedCourse.course_name}</p>
           )}
           {(!selectedCourse?.tuition_fees || selectedCourse.tuition_fees.length === 0) ? (
             <p className="text-sm text-slate-500 text-center py-4">No hay historial de cuotas para este curso.</p>
@@ -473,7 +484,7 @@ export default function Courses() {
               {[...selectedCourse.tuition_fees]
                 .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
                 .map((fee, idx) => (
-                  <div key={idx} className="flex justify-between items-center p-3 rounded-lg border border-slate-800 bg-[#17181e]">
+                  <div key={idx} className="flex justify-between items-center p-3 rounded-lg border border-slate-200 bg-slate-50">
                     <div>
                       <p className="text-sm font-bold text-emerald-400">${Number(fee.monthly_cost).toLocaleString('en-US')}</p>
                       <p className="text-xs text-slate-500">Desde: {formatDate(fee.start_date)}</p>

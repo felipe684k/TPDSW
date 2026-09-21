@@ -1,5 +1,6 @@
 import { SIDEBAR_TABS } from "./Sidebar.const"
 import SidebarButton from "./SidebarButton"
+import { theme } from "../utils/theme"
 
 interface SidebarProps {
   activeTab: 'dashboard' | 'enrollments' | 'students' | 'professors' | 'courses' | 'classrooms' | 'academic-years' | 'levels'
@@ -16,7 +17,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isSidebarOp
     { id: 'classrooms', label: 'Aulas', icon: '🚪' },
     { id: 'academic-years', label: 'Ciclos Lectivos', icon: '📅' },
     { id: 'enrollments', label: 'Inscripciones', icon: '📝' },
-    { id: 'students', label: 'Alumnos', icon: '👦' },
+    { id: 'students', label: 'Alumnos', icon: '👥' },
     { id: 'professors', label: 'Profesores', icon: '👨‍🏫' },
   ] as const;
 
@@ -29,12 +30,12 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isSidebarOp
         />
       )}
       
-      <aside className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 md:relative md:translate-x-0 w-60 bg-slate-950 text-slate-400 flex flex-col border-r border-slate-800 shrink-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="p-5 flex items-center gap-3 border-b border-slate-900">
-        <div className="w-9 h-9 rounded bg-indigo-600 flex items-center justify-center text-lg text-white font-bold">🎓</div>
+      <aside className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 md:relative md:translate-x-0 w-60 flex flex-col shrink-0 ${theme.sidebar.wrapper} ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`p-5 flex items-center gap-3 border-b ${theme.sidebar.header}`}>
+        <div className="w-9 h-9 rounded bg-blue-500 flex items-center justify-center text-lg text-white font-bold">🎓</div>
         <div>
           <strong className="block text-sm text-slate-100 font-bold">Instituto de Inglés</strong>
-          <span className="block text-xs text-slate-500">Gestión de Cursos</span>
+          <span className="block text-xs text-blue-200/70">Gestión de Cursos</span>
         </div>
       </div>
 

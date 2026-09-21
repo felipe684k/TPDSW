@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { API_BASE_URL } from '../config'
+import { theme } from '../utils/theme'
 
 export default function Topbar({ activeTab, setIsSidebarOpen }: { activeTab: string, setIsSidebarOpen: (isOpen: boolean) => void }) {
   const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking')
@@ -23,7 +24,7 @@ export default function Topbar({ activeTab, setIsSidebarOpen }: { activeTab: str
   }, [])
 
   return (
-    <header className="h-14 bg-[#1c1d24] border-b border-slate-800 px-6 flex items-center justify-between shadow-sm shrink-0">
+    <header className={`h-14 ${theme.topbar.wrapper} px-6 flex items-center justify-between shadow-sm shrink-0`}>
       <div className="flex items-center gap-2 text-xs text-slate-400">
         <button 
           onClick={() => setIsSidebarOpen(true)}

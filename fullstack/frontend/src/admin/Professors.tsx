@@ -3,6 +3,7 @@ import { professorService, type Professor } from '../services/professor.service'
 import DataTable from '../shared/components/DataTable'
 import Modal from '../shared/components/Modal'
 import FormInput from '../shared/components/FormInput'
+import { theme } from '../utils/theme'
 
 export default function Professors() {
   const [modalOpen, setModalOpen] = useState(false)
@@ -131,26 +132,26 @@ export default function Professors() {
   const columns = [
     {
       header: 'Profesor',
-      render: (p: Professor) => <span className="font-semibold text-slate-200">{p.last_name}, {p.first_name}</span>,
+      render: (p: Professor) => <span className="font-semibold text-slate-700">{p.last_name}, {p.first_name}</span>,
     },
     {
       header: 'DNI',
-      render: (p: Professor) => <span className="font-mono text-slate-400">{p.dni}</span>,
+      render: (p: Professor) => <span className="font-mono text-slate-500">{p.dni}</span>,
     },
     {
       header: 'Teléfono',
-      render: (p: Professor) => <span className="text-slate-400">{p.phone || '-'}</span>,
+      render: (p: Professor) => <span className="text-slate-500">{p.phone || '-'}</span>,
     },
     {
       header: 'Email',
-      render: (p: Professor) => <span className="text-slate-400">{p.email || '-'}</span>,
+      render: (p: Professor) => <span className="text-slate-500">{p.email || '-'}</span>,
     },
     {
       header: 'Acciones',
       render: (p: Professor) => (
         <div className="flex gap-2">
           <button onClick={() => handleEdit(p)} className="text-indigo-400 hover:text-indigo-300 font-semibold text-2xs cursor-pointer">Editar</button>
-          <span className="text-slate-300">|</span>
+          <span className="text-slate-600">|</span>
           <button onClick={() => confirmDelete(p.id!)} className="text-rose-500 hover:text-rose-400 font-semibold text-2xs cursor-pointer">Desactivar</button>
         </div>
       ),
@@ -163,19 +164,19 @@ export default function Professors() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-100">Profesores</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-800">Profesores</h1>
           <p className="text-xs text-slate-500 mt-1">Administración del cuerpo docente del instituto.</p>
         </div>
         <button 
           onClick={handleOpenModalCreate} 
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-medium shadow transition-all"
+          className={theme.button.primary}
         >
-          ➕ Registrar Profesor
+          + Registrar Profesor
         </button>
       </div>
 
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 bg-[#1c1d24] border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
+        <div className={`fixed bottom-6 right-6 z-50 bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
           toast.type === 'success' 
             ? 'border-emerald-500/50 text-emerald-400 shadow-emerald-900/20' 
             : 'border-rose-500/50 text-rose-400 shadow-rose-900/20'
@@ -186,15 +187,15 @@ export default function Professors() {
       )}
 
       {/* Search and Filters */}
-      <div className="bg-[#1c1d24] p-4 rounded-xl border border-slate-800 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
         <div className="relative w-full md:w-80">
-          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs">🔍</span>
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 text-xs">🔍</span>
           <input 
             type="text" 
             placeholder="Buscar profesor por nombre o DNI..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 border border-slate-800 rounded text-xs bg-[#1c1d24] text-slate-200 outline-none focus:border-indigo-500"
+            className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded text-xs bg-white text-slate-700 outline-none focus:border-indigo-500"
           />
         </div>
       </div>
@@ -216,7 +217,7 @@ export default function Professors() {
           <>
             <button 
               type="button" onClick={() => setModalOpen(false)}
-              className="px-4 py-2 border border-slate-800 bg-[#1c1d24] hover:bg-[#17181e] text-slate-400 rounded text-xs font-medium transition-colors cursor-pointer"
+              className="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 rounded text-xs font-medium transition-colors cursor-pointer"
             >
               Cancelar
             </button>
@@ -231,7 +232,7 @@ export default function Professors() {
       >
         <form id="professorForm" onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-3">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Datos Personales</div>
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">Datos Personales</div>
             <div className="grid grid-cols-2 gap-3">
               <FormInput 
                 label="Apellido *"
@@ -255,7 +256,7 @@ export default function Professors() {
           </div>
 
           <div className="space-y-3">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Contacto</div>
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">Contacto</div>
             <div className="grid grid-cols-2 gap-3">
               <FormInput 
                 label="Teléfono"
@@ -280,7 +281,7 @@ export default function Professors() {
             <button 
               type="button" 
               onClick={() => { setDeleteModalOpen(false); setProfessorToDelete(null); }}
-              className="px-4 py-2 border border-slate-800 bg-[#1c1d24] hover:bg-[#17181e] text-slate-400 rounded text-xs font-medium transition-colors cursor-pointer"
+              className="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 rounded text-xs font-medium transition-colors cursor-pointer"
             >
               Cancelar
             </button>
@@ -298,8 +299,8 @@ export default function Professors() {
           <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-4 text-rose-500 text-xl">
             ⚠️
           </div>
-          <h2 className="text-lg font-bold text-slate-100 mb-2">¿Desactivar profesor?</h2>
-          <p className="text-xs text-slate-400 mb-2">
+          <h2 className="text-lg font-bold text-slate-800 mb-2">¿Desactivar profesor?</h2>
+          <p className="text-xs text-slate-500 mb-2">
             Esta acción deshabilitará al profesor en el sistema. Podrá ser reactivado más tarde si es necesario.
           </p>
         </div>

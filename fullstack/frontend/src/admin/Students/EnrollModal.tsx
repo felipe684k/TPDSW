@@ -93,7 +93,7 @@ export default function EnrollModal({ isOpen, onClose, studentId, onSuccess }: E
         <>
           <button 
             type="button" onClick={onClose}
-            className="flex-1 px-4 py-2 border border-slate-800 bg-[#1c1d24] hover:bg-[#17181e] text-slate-400 rounded text-xs font-medium transition-colors cursor-pointer"
+            className="flex-1 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 rounded text-xs font-medium transition-colors cursor-pointer"
           >
             Cancelar
           </button>
@@ -109,11 +109,11 @@ export default function EnrollModal({ isOpen, onClose, studentId, onSuccess }: E
     >
       <form id="enrollForm" onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="text-xs font-semibold text-slate-400 block mb-1">Ciclo Lectivo</label>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">Ciclo Lectivo</label>
           <select 
             value={selectedAcademicYearId} 
             onChange={handleAcademicYearChange}
-            className="w-full border border-slate-700 bg-[#17181e] text-slate-200 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
+            className="w-full border border-slate-300 bg-slate-50 text-slate-700 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
           >
             <option value="">-- Seleccionar --</option>
             {academicYears.map(ay => (
@@ -123,12 +123,12 @@ export default function EnrollModal({ isOpen, onClose, studentId, onSuccess }: E
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-slate-400 block mb-1">Curso *</label>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">Curso *</label>
           <select 
             required
             value={selectedCourseId} 
             onChange={handleCourseChange}
-            className="w-full border border-slate-700 bg-[#17181e] text-slate-200 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
+            className="w-full border border-slate-300 bg-slate-50 text-slate-700 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
             disabled={loading || availableCourses.length === 0}
           >
             <option value="">{loading ? 'Cargando cursos...' : '-- Seleccionar Curso --'}</option>
@@ -142,12 +142,12 @@ export default function EnrollModal({ isOpen, onClose, studentId, onSuccess }: E
         </div>
 
         <div>
-          <label className={`text-xs font-semibold block mb-1 ${!selectedCourseId ? 'text-slate-600' : 'text-slate-400'}`}>Comisión *</label>
+          <label className={`text-xs font-semibold block mb-1 ${!selectedCourseId ? 'text-slate-600' : 'text-slate-500'}`}>Comisión *</label>
           <select 
             required
             value={selectedSectionId} 
             onChange={e => setSelectedSectionId(Number(e.target.value))}
-            className="w-full border border-slate-700 bg-[#17181e] text-slate-200 rounded p-2.5 text-xs outline-none focus:border-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-900"
+            className="w-full border border-slate-300 bg-slate-50 text-slate-700 rounded p-2.5 text-xs outline-none focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100"
             disabled={!selectedCourseId || availableSections.length === 0}
           >
             {!selectedCourseId ? (
@@ -162,17 +162,17 @@ export default function EnrollModal({ isOpen, onClose, studentId, onSuccess }: E
             ))}
           </select>
           {availableSections.length === 0 && selectedCourseId && (
-            <p className="text-[10px] text-rose-400 mt-1">No hay comisiones para el curso seleccionado.</p>
+            <p className="text-[10px] text-rose-500 mt-1">No hay comisiones para el curso seleccionado.</p>
           )}
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-slate-400 block mb-1">Método de Pago (Matrícula) *</label>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">Método de Pago (Matrícula) *</label>
           <select 
             required
             value={paymentMethod} 
             onChange={e => setPaymentMethod(e.target.value)}
-            className="w-full border border-slate-700 bg-[#17181e] text-slate-200 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
+            className="w-full border border-slate-300 bg-slate-50 text-slate-700 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
           >
             <option value="">-- Seleccionar Método --</option>
             <option value="cash">Efectivo</option>
@@ -181,7 +181,7 @@ export default function EnrollModal({ isOpen, onClose, studentId, onSuccess }: E
           </select>
         </div>
 
-        <div className="bg-indigo-900/20 border border-indigo-500/30 p-3 rounded-lg text-xs text-indigo-200">
+        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg text-xs text-blue-700">
           <strong>Nota:</strong> Al confirmar, el sistema generará automáticamente la deuda por el costo de la matrícula de la comisión seleccionada.
         </div>
       </form>

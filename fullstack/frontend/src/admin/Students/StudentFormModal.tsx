@@ -24,7 +24,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
         <>
           <button
             type="button" onClick={onClose}
-            className="px-4 py-2 border border-slate-800 bg-[#1c1d24] hover:bg-[#17181e] text-slate-400 rounded text-xs font-medium transition-colors cursor-pointer"
+            className="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 rounded text-xs font-medium transition-colors cursor-pointer"
           >Cancelar</button>
           <button
             type="submit" form="student-form"
@@ -43,7 +43,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
             </div>
           )}
           
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Datos Personales</div>
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">Datos Personales</div>
           <div className="grid grid-cols-2 gap-3">
             <FormInput
               label="Apellido *"
@@ -72,7 +72,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
         </div>
 
         <div className="space-y-3">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Contacto</div>
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">Contacto</div>
           <div className="grid grid-cols-2 gap-3">
             <FormInput
               label="Teléfono *"
@@ -89,7 +89,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
 
         {!editingId && (
           <div className="space-y-3">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 pb-1">Académico</div>
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">Académico</div>
             <FormSelect
               label="Nivel de Ingreso"
               name="level_code" value={formData.level_code} onChange={onChange}
