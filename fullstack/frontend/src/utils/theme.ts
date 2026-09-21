@@ -1,19 +1,21 @@
 export const theme = {
   layout: {
-    // Rich Bitrix24-style gradient background
-    appBackground: "bg-gradient-to-br from-[#0b1b36] via-[#1a365d] to-[#2563eb]",
-    mainContainer: "bg-slate-50/95 backdrop-blur-md shadow-inner", // Light frosted glass effect
+    // Bitrix24-style photographic background with overlay
+    appBackground: "bg-[url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat relative before:absolute before:inset-0 before:bg-slate-900/40 before:backdrop-blur-[2px]",
+    // Make sure main elements sit above the background overlay
+    mainContainer: "bg-slate-50/95 shadow-inner relative z-10 rounded-tl-2xl border-t border-l border-white/50", // Light frosted glass effect with rounded top-left
     pageHeader: "text-slate-800",
     pageSubheader: "text-slate-500",
   },
   sidebar: {
-    wrapper: "bg-[#111827]/85 backdrop-blur-md text-slate-300 border-r border-slate-700/50",
-    header: "border-slate-700/50",
-    activeItem: "bg-blue-500/20 text-blue-400 border-l-2 border-blue-400",
-    inactiveItem: "hover:bg-slate-800/50 hover:text-slate-200 text-slate-400",
+    wrapper: "bg-slate-900/60 backdrop-blur-md text-slate-200 border-r border-white/10 relative z-10",
+    header: "border-white/10",
+    activeItem: "bg-blue-500/80 text-white shadow-sm border-l-2 border-cyan-300 backdrop-blur-sm",
+    inactiveItem: "hover:bg-white/10 hover:text-white text-slate-300 transition-colors",
   },
   topbar: {
-    wrapper: "bg-[#111827]/85 backdrop-blur-md text-slate-300 border-b border-slate-700/50",
+    wrapper: "bg-transparent text-white border-b border-transparent relative z-10 backdrop-blur-none", // Made transparent to show the background image
+    title: "text-white font-semibold drop-shadow-md",
   },
   card: {
     wrapper: "bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow",
@@ -31,7 +33,7 @@ export const theme = {
   },
   button: {
     base: "inline-flex items-center justify-center rounded text-xs font-medium transition-all focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
-    primary: "bg-blue-500 hover:bg-blue-600 text-white shadow-sm px-4 py-2",
+    primary: "bg-blue-600 hover:bg-blue-700 text-white shadow-sm px-4 py-2",
     secondary: "bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-4 py-2",
     danger: "bg-rose-500 hover:bg-rose-600 text-white shadow-sm px-4 py-2",
     ghost: "bg-transparent hover:bg-slate-100 text-slate-600 px-4 py-2",
