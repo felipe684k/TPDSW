@@ -2,8 +2,8 @@ import { SIDEBAR_TABS } from "./Sidebar.const"
 import SidebarButton from "./SidebarButton"
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'enrollments' | 'students' | 'professors' | 'courses' | 'sections' | 'payments' | 'classrooms' | 'academic-years' | 'levels'
-  setActiveTab: (tab: 'dashboard' | 'enrollments' | 'students' | 'professors' | 'courses' | 'sections' | 'payments' | 'classrooms' | 'academic-years' | 'levels') => void
+  activeTab: 'dashboard' | 'enrollments' | 'students' | 'professors' | 'courses' | 'classrooms' | 'academic-years' | 'levels'
+  setActiveTab: (tab: 'dashboard' | 'enrollments' | 'students' | 'professors' | 'courses' | 'classrooms' | 'academic-years' | 'levels') => void
   onLogout: () => void
   isSidebarOpen: boolean
   setIsSidebarOpen: (isOpen: boolean) => void
@@ -11,15 +11,12 @@ interface SidebarProps {
 
 export default function Sidebar({ activeTab, setActiveTab, onLogout, isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
   const tabs = [
-    { id: 'dashboard', label: 'Panel', icon: '🏠', section: 'General' },
-    { id: 'divider', section: 'Académico' },
-    { id: 'courses', label: 'Cursos', icon: '📚' },
-    { id: SIDEBAR_TABS.SECTIONS, label: 'Comisiones', icon: '🏷️' },
-    { id: 'classrooms', label: 'Aulas', icon: '🏫' },
+    { id: 'dashboard', label: 'Panel', icon: '🏠' },
+    { id: 'courses', label: 'Cursos', icon: '🎓' },
+    { id: 'classrooms', label: 'Aulas', icon: '🚪' },
     { id: 'academic-years', label: 'Ciclos Lectivos', icon: '📅' },
-    { id: 'payments', label: 'Pagos', icon: '💳' },
     { id: 'enrollments', label: 'Inscripciones', icon: '📝' },
-    { id: 'students', label: 'Alumnos', icon: '👥' },
+    { id: 'students', label: 'Alumnos', icon: '👦' },
     { id: 'professors', label: 'Profesores', icon: '👨‍🏫' },
   ] as const;
 

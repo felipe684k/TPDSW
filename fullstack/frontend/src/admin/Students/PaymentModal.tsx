@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { API_BASE_URL } from '../config'
-import { paymentService, type Installment } from '../services/payment.service'
+import { API_BASE_URL } from '../../config'
+import { paymentService, type Installment } from '../../services/payment.service'
 
 interface Student {
   id: number
@@ -11,9 +11,15 @@ interface Student {
   admissionMonthIndex?: number
 }
 
-export default function Payments() {
+interface PaymentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  studentId: number | null;
+}
+
+export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModalProps) {
   const [studentsList, setStudentsList] = useState<Student[]>([])
-  const [selectedStudent, setSelectedStudent] = useState<number | null>(null)
+  const [selectedStudent, setSelectedStudent] = useState<number | null>(studentId)
   const [installments, setInstallments] = useState<Installment[]>([])
   const [enrollmentId, setEnrollmentId] = useState<number | null>(null)
   const [hasEnrollment, setHasEnrollment] = useState<boolean>(true)
@@ -26,8 +32,17 @@ export default function Payments() {
   const [loading, setLoading] = useState<boolean>(false)
 
   useEffect(() => {
-    fetchStudents()
-  }, [])
+    if (isOpen) {
+      fetchStudents()
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (isOpen && studentId && studentsList.length > 0) {
+      setSelectedStudent(studentId)
+      loadAccountStatus(studentId)
+    }
+  }, [isOpen, studentId, studentsList.length])
 
   const fetchStudents = async () => {
     try {
@@ -119,19 +134,6 @@ export default function Payments() {
     setLoading(false)
   }
 
-  const handleSelectStudent = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const id = parseInt(e.target.value)
-    if (!id) {
-      setSelectedStudent(null)
-      setInstallments([])
-      setEnrollmentId(null)
-      setHasEnrollment(true)
-      return
-    }
-    setSelectedStudent(id)
-    loadAccountStatus(id)
-  }
-
   const handleOpenPaymentModal = (installment: Installment) => {
     setPaymentModal(installment)
     setPaymentMethod('')
@@ -186,28 +188,21 @@ export default function Payments() {
 
   const currentStudent = studentsList.find(a => a.id === selectedStudent)
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-100">Cobro de Cuotas</h1>
-          <p className="text-xs text-slate-500 mt-1">Gestión de pagos mensuales para el Ciclo Lectivo 2026.</p>
-        </div>
-      </div>
+  if (!isOpen) return null;
 
-      {/* Student Selector */}
-      <div className="bg-[#1c1d24] p-5 rounded-xl border border-slate-800 shadow-sm flex flex-col gap-3">
-        <label className="text-xs font-semibold text-slate-300">Buscar Alumno Inscripto</label>
-        <select 
-          onChange={handleSelectStudent}
-          className="border border-slate-800 rounded-lg p-3 text-sm bg-[#17181e] text-slate-200 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all max-w-md"
-        >
-          <option value="">— Seleccionar Alumno —</option>
-          {studentsList.map(a => (
-            <option key={a.id} value={a.id}>{a.fullName} (DNI: {a.dni}) - {a.course}</option>
-          ))}
-        </select>
-      </div>
+  return (
+    <div className="fixed inset-0 bg-black/60 z-40 flex justify-end">
+      <div className="bg-[#1c1d24] w-full max-w-3xl h-full shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-right duration-300">
+        
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-slate-100">Estado de Cuenta</h1>
+            <p className="text-xs text-slate-500 mt-1">Gestión de pagos mensuales para el Ciclo Lectivo 2026.</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white bg-slate-800 p-2 rounded-lg cursor-pointer">
+            Cerrar ✕
+          </button>
+        </div>
 
       {/* Warning if no enrollment */}
       {selectedStudent && !hasEnrollment && !loading && (
@@ -489,7 +484,7 @@ export default function Payments() {
           </div>
         </div>
       )}
-
+      </div>
     </div>
   )
 }

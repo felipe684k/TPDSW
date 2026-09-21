@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
 import Sidebar from './shared/Sidebar'
-import Sections from './admin/Sections'
-import Payments from './admin/Payments'
 import Topbar from './shared/Topbar'
 import Dashboard from './admin/Dashboard'
 import Enrollments from './admin/Enrollments'
@@ -27,7 +25,7 @@ export default function App() {
     return saved ? JSON.parse(saved) : null
   })
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'enrollments' | 'students' | 'professors' | 'courses' | 'sections' | 'payments' | 'classrooms' | 'academic-years' | 'levels'>(() => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'enrollments' | 'students' | 'professors' | 'courses' | 'classrooms' | 'academic-years' | 'levels'>(() => {
     return (localStorage.getItem('activeTab') as any) || 'dashboard'
   })
 
@@ -156,14 +154,6 @@ export default function App() {
 
           {activeTab === 'academic-years' && (
             <AcademicYears />
-          )}
-
-          {activeTab === 'sections' && (
-            <Sections />
-          )}
-
-          {activeTab === 'payments' && (
-            <Payments />
           )}
         </div>
       </main>

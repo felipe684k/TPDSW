@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { studentService, type Student } from '../../services/student.service'
 import ConfirmDeleteModal from '../../shared/ConfirmDeleteModal'
 import StudentFormModal from './StudentFormModal'
+import PaymentModal from './PaymentModal'
+import EnrollModal from './EnrollModal'
 import DataTable from '../../shared/components/DataTable'
 
 export default function Students() {
@@ -12,6 +14,8 @@ export default function Students() {
 
   const [editingId, setEditingId] = useState<number | null>(null)
   const [studentToDelete, setStudentToDelete] = useState<number | null>(null) 
+  const [paymentStudentId, setPaymentStudentId] = useState<number | null>(null)
+  const [enrollStudentId, setEnrollStudentId] = useState<number | null>(null)
   
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [toast, setToast] = useState<{text: string, type: 'success' | 'danger'} | null>(null)
@@ -161,7 +165,21 @@ export default function Students() {
     {
       header: 'Acciones',
       render: (s: Student) => (
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <button 
+            onClick={() => setPaymentStudentId(s.id!)}
+            className="text-emerald-400 hover:text-emerald-300 font-semibold text-2xs cursor-pointer"
+          >
+            💰 Pagar
+          </button>
+          <span className="text-slate-300">|</span>
+          <button 
+            onClick={() => setEnrollStudentId(s.id!)}
+            className="text-blue-400 hover:text-blue-300 font-semibold text-2xs cursor-pointer"
+          >
+            📝 Inscribir
+          </button>
+          <span className="text-slate-300">|</span>
           <button 
             onClick={() => handleEdit(s)}
             className="text-indigo-400 hover:text-indigo-300 font-semibold text-2xs cursor-pointer"
@@ -245,6 +263,23 @@ export default function Students() {
         onClose={() => setStudentToDelete(null)}
         onConfirm={handleDelete}
         message="Esta acción desactivará al alumno del sistema. ¿Estás seguro de que deseas continuar?"
+      />
+
+      <PaymentModal
+        isOpen={paymentStudentId != null}
+        onClose={() => setPaymentStudentId(null)}
+        studentId={paymentStudentId}
+      />
+
+      <EnrollModal
+        isOpen={enrollStudentId != null}
+        onClose={() => setEnrollStudentId(null)}
+        studentId={enrollStudentId}
+        onSuccess={() => {
+          setEnrollStudentId(null)
+          setToast({ text: "Inscripción registrada (Simulación)", type: 'success' })
+          setTimeout(() => setToast(null), 3000)
+        }}
       />
     </div>
   )

@@ -5,12 +5,14 @@ import { tuitionFeeService } from '../services/tuitionFee.service'
 import Modal from '../shared/components/Modal'
 import FormInput from '../shared/components/FormInput'
 import FormSelect from '../shared/components/FormSelect'
+import CourseSections from './Courses/CourseSections'
 
 export default function Courses() {
   const [modalOpen, setModalOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [historyModalOpen, setHistoryModalOpen] = useState(false)
   const [updateTuitionFeeModalOpen, setUpdateTuitionFeeModalOpen] = useState(false)
+  const [expandedCourse, setExpandedCourse] = useState<number | null>(null)
   
   const [courses, setCourses] = useState<Course[]>([])
   const [levels, setLevels] = useState<Level[]>([])
@@ -231,61 +233,76 @@ export default function Courses() {
                       const activeFee = sortedFees.length > 0 ? sortedFees[sortedFees.length - 1] : null;
                       
                       return (
-                        <div key={course.id_course} className="bg-[#1c1d24] p-5 rounded-xl border border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-md transition-shadow">
-                          {/* Card Header */}
-                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full md:w-1/4">
-                            <div>
-                              <h3 className="text-base font-bold text-slate-100">{course.course_name}</h3>
+                        <div key={course.id_course} className="bg-[#1c1d24] rounded-xl border border-slate-800 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+                          {/* Card Header (Clickable Folder) */}
+                          <button 
+                            onClick={() => setExpandedCourse(expandedCourse === course.id_course ? null : course.id_course!)}
+                            className="w-full p-5 flex flex-col md:flex-row items-center justify-between gap-6 cursor-pointer text-left"
+                          >
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full md:w-1/4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-indigo-950/50 flex items-center justify-center text-indigo-400 border border-indigo-900/30">
+                                  {expandedCourse === course.id_course ? '📂' : '📁'}
+                                </div>
+                                <h3 className="text-base font-bold text-slate-100">{course.course_name}</h3>
+                              </div>
                             </div>
-                          </div>
 
-                          {/* Course Attributes */}
-                          <div className="flex flex-row justify-around items-center w-full md:w-2/4 bg-[#17181e] p-3 rounded-lg border border-slate-800/60">
-                            <div className="text-center">
-                              <span className="text-[10px] text-slate-400 block mb-1">Horas Semanales</span>
-                              <span className="text-sm font-semibold text-slate-300 font-mono">{course.weekly_hours} hrs</span>
+                            {/* Course Attributes */}
+                            <div className="flex flex-row justify-around items-center w-full md:w-2/4 bg-[#17181e] p-3 rounded-lg border border-slate-800/60">
+                              <div className="text-center">
+                                <span className="text-[10px] text-slate-400 block mb-1">Horas Semanales</span>
+                                <span className="text-sm font-semibold text-slate-300 font-mono">{course.weekly_hours} hrs</span>
+                              </div>
+                              <div className="text-center px-4 border-l border-r border-slate-800/60">
+                                <span className="text-[10px] text-slate-400 block mb-1">Días x Semana</span>
+                                <span className="text-sm font-semibold text-slate-300 font-mono">{course.days_per_week}</span>
+                              </div>
+                              <div className="text-center">
+                                <span className="text-[10px] text-slate-400 block mb-1">Matrícula</span>
+                                <span className="text-sm font-semibold text-slate-300">${Number(course.registration_fee).toLocaleString('en-US')}</span>
+                              </div>
                             </div>
-                            <div className="text-center px-4 border-l border-r border-slate-800/60">
-                              <span className="text-[10px] text-slate-400 block mb-1">Días x Semana</span>
-                              <span className="text-sm font-semibold text-slate-300 font-mono">{course.days_per_week}</span>
-                            </div>
-                            <div className="text-center">
-                              <span className="text-[10px] text-slate-400 block mb-1">Matrícula</span>
-                              <span className="text-sm font-semibold text-slate-300">${Number(course.registration_fee).toLocaleString('en-US')}</span>
-                            </div>
-                          </div>
 
-                          {/* Tuition Fee and Actions */}
-                          <div className="flex flex-row justify-between items-center w-full md:w-1/4">
-                            <div>
-                              {activeFee ? (
-                                <>
-                                  <span className="text-[10px] text-slate-400 block">Cuota Actual</span>
-                                  <span className="text-base font-bold text-emerald-400">${Number(activeFee.monthly_cost).toLocaleString('en-US')}</span>
-                                  <div className="flex gap-2 mt-1">
-                                    <button 
-                                      onClick={() => { setSelectedCourse(course); setNewTuitionFeeAmount(''); setUpdateTuitionFeeModalOpen(true); }}
-                                      className="cursor-pointer text-[9px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded"
-                                    >
-                                      Actualizar
-                                    </button>
-                                    <button 
-                                      onClick={() => { setSelectedCourse(course); setHistoryModalOpen(true); }}
-                                      className="cursor-pointer text-[9px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded"
-                                    >
-                                      Historial
-                                    </button>
-                                  </div>
-                                </>
-                              ) : (
-                                <span className="text-[10px] text-slate-500 block">Sin cuota</span>
-                              )}
+                            {/* Tuition Fee and Actions */}
+                            <div className="flex flex-row justify-between items-center w-full md:w-1/4">
+                              <div>
+                                {activeFee ? (
+                                  <>
+                                    <span className="text-[10px] text-slate-400 block">Cuota Actual</span>
+                                    <span className="text-base font-bold text-emerald-400">${Number(activeFee.monthly_cost).toLocaleString('en-US')}</span>
+                                    <div className="flex gap-2 mt-1">
+                                      <div 
+                                        onClick={(e) => { e.stopPropagation(); setSelectedCourse(course); setNewTuitionFeeAmount(''); setUpdateTuitionFeeModalOpen(true); }}
+                                        className="cursor-pointer text-[9px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded"
+                                      >
+                                        Actualizar
+                                      </div>
+                                      <div 
+                                        onClick={(e) => { e.stopPropagation(); setSelectedCourse(course); setHistoryModalOpen(true); }}
+                                        className="cursor-pointer text-[9px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded"
+                                      >
+                                        Historial
+                                      </div>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <span className="text-[10px] text-slate-500 block">Sin cuota</span>
+                                )}
+                              </div>
+                              <div className="flex flex-col gap-2 border-l border-slate-800/60 pl-4 ml-2">
+                                <div onClick={(e) => { e.stopPropagation(); handleEdit(course); }} className="text-indigo-400 hover:text-indigo-300 font-semibold text-xs cursor-pointer text-left">Editar</div>
+                                <div onClick={(e) => { e.stopPropagation(); promptDelete(course.id_course!); }} className="text-rose-500 hover:text-rose-400 font-semibold text-xs cursor-pointer text-left">Desactivar</div>
+                              </div>
                             </div>
-                            <div className="flex flex-col gap-2 border-l border-slate-800/60 pl-4 ml-2">
-                              <button onClick={() => handleEdit(course)} className="text-indigo-400 hover:text-indigo-300 font-semibold text-xs cursor-pointer text-left">Editar</button>
-                              <button onClick={() => promptDelete(course.id_course!)} className="text-rose-500 hover:text-rose-400 font-semibold text-xs cursor-pointer text-left">Desactivar</button>
+                          </button>
+                          
+                          {/* Expanded Content: Sections */}
+                          {expandedCourse === course.id_course && (
+                            <div className="px-5 pb-5">
+                              <CourseSections courseId={course.id_course!} />
                             </div>
-                          </div>
+                          )}
                         </div>
                       )
                     })}
