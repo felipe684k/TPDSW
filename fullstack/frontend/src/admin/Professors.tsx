@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { professorService, type Professor } from '../services/professor.service'
+import { professorService, type Professor } from '../biz/services/professor.service'
 import DataTable from '../shared/components/DataTable'
 import Modal from '../shared/components/Modal'
 import FormInput from '../shared/components/FormInput'
-import { theme } from '../utils/theme'
+import { theme } from '../shared/theme'
 
 export default function Professors() {
   const [modalOpen, setModalOpen] = useState(false)

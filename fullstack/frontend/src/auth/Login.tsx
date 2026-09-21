@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { API_BASE_URL } from '../config'
+import { API_BASE_URL } from '../biz/config'
 
 interface LoginProps {
   onLogin: (role: 'ADMIN' | 'STUDENT', userData: any) => void

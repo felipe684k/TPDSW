@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { sectionService, type Section } from '../../services/section.service'
-import { academicYearService, type AcademicYear } from '../../services/academicYear.service'
+import { sectionService, type Section } from '../../biz/services/section.service'
+import { academicYearService, type AcademicYear } from '../../biz/services/academicYear.service'
 import Modal from '../../shared/components/Modal'
 
 interface EnrollModalProps {
@@ -10,7 +10,7 @@ interface EnrollModalProps {
   onSuccess: () => void
 }
 
-export default function EnrollModal({ isOpen, onClose, studentId, onSuccess }: EnrollModalProps) {
+export default function EnrollModal({ isOpen, onClose, onSuccess }: EnrollModalProps) {
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
   const [sections, setSections] = useState<Section[]>([])
   
@@ -158,7 +158,7 @@ export default function EnrollModal({ isOpen, onClose, studentId, onSuccess }: E
               <option value="">-- Seleccionar Comisión --</option>
             )}
             {availableSections.map(s => (
-              <option key={s.id_section} value={s.id_section}>{s.name} (Cupos: {s.capacity})</option>
+              <option key={s.id_section} value={s.id_section}>{s.name} (Cupos: {(s as any).capacity})</option>
             ))}
           </select>
           {availableSections.length === 0 && selectedCourseId && (

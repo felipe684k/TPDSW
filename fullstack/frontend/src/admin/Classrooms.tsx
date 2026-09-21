@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { classroomService, type Classroom } from '../services/classroom.service'
+import { classroomService, type Classroom } from '../biz/services/classroom.service'
 import DataTable from '../shared/components/DataTable'
 import Modal from '../shared/components/Modal'
 import FormInput from '../shared/components/FormInput'
-import { theme } from '../utils/theme'
+import { theme } from '../shared/theme'
 
 export default function Classrooms() {
   const [classrooms, setClassrooms] = useState<Classroom[]>([])

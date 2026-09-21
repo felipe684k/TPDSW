@@ -1,5 +1,5 @@
 import React from 'react'
-import { theme } from '../../utils/theme'
+import { theme } from '../theme'
 
 interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label: string;

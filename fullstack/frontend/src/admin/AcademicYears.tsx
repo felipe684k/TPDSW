@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { academicYearService, type AcademicYear } from '../services/academicYear.service'
+import { academicYearService, type AcademicYear } from '../biz/services/academicYear.service'
 import Modal from '../shared/components/Modal'
 import FormInput from '../shared/components/FormInput'
-import { theme } from '../utils/theme'
+import { theme } from '../shared/theme'
 
 export default function AcademicYears() {
   const [modalOpen, setModalOpen] = useState(false)

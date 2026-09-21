@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { sectionService, type Section, type Classroom } from '../../services/section.service'
-import { classroomService } from '../../services/classroom.service'
-import { academicYearService, type AcademicYear } from '../../services/academicYear.service'
-import { professorService, type Professor as User } from '../../services/professor.service'
+import { sectionService, type Section, type Classroom } from '../../biz/services/section.service'
+import { classroomService } from '../../biz/services/classroom.service'
+import { academicYearService, type AcademicYear } from '../../biz/services/academicYear.service'
+import { professorService, type Professor as User } from '../../biz/services/professor.service'
 
 interface CourseSectionsProps {
   courseId: number;

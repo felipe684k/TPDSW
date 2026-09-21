@@ -1,13 +1,14 @@
+import { SIDEBAR_TABS } from '../shared/Sidebar.const'
 import { useEffect, useState } from 'react'
 import type { Enrollment } from './Enrollments'
-import { studentService } from '../services/student.service'
-import { paymentService } from '../services/payment.service'
-import { API_BASE_URL } from '../config'
-import { theme } from '../utils/theme'
+import { studentService } from '../biz/services/student.service'
+import { paymentService } from '../biz/services/payment.service'
+import { API_BASE_URL } from '../biz/config'
+import { theme } from '../shared/theme'
 
 interface DashboardProps {
   enrollments?: Enrollment[]
-  setActiveTab: (tab: 'dashboard' | 'enrollments' | 'students' | 'professors' | 'courses' | 'sections' | 'payments' | 'classrooms' | 'academic-years') => void
+  setActiveTab: (tab: import('../shared/Sidebar.const').SidebarTab) => void
 }
 
 export default function Dashboard({ setActiveTab }: DashboardProps) {
@@ -42,7 +43,7 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
           <p className={`text-xs mt-1 ${theme.layout.pageSubheader}`}>Resumen general del instituto de inglés.</p>
         </div>
         <button 
-          onClick={() => setActiveTab('enrollments')} 
+          onClick={() => setActiveTab(SIDEBAR_TABS.ENROLLMENTS)} 
           className={theme.button.primary}
         >
           Ir a Inscripciones ➔
@@ -83,17 +84,17 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
 
       {/* Recent Enrollments */}
       <div className={`${theme.card.wrapper} overflow-hidden`}>
-        <div className={`p-4 border-b ${theme.card.border} flex justify-between items-center`}>
+        <div className={`p-4 border-b border-slate-200 flex justify-between items-center`}>
           <div>
             <h3 className={`text-sm font-semibold ${theme.card.header}`}>Inscripciones Recientes</h3>
             <p className="text-[11px] text-slate-500">Lista de alumnos inscriptos recientemente</p>
           </div>
-          <button onClick={() => setActiveTab('enrollments')} className="cursor-pointer text-xs text-indigo-600 hover:text-indigo-700 font-medium">Ver todo →</button>
+          <button onClick={() => setActiveTab(SIDEBAR_TABS.ENROLLMENTS)} className="cursor-pointer text-xs text-indigo-600 hover:text-indigo-700 font-medium">Ver todo →</button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className={`bg-slate-50 border-b ${theme.card.border}`}>
+              <tr className={`bg-slate-50 border-b border-slate-200`}>
                 <th className={`p-3 text-[10px] uppercase font-bold ${theme.table.header} tracking-wider`}>Alumno</th>
                 <th className={`p-3 text-[10px] uppercase font-bold ${theme.table.header} tracking-wider`}>Comisión</th>
                 <th className={`p-3 text-[10px] uppercase font-bold ${theme.table.header} tracking-wider`}>Nivel</th>
@@ -101,7 +102,7 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
                 <th className={`p-3 text-[10px] uppercase font-bold ${theme.table.header} tracking-wider`}>Estado</th>
               </tr>
             </thead>
-            <tbody className={`divide-y ${theme.table.divide}`}>
+            <tbody className={`divide-y divide-slate-200`}>
               {enrollmentsList.length === 0 ? (
                  <tr><td colSpan={5} className="p-4 text-center text-slate-500 text-xs">No hay inscripciones para mostrar</td></tr>
               ) : (

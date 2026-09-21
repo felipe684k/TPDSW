@@ -1,5 +1,5 @@
 import React from 'react';
-import { theme } from '../../utils/theme';
+import { theme } from '../theme';
 
 interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;

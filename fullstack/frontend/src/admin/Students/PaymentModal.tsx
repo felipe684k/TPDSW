@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
-import { API_BASE_URL } from '../../config'
-import { paymentService, type Installment } from '../../services/payment.service'
+import { API_BASE_URL } from '../../biz/config'
+import { paymentService, type Installment } from '../../biz/services/payment.service'
 
 interface Student {
   id: number

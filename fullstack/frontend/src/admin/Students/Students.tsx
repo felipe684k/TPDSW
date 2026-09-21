@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import { studentService, type Student } from '../../services/student.service'
+import { studentService, type Student } from '../../biz/services/student.service'
 import ConfirmDeleteModal from '../../shared/ConfirmDeleteModal'
 import StudentFormModal from './StudentFormModal'
 import PaymentModal from './PaymentModal'
 import EnrollModal from './EnrollModal'
 import DataTable from '../../shared/components/DataTable'
-import { theme } from '../../utils/theme'
+import { theme } from '../../shared/theme'
 
 export default function Students() {
   const [isModalOpen, setIsModalOpen] = useState(false)

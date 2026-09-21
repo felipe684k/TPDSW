@@ -1,5 +1,5 @@
 import React from 'react'
-import { theme } from '../../utils/theme'
+import { theme } from '../theme'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'action' | 'actionDanger' | 'actionSuccess'

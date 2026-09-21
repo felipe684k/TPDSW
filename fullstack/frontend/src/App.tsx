@@ -1,3 +1,4 @@
+import { SIDEBAR_TABS, type SidebarTab } from './shared/Sidebar.const'
 import { useState, useEffect } from 'react'
 import Sidebar from './shared/Sidebar'
 import Topbar from './shared/Topbar'
@@ -11,7 +12,7 @@ import AcademicYears from './admin/AcademicYears'
 import Login from './auth/Login'
 import StudentDashboard from './student/StudentDashboard'
 
-import { theme } from './utils/theme'
+import { theme } from './shared/theme'
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -27,7 +28,7 @@ export default function App() {
     return saved ? JSON.parse(saved) : null
   })
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'enrollments' | 'students' | 'professors' | 'courses' | 'classrooms' | 'academic-years' | 'levels'>(() => {
+  const [activeTab, setActiveTab] = useState<SidebarTab>(() => {
     return (localStorage.getItem('activeTab') as any) || 'dashboard'
   })
 
@@ -108,7 +109,7 @@ export default function App() {
       setUserRole(role);
       setUserData(data);
       setIsLoggedIn(true);
-      setActiveTab('dashboard');
+      setActiveTab(SIDEBAR_TABS.DASHBOARD);
     }} />
   }
 
@@ -124,37 +125,37 @@ export default function App() {
         <Topbar activeTab={activeTab} setIsSidebarOpen={setIsSidebarOpen} />
 
         <div className={`flex-1 overflow-y-auto p-6 ${theme.layout.mainContainer}`}>
-          {activeTab === 'dashboard' && (
+          {activeTab === SIDEBAR_TABS.DASHBOARD && (
             <Dashboard
               enrollments={enrollments}
               setActiveTab={setActiveTab}
             />
           )}
 
-          {activeTab === 'enrollments' && (
+          {activeTab === SIDEBAR_TABS.ENROLLMENTS && (
             <Enrollments
               enrollments={enrollments}
               setEnrollments={setEnrollments}
             />
           )}
 
-          {activeTab === 'students' && (
+          {activeTab === SIDEBAR_TABS.STUDENTS && (
             <Students />
           )}
 
-          {activeTab === 'professors' && (
+          {activeTab === SIDEBAR_TABS.PROFESSORS && (
             <Professors />
           )}
 
-          {activeTab === 'courses' && (
+          {activeTab === SIDEBAR_TABS.COURSES && (
             <Courses />
           )}
 
-          {activeTab === 'classrooms' && (
+          {activeTab === SIDEBAR_TABS.CLASSROOMS && (
             <Classrooms />
           )}
 
-          {activeTab === 'academic-years' && (
+          {activeTab === SIDEBAR_TABS.ACADEMIC_YEARS && (
             <AcademicYears />
           )}
         </div>

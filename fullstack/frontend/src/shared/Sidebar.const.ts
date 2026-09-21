@@ -1,3 +1,12 @@
 export const SIDEBAR_TABS = {
-    SECTIONS: "sections"
-}
+  DASHBOARD: 'dashboard',
+  ENROLLMENTS: 'enrollments',
+  STUDENTS: 'students',
+  PROFESSORS: 'professors',
+  COURSES: 'courses',
+  CLASSROOMS: 'classrooms',
+  ACADEMIC_YEARS: 'academic-years',
+  LEVELS: 'levels',
+} as const;
+
+export type SidebarTab = typeof SIDEBAR_TABS[keyof typeof SIDEBAR_TABS];

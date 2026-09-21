@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { API_BASE_URL } from '../config'
-import { theme } from '../utils/theme'
+import { API_BASE_URL } from '../biz/config'
+import { type SidebarTab } from "./Sidebar.const"
+import { theme } from './theme'
 
-export default function Topbar({ activeTab, setIsSidebarOpen }: { activeTab: string, setIsSidebarOpen: (isOpen: boolean) => void }) {
+export default function Topbar({ activeTab, setIsSidebarOpen }: { activeTab: SidebarTab, setIsSidebarOpen: (isOpen: boolean) => void }) {
   const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking')
 
   useEffect(() => {

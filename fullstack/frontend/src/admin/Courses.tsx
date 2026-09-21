@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
-import { courseService, type Course } from '../services/course.service'
-import { levelService, type Level } from '../services/level.service'
-import { tuitionFeeService } from '../services/tuitionFee.service'
+import { courseService, type Course } from '../biz/services/course.service'
+import { levelService, type Level } from '../biz/services/level.service'
+import { tuitionFeeService } from '../biz/services/tuitionFee.service'
 import Modal from '../shared/components/Modal'
 import FormInput from '../shared/components/FormInput'
 import FormSelect from '../shared/components/FormSelect'
 import CourseSections from './Courses/CourseSections'
-import { theme } from '../utils/theme'
+import { theme } from '../shared/theme'
 
 export default function Courses() {
   const [modalOpen, setModalOpen] = useState(false)
@@ -197,28 +197,28 @@ export default function Courses() {
           (() => {
             // Sort levels by next_level_code
             const isNext = new Set(levels.map(l => l.next_level_code).filter(Boolean));
-            let current = levels.find(l => !isNext.has(l.level_code));
+            let current = levels.find(l => !isNext.has(l?.level_code));
             if (!current) current = levels[0]; 
             
             const sortedLevels = [];
             while (current) {
               sortedLevels.push(current);
               const nextId: number | undefined | null = current.next_level_code;
-              const nextCurrent: Level | undefined = levels.find(l => l.level_code === nextId);
-              if (!nextCurrent || sortedLevels.some(l => l.level_code === nextCurrent.level_code)) break;
+              const nextCurrent: Level | undefined = levels.find(l => l?.level_code === nextId);
+              if (!nextCurrent || sortedLevels.some(l => l?.level_code === nextCurrent.level_code)) break;
               current = nextCurrent;
             }
             
-            const sortedIds = new Set(sortedLevels.map(l => l.level_code));
-            const disconnected = levels.filter(l => !sortedIds.has(l.level_code));
+            const sortedIds = new Set(sortedLevels.map(l => l?.level_code));
+            const disconnected = levels.filter(l => !sortedIds.has(l?.level_code));
             const allSortedLevels = [...sortedLevels, ...disconnected];
 
             return allSortedLevels.map(level => {
-              const levelCourses = courses.filter(c => c.level_code === level.level_code);
+              const levelCourses = courses.filter(c => c.level_code === level?.level_code);
               if (levelCourses.length === 0) return null;
 
               return (
-                <div key={level.level_code} className="space-y-4">
+                <div key={level?.level_code} className="space-y-4">
                   {/* Level Header */}
                   <div className="flex items-center gap-3 border-b border-slate-200 pb-2">
                     <span className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
@@ -362,7 +362,7 @@ export default function Courses() {
             onChange={e => setFormData({...formData, level_code: e.target.value})}
             options={[
               { value: '', label: '— Elegir Nivel —' },
-              ...levels.map(l => ({ value: l.level_code.toString(), label: l.name }))
+              ...levels.map(l => ({ value: l?.level_code?.toString() || '', label: l.name }))
             ]}
           />
 
