@@ -8,7 +8,7 @@ export const theme = {
     pageSubheader: "text-slate-500",
   },
   sidebar: {
-    wrapper: "bg-slate-900/60 backdrop-blur-md text-slate-200 border-r border-white/10 relative z-10",
+    wrapper: "bg-slate-900/60 backdrop-blur-md text-slate-200 border-r border-white/10 z-50",
     header: "border-white/10",
     activeItem: "bg-blue-500/80 text-white shadow-sm border-l-2 border-cyan-300 backdrop-blur-sm",
     inactiveItem: "hover:bg-white/10 hover:text-white text-slate-300 transition-colors",
