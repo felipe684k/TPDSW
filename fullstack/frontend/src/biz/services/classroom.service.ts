@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../config';
+﻿import { API_BASE_URL } from '../config';
 
 export interface Classroom {
   id?: number;
@@ -6,33 +6,24 @@ export interface Classroom {
   capacity: number;
 }
 
+const API_URL = `${API_BASE_URL}/classrooms`;
+
 export const classroomService = {
+  // TODO: Implementar llamados HTTP hacia el backend usando API_URL
   getClassrooms: async (): Promise<Classroom[]> => {
-    const response = await fetch(`${API_BASE_URL}/classrooms`);
-    if (!response.ok) throw new Error('Error fetching classrooms');
-    const json = await response.json();
-    return json.data;
+    console.log('GET', API_URL);
+    return [];
   },
 
-  createClassroom: async (classroom: Classroom): Promise<Classroom> => {
-    const response = await fetch(`${API_BASE_URL}/classrooms`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(classroom),
-    });
-    if (!response.ok) throw new Error('Error creating classroom');
-    const json = await response.json();
-    return json.data;
+  createClassroom: async (_classroom: Classroom): Promise<any> => {
+    // Lógica para crear aula
   },
 
-  updateClassroom: async (id: number, classroom: Classroom): Promise<Classroom> => {
-    const response = await fetch(`${API_BASE_URL}/classrooms/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(classroom),
-    });
-    if (!response.ok) throw new Error('Error updating classroom');
-    const json = await response.json();
-    return json.data;
+  updateClassroom: async (_id: number, _classroom: Classroom): Promise<any> => {
+    // Lógica para actualizar aula
+  },
+
+  deleteClassroom: async (_id: number): Promise<any> => {
+    // Lógica para eliminar aula
   }
 };

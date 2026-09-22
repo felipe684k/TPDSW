@@ -1,10 +1,13 @@
 import { Router } from 'express';
-import { getClassrooms, createClassroom, updateClassroom } from '../controllers/classroom.controller.js';
+import { getClassrooms, createClassroom, updateClassroom, deleteClassroom } from '../controllers/classroom.controller.js';
 
 const router = Router();
 
-router.get('/', getClassrooms);
-router.post('/', createClassroom);
-router.put('/:id', updateClassroom);
+// TODO: Definir aquí las rutas de la CRUD de Aulas
+// router.get('/', getClassrooms);
+// router.post('/', createClassroom);
+// router.put('/:id', updateClassroom);
+// router.delete('/:id', deleteClassroom);
 
 export default router;
+

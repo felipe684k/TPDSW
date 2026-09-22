@@ -6,6 +6,7 @@ import Course from './course.js';
 import TuitionFee from './tuition_fee.js';
 import UserLevel from './user_level.js';
 import Classroom from './classroom.js';
+import Classroomamano from './classroomamano.js';
 import AcademicYear from './academic_year.js';
 import Section from './section.js';
 import UserSection from './user_section.js';
