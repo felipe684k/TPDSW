@@ -15,9 +15,9 @@ import StudentDashboard from './student/StudentDashboard'
 import { theme } from './shared/theme'
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     return localStorage.getItem('isLoggedIn') === 'true'
-  })
+  }) 
 
   const [userRole, setUserRole] = useState<'ADMIN' | 'STUDENT'>(() => {
     return (localStorage.getItem('userRole') as any) || 'ADMIN'
@@ -105,7 +105,9 @@ export default function App() {
   ])
 
   if (!isLoggedIn) {
-    return <Login onLogin={(role, data) => {
+    return <Login onLogin={(role, data) => { 
+      //Login seria como una funcion en donde se le envia el parametro onLogin, 
+      // lo unco que se envia es la funcion pero no se ejecuta todavia
       setUserRole(role);
       setUserData(data);
       setIsLoggedIn(true);

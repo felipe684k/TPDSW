@@ -3,13 +3,15 @@ import { API_BASE_URL } from '../biz/config'
 
 interface LoginProps {
   onLogin: (role: 'ADMIN' | 'STUDENT', userData: any) => void
-}
+} // definimos el tipo que tiene que ser props (objeto que recibe la funcion Login)
 
-export default function Login({ onLogin }: LoginProps) {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+export default function Login({ onLogin }: LoginProps) { 
+  // {onLogin} es la unica propiedad de props, se usa para no tener que poner props.onLogin todo el tiempo, 
+  // en este instante todavia no se ejecuto la funcion
+  const [username, setUsername] = useState<string>('')
+  const [password, setPassword] = useState<string>('')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
