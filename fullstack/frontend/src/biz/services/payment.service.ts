@@ -2,17 +2,29 @@ import { API_BASE_URL } from '../config';
 
 const API_URL = `${API_BASE_URL}/payments`;
 
+export interface SubPayment {
+  id: number;
+  amount: number;
+  payment_date: string;
+  payment_method?: string;
+  status: string;
+}
+
 export interface Installment {
   id: number | string;
   id_enrollment?: number;
   section?: string;
   installment_month: string;
   amount: number;
+  total_paid: number;
+  remaining_amount: number;
   due_date: string;
-  status: string;
+  status: 'Paid' | 'Partial' | 'Pending' | string;
   payment_date: string | null;
-  surcharge: number;
-  discount: number;
+  payment_method?: string;
+  payments?: SubPayment[];
+  surcharge?: number;
+  discount?: number;
   paymentMethod?: string;
 }
 
@@ -20,10 +32,11 @@ export interface RegisterPaymentPayload {
   id_enrollment: number;
   installment_month: string;
   amount: number;
-  surcharge: number;
-  discount: number;
-  status: string;
-  payment_date: string;
+  payment_method: string;
+  payment_date?: string;
+  surcharge?: number;
+  discount?: number;
+  status?: string;
 }
 
 export interface AccountStatus {

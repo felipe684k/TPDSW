@@ -36,6 +36,11 @@ export const Payment = sequelize.define('Payment', {
   installment_month: {
     type: DataTypes.STRING(20),
     allowNull: false
+  },
+  payment_method: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    defaultValue: 'Cash'
   }
 }, {
   tableName: 'payment',

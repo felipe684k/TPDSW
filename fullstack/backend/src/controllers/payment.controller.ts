@@ -110,39 +110,48 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
       }
 
       const registeredPayments: any[] = enroll.payments || [];
-      const monthsToShow = academicMonths.filter(m => m.monthNum <= currentMonthNum || registeredPayments.some(p => p.installment_month?.toLowerCase() === m.name.toLowerCase()));
+      const monthsToShow = academicMonths.filter(m => 
+        m.monthNum <= currentMonthNum || 
+        registeredPayments.some(p => p.installment_month?.toLowerCase() === m.name.toLowerCase())
+      );
 
       monthsToShow.forEach((m) => {
-        const existingPayment = registeredPayments.find(p => p.installment_month?.toLowerCase() === m.name.toLowerCase());
+        const monthPayments = registeredPayments.filter(
+          p => p.installment_month?.toLowerCase() === m.name.toLowerCase()
+        );
+        const totalPaid = monthPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        const remainingAmount = Math.max(0, baseAmount - totalPaid);
         const dueDate = `10/${m.monthNum.toString().padStart(2, '0')}/${currentYear}`;
 
-        if (existingPayment) {
-          installmentResults.push({
-            id: existingPayment.id_payment,
-            id_enrollment: enroll.id_enrollment,
-            section: enroll.section?.name || 'Section',
-            installment_month: m.name,
-            amount: Number(existingPayment.amount),
-            due_date: dueDate,
-            status: existingPayment.status || 'Paid',
-            payment_date: existingPayment.payment_date,
-            surcharge: Number(existingPayment.surcharge || 0),
-            discount: Number(existingPayment.discount || 0)
-          });
-        } else {
-          installmentResults.push({
-            id: `pending_${enroll.id_enrollment}_${m.monthNum}`,
-            id_enrollment: enroll.id_enrollment,
-            section: enroll.section?.name || 'Section',
-            installment_month: m.name,
-            amount: baseAmount,
-            due_date: dueDate,
-            status: 'Pending',
-            payment_date: null,
-            surcharge: 0,
-            discount: 0
-          });
+        let status = 'Pending';
+        if (totalPaid >= baseAmount) {
+          status = 'Paid';
+        } else if (totalPaid > 0) {
+          status = 'Partial';
         }
+
+        const lastPayment = monthPayments.length > 0 ? monthPayments[monthPayments.length - 1] : null;
+
+        installmentResults.push({
+          id: lastPayment ? lastPayment.id_payment : `pending_${enroll.id_enrollment}_${m.monthNum}`,
+          id_enrollment: enroll.id_enrollment,
+          section: enroll.section?.name || 'Section',
+          installment_month: m.name,
+          amount: baseAmount,
+          total_paid: totalPaid,
+          remaining_amount: remainingAmount,
+          due_date: dueDate,
+          status: status,
+          payment_date: lastPayment ? lastPayment.payment_date : null,
+          payment_method: lastPayment ? lastPayment.payment_method : null,
+          payments: monthPayments.map(p => ({
+            id: p.id_payment,
+            amount: Number(p.amount),
+            payment_date: p.payment_date,
+            payment_method: p.payment_method,
+            status: p.status
+          }))
+        });
       });
     }
 
@@ -154,11 +163,11 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
 };
 
 /**
- * Register a new tuition payment
+ * Register a new tuition payment (supports partial / fragmented payments)
  */
 export const registerPayment = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id_enrollment, installment_month, amount, surcharge, discount, status, payment_date } = req.body;
+    const { id_enrollment, installment_month, amount, payment_method, payment_date } = req.body;
 
     const numEnrollmentId = typeof id_enrollment === 'number' ? id_enrollment : parseInt(id_enrollment, 10);
 
@@ -171,8 +180,27 @@ export const registerPayment = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    // Validate that enrollment exists
-    const existingEnrollment = await Enrollment.findByPk(numEnrollmentId);
+    // Validate that enrollment exists with course tuition fee info and past payments
+    const existingEnrollment: any = await Enrollment.findByPk(numEnrollmentId, {
+      include: [
+        {
+          model: Section,
+          as: 'section',
+          include: [
+            {
+              model: Course,
+              as: 'course',
+              include: [{ model: TuitionFee, as: 'tuition_fees' }]
+            }
+          ]
+        },
+        {
+          model: Payment,
+          as: 'payments'
+        }
+      ]
+    });
+
     if (!existingEnrollment) {
       res.status(404).json({ 
         status: 'error', 
@@ -182,48 +210,69 @@ export const registerPayment = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    if (!installment_month || amount === undefined) {
-      res.status(400).json({ status: 'error', message: 'Missing required fields (installment_month, amount)', data: null });
+    const payAmount = Number(amount);
+    if (!installment_month || isNaN(payAmount) || payAmount <= 0) {
+      res.status(400).json({ status: 'error', message: 'Monto y mes de cuota válidos son requeridos.', data: null });
+      return;
+    }
+
+    // Determine base amount for the month
+    const course = existingEnrollment.section?.course;
+    let baseAmount = 12000;
+    if (course) {
+      if (course.tuition_fees && course.tuition_fees.length > 0) {
+        baseAmount = Number(course.tuition_fees[0].monthly_cost) || 12000;
+      } else if (course.registration_fee) {
+        baseAmount = Number(course.registration_fee) || 12000;
+      }
+    }
+
+    // Previous payments for this month
+    const previousPayments: any[] = existingEnrollment.payments?.filter(
+      (p: any) => p.installment_month?.toLowerCase() === installment_month.toLowerCase()
+    ) || [];
+    const alreadyPaid = previousPayments.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+    const remainingBefore = Math.max(0, baseAmount - alreadyPaid);
+
+    if (remainingBefore <= 0) {
+      res.status(400).json({ 
+        status: 'error', 
+        message: `La cuota de ${installment_month} ya se encuentra totalmente saldada.` 
+      });
+      return;
+    }
+
+    if (payAmount > remainingBefore) {
+      res.status(400).json({ 
+        status: 'error', 
+        message: `El monto a pagar ($${payAmount}) supera el saldo pendiente de la cuota ($${remainingBefore}).` 
+      });
       return;
     }
 
     const actualDate = payment_date || new Date().toISOString().split('T')[0];
-    const actualStatus = status || 'Paid';
+    const newTotalPaid = alreadyPaid + payAmount;
+    const newStatus = newTotalPaid >= baseAmount ? 'Paid' : 'Partial';
 
-    // Check if payment already exists for this enrollment and month
-    const existingPayment: any = await Payment.findOne({
-      where: {
-        id_enrollment: numEnrollmentId,
-        installment_month
-      }
-    });
-
-    if (existingPayment) {
-      // Update existing record
-      await existingPayment.update({
-        payment_date: actualDate,
-        amount: Number(amount),
-        surcharge: Number(surcharge || 0),
-        discount: Number(discount || 0),
-        status: actualStatus
-      });
-
-      res.status(200).json({ status: 'ok', message: 'Payment updated successfully', data: existingPayment });
-      return;
-    }
-
-    // Create new payment
+    // Create new payment record
     const newPayment = await Payment.create({
       id_enrollment: numEnrollmentId,
       payment_date: actualDate,
-      amount: Number(amount),
-      surcharge: Number(surcharge || 0),
-      discount: Number(discount || 0),
-      status: actualStatus,
-      installment_month
+      amount: payAmount,
+      surcharge: 0,
+      discount: 0,
+      status: newStatus,
+      installment_month,
+      payment_method: payment_method || 'Cash'
     });
 
-    res.status(201).json({ status: 'ok', message: 'Payment registered successfully', data: newPayment });
+    res.status(201).json({ 
+      status: 'ok', 
+      message: newStatus === 'Paid' 
+        ? 'Cuota saldada exitosamente' 
+        : `Pago parcial de $${payAmount} registrado. Saldo pendiente: $${baseAmount - newTotalPaid}`, 
+      data: newPayment 
+    });
   } catch (error: any) {
     console.error('Error registering payment:', error?.message || error);
     res.status(500).json({ status: 'db_error', message: 'Internal error registering payment', data: null });
@@ -245,7 +294,14 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
         },
         {
           model: Section,
-          as: 'section'
+          as: 'section',
+          include: [
+            {
+              model: Course,
+              as: 'course',
+              include: [{ model: TuitionFee, as: 'tuition_fees' }]
+            }
+          ]
         },
         {
           model: Payment,
@@ -277,15 +333,30 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
       const userObj = enroll.user;
       if (!userObj) continue;
 
+      const course = enroll.section?.course;
+      let baseAmount = 12000;
+      if (course) {
+        if (course.tuition_fees && course.tuition_fees.length > 0) {
+          baseAmount = Number(course.tuition_fees[0].monthly_cost) || 12000;
+        } else if (course.registration_fee) {
+          baseAmount = Number(course.registration_fee) || 12000;
+        }
+      }
+
       const payments: any[] = enroll.payments || [];
       const unpaidInstallments: string[] = [];
       let totalDebt = 0;
 
       for (const m of dueMonths) {
-        const paid = payments.some(p => p.installment_month?.toLowerCase() === m.name.toLowerCase() && p.status === 'Paid');
-        if (!paid) {
+        const monthPayments = payments.filter(
+          p => p.installment_month?.toLowerCase() === m.name.toLowerCase()
+        );
+        const totalPaid = monthPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        const remaining = Math.max(0, baseAmount - totalPaid);
+
+        if (remaining > 0) {
           unpaidInstallments.push(m.name);
-          totalDebt += 12000;
+          totalDebt += remaining;
         }
       }
 

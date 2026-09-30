@@ -27,9 +27,8 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
   
   const [paymentModal, setPaymentModal] = useState<Installment | null>(null)
   const [receiptModal, setReceiptModal] = useState<Installment | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState('')
-  const [surcharge, setSurcharge] = useState<number>(0)
-  const [discount, setDiscount] = useState<number>(0)
+  const [paymentMethod, setPaymentMethod] = useState('Cash')
+  const [payAmount, setPayAmount] = useState<number | ''>('')
   const [loading, setLoading] = useState<boolean>(false)
 
   useEffect(() => {
@@ -68,8 +67,8 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
     }
 
     setStudentsList([
-      { id: 1, fullName: 'Gonzlez, Luca', Dni: '40.123.456', course: 'Kids 1 - A', tuitionAmount: 12000, admissionMonthIndex: 0 } as any,
-      { id: 2, fullName: 'Ramrez, Toms', Dni: '38.901.234', course: 'Teens 3 - Noche', tuitionAmount: 14500, admissionMonthIndex: 5 } as any
+      { id: 1, fullName: 'González, Lucía', dni: '40.123.456', course: 'Kids 1 - A', tuitionAmount: 12000, admissionMonthIndex: 0 } as any,
+      { id: 2, fullName: 'Ramírez, Tomás', dni: '38.901.234', course: 'Teens 3 - Noche', tuitionAmount: 14500, admissionMonthIndex: 5 } as any
     ])
   }
 
@@ -116,25 +115,26 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
       const monthsToDate = academicMonths.filter(m => m.monthNum <= currentMonthNum)
 
       const mockInstallments: Installment[] = monthsToDate.map((m, idx) => {
+        const base = student.tuitionAmount || 12000
+        const isPaid = idx === 0
         return {
           id: idx + 1,
           id_enrollment: id,
           section: student.course || 'Section',
           installment_month: m.name,
-          amount: student.tuitionAmount || 12000,
+          amount: base,
+          total_paid: isPaid ? base : 0,
+          remaining_amount: isPaid ? 0 : base,
           due_date: `10/${m.monthNum.toString().padStart(2, '0')}/${currentYear}`,
-          status: idx === 0 ? 'Paid' : 'Pending',
-          payment_date: idx === 0 ? `05/${m.monthNum.toString().padStart(2, '0')}/${currentYear}` : null,
-          surcharge: 0,
-          discount: 0,
-          paymentMethod: idx === 0 ? 'Cash' : undefined
+          status: isPaid ? 'Paid' : 'Pending',
+          payment_date: isPaid ? `05/${m.monthNum.toString().padStart(2, '0')}/${currentYear}` : null,
+          payment_method: isPaid ? 'Cash' : undefined
         }
       })
       setInstallments(mockInstallments)
     }
     setLoading(false)
   }
-
 
   useEffect(() => {
     const mainContainer = document.querySelector('main > div.overflow-y-auto')
@@ -150,9 +150,9 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
 
   const handleOpenPaymentModal = (installment: Installment) => {
     setPaymentModal(installment)
-    setPaymentMethod('')
-    setSurcharge(0)
-    setDiscount(0)
+    setPaymentMethod('Cash')
+    const remaining = installment.remaining_amount !== undefined ? installment.remaining_amount : installment.amount
+    setPayAmount(remaining)
   }
 
   const handleVerRecibo = (installment: Installment) => {
@@ -163,14 +163,26 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
     e.preventDefault()
     if (!paymentModal) return
     if (!paymentMethod) {
-      alert('Por favor selecciona un mtodo de pago')
+      alert('Por favor seleccioná un método de pago.')
+      return
+    }
+
+    const numAmount = Number(payAmount)
+    if (isNaN(numAmount) || numAmount <= 0) {
+      alert('Por favor ingresá un monto válido mayor a 0.')
+      return
+    }
+
+    const remaining = paymentModal.remaining_amount !== undefined ? paymentModal.remaining_amount : paymentModal.amount
+    if (numAmount > remaining) {
+      alert(`El monto ingresado ($${numAmount}) supera el saldo pendiente de la cuota ($${remaining}).`)
       return
     }
 
     const targetEnrollmentId = typeof paymentModal.id_enrollment === 'number' ? paymentModal.id_enrollment : enrollmentId
 
     if (!targetEnrollmentId) {
-      alert('Este alumno no tiene una inscripcin activa. Debe estar inscripto en una comisin para registrar un pago.')
+      alert('Este alumno no tiene una inscripción activa. Debe estar inscripto en una comisión para registrar un pago.')
       return
     }
 
@@ -179,10 +191,8 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
     const payload = {
       id_enrollment: targetEnrollmentId,
       installment_month: paymentModal.installment_month,
-      amount: Number(paymentModal.amount),
-      surcharge: Number(surcharge),
-      discount: Number(discount),
-      status: 'Paid',
+      amount: numAmount,
+      payment_method: paymentMethod,
       payment_date: todayDate
     }
 
@@ -193,7 +203,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
       }
     } catch (err) {
       console.warn('Error al registrar el pago:', err)
-      const msg = err instanceof Error ? err.message : 'Ocurri un error de conexin al procesar el pago.'
+      const msg = err instanceof Error ? err.message : 'Ocurrió un error al procesar el pago.'
       alert(msg)
     }
 
@@ -211,20 +221,20 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-800">Estado de Cuenta</h1>
-            <p className="text-xs text-slate-500 mt-1">Gestin de pagos mensuales para el Ciclo Lectivo 2026.</p>
+            <p className="text-xs text-slate-500 mt-1">Gestión de pagos mensuales para el Ciclo Lectivo 2026.</p>
           </div>
           <button onClick={onClose} className="text-slate-600 hover:bg-slate-100 bg-white border border-slate-200 p-2 shadow-sm text-sm font-medium rounded-lg cursor-pointer">
-            Cerrar 
+            Cerrar
           </button>
         </div>
 
       {/* Warning if no enrollment */}
       {selectedStudent && !hasEnrollment && !loading && (
         <div className="bg-amber-950/40 border border-amber-800/60 text-amber-300 p-4 rounded-xl text-xs flex items-center gap-3">
-          <span className="text-lg"></span>
+          <span className="text-lg">⚠️</span>
           <div>
-            <strong>El alumno no tiene una inscripcin activa en comisiones.</strong>
-            <p className="text-[11px] text-amber-700 mt-0.5">Para cobrar cuotas, el alumno debe ser inscripto previamente en el mdulo de <em>Inscripciones</em>.</p>
+            <strong>El alumno no tiene una inscripción activa en comisiones.</strong>
+            <p className="text-[11px] text-amber-700 mt-0.5">Para cobrar cuotas, el alumno debe ser inscripto previamente en el módulo de <em>Inscripciones</em>.</p>
           </div>
         </div>
       )}
@@ -245,7 +255,9 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
             <div className="text-right">
               <span className="text-xs text-slate-500 block">Deuda Vencida a la Fecha</span>
               <span className="text-lg font-bold text-rose-500">
-                ${installments.filter(c => c.status === 'Pending').reduce((acc, c) => acc + c.amount, 0).toLocaleString('en-US')}
+                ${installments
+                  .reduce((acc, c) => acc + (c.remaining_amount !== undefined ? c.remaining_amount : (c.status === 'Paid' ? 0 : c.amount)), 0)
+                  .toLocaleString('en-US')}
               </span>
             </div>
           </div>
@@ -257,67 +269,97 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
               <div className="text-center py-8 text-xs text-slate-500">No hay cuotas devengadas registradas para este alumno.</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {installments.map((installment) => (
-                  <div key={installment.id} className={`p-4 rounded-xl border ${installment.status === 'Paid' ? 'border-emerald-800/40 bg-emerald-950/10' : 'border-slate-200 bg-white'} shadow-sm flex flex-col justify-between space-y-4`}>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">{installment.installment_month} 2026</span>
-                        <span className="block text-[10px] text-slate-500">Vencimiento: {installment.due_date}</span>
-                      </div>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        installment.status === 'Paid' ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700/50' : 'bg-amber-900/40 text-amber-400 border border-amber-700/50'
-                      }`}>
-                        {installment.status === 'Paid' ? 'Pagado' : 'Pendiente'}
-                      </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 text-[10px] bg-slate-50/50 p-2 rounded border border-slate-200/60">
-                      <div>
-                        <span className="text-slate-500 block">Cuota Base</span>
-                        <span className="font-semibold text-slate-600">${installment.amount.toLocaleString('en-US')}</span>
-                      </div>
-                      {installment.status === 'Paid' && (
-                        <>
-                          <div>
-                            <span className="text-slate-500 block">Fecha de Pago</span>
-                            <span className="font-semibold text-slate-600">{installment.payment_date || 'Saldado'}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 block">Recargo</span>
-                            <span className="font-semibold text-rose-400">+${installment.surcharge}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 block">Descuento</span>
-                            <span className="font-semibold text-emerald-400">-${installment.discount}</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                {installments.map((installment) => {
+                  const remAmount = installment.remaining_amount !== undefined 
+                    ? installment.remaining_amount 
+                    : (installment.status === 'Paid' ? 0 : installment.amount);
+                  const isPaid = installment.status === 'Paid';
+                  const isPartial = installment.status === 'Partial';
 
-                    <div className="flex justify-between items-end pt-2 border-t border-slate-200/60">
-                      <div>
-                        <span className="block text-[10px] text-slate-500">Total</span>
-                        <span className="text-lg font-bold text-slate-800">${(installment.amount + installment.surcharge - installment.discount).toLocaleString('en-US')}</span>
+                  return (
+                    <div 
+                      key={installment.id} 
+                      className={`p-4 rounded-xl border ${
+                        isPaid 
+                          ? 'border-emerald-800/40 bg-emerald-950/10' 
+                          : isPartial 
+                          ? 'border-blue-700/40 bg-blue-950/10' 
+                          : 'border-slate-200 bg-white'
+                      } shadow-sm flex flex-col justify-between space-y-3`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">{installment.installment_month} 2026</span>
+                          <span className="block text-[10px] text-slate-500">Vencimiento: {installment.due_date}</span>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          isPaid 
+                            ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700/50' 
+                            : isPartial 
+                            ? 'bg-blue-900/40 text-blue-400 border border-blue-700/50' 
+                            : 'bg-amber-900/40 text-amber-400 border border-amber-700/50'
+                        }`}>
+                          {isPaid ? 'Saldado' : isPartial ? 'Pago Parcial' : 'Pendiente'}
+                        </span>
                       </div>
                       
-                      {installment.status === 'Pending' ? (
-                        <button 
-                          onClick={() => handleOpenPaymentModal(installment)}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-xs font-medium shadow-sm transition-colors cursor-pointer"
-                        >
-                          Cobrar
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => handleVerRecibo(installment)}
-                          className="bg-slate-800 hover:bg-slate-700 text-slate-700 border border-slate-700 px-2.5 py-1.5 rounded text-xs font-medium transition-colors cursor-pointer flex items-center gap-1"
-                        >
-                           Ver Recibo
-                        </button>
+                      <div className="grid grid-cols-3 gap-2 text-[10px] bg-slate-50/50 p-2 rounded border border-slate-200/60">
+                        <div>
+                          <span className="text-slate-500 block">Cuota Base</span>
+                          <span className="font-semibold text-slate-700">${installment.amount.toLocaleString('en-US')}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 block">Abonado</span>
+                          <span className="font-semibold text-emerald-600">${(installment.total_paid || (isPaid ? installment.amount : 0)).toLocaleString('en-US')}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 block">Restante</span>
+                          <span className={`font-semibold ${remAmount > 0 ? 'text-rose-500' : 'text-slate-500'}`}>
+                            ${remAmount.toLocaleString('en-US')}
+                          </span>
+                        </div>
+                      </div>
+
+                      {installment.payments && installment.payments.length > 0 && (
+                        <div className="text-[10px] bg-slate-100/80 p-2 rounded border border-slate-200/60 space-y-1">
+                          <span className="font-semibold text-slate-600 block">Pagos realizados ({installment.payments.length}):</span>
+                          {installment.payments.map((p, pIdx) => (
+                            <div key={p.id || pIdx} className="flex justify-between items-center text-[10px]">
+                              <span className="text-slate-500">{p.payment_date || 'Fecha N/D'}</span>
+                              <span className="font-medium text-emerald-700">+${Number(p.amount).toLocaleString('en-US')}</span>
+                            </div>
+                          ))}
+                        </div>
                       )}
+
+                      <div className="flex justify-between items-end pt-2 border-t border-slate-200/60 gap-2">
+                        <div>
+                          <span className="block text-[10px] text-slate-500">Saldo a Cobrar</span>
+                          <span className="text-base font-bold text-slate-800">${remAmount.toLocaleString('en-US')}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-1.5">
+                          {!isPaid && (
+                            <button 
+                              onClick={() => handleOpenPaymentModal(installment)}
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-xs font-medium shadow-sm transition-colors cursor-pointer"
+                            >
+                              {isPartial ? 'Abonar Saldo' : 'Cobrar'}
+                            </button>
+                          )}
+                          {(isPaid || isPartial) && (
+                            <button 
+                              onClick={() => handleVerRecibo(installment)}
+                              className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-2.5 py-1.5 rounded text-xs font-medium transition-colors cursor-pointer flex items-center gap-1"
+                            >
+                              Ver Recibo
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -330,42 +372,64 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm border border-slate-200">
             <div className="p-4 border-b border-slate-200 flex justify-between items-center">
               <h2 className="text-sm font-bold text-slate-700">Registrar Pago de Cuota</h2>
-              <button onClick={() => setPaymentModal(null)} className="text-slate-500 hover:text-white text-xs"></button>
+              <button onClick={() => setPaymentModal(null)} className="text-slate-500 hover:text-slate-700 text-xs">✕</button>
             </div>
             
             <form onSubmit={handleProcessPayment} className="p-5 space-y-4">
               <div className="bg-slate-50 border border-slate-200/60 rounded-lg p-3 text-center mb-2">
                 <span className="block text-xs text-slate-500 uppercase tracking-wider">Cuota de {paymentModal.installment_month} 2026</span>
-                <span className="text-2xl font-bold text-slate-800">${(paymentModal.amount + surcharge - discount).toLocaleString('en-US')}</span>
+                <div className="grid grid-cols-3 gap-1 mt-2 text-xs">
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Total</span>
+                    <span className="font-semibold text-slate-700">${paymentModal.amount.toLocaleString('en-US')}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Abonado</span>
+                    <span className="font-semibold text-emerald-600">${(paymentModal.total_paid || 0).toLocaleString('en-US')}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Pendiente</span>
+                    <span className="font-bold text-rose-500">${(paymentModal.remaining_amount ?? paymentModal.amount).toLocaleString('en-US')}</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-slate-500">Recargo ($)</label>
-                  <input 
-                    type="number" min="0" value={surcharge} onChange={e => setSurcharge(Number(e.target.value))}
-                    className="border border-slate-700 rounded p-2 text-sm bg-white text-slate-700 outline-none focus:border-indigo-500"
-                  />
+              {/* Payment Amount Input */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-semibold text-slate-700">Monto a Cobrar ($) *</label>
+                  <button
+                    type="button"
+                    onClick={() => setPayAmount(paymentModal.remaining_amount ?? paymentModal.amount)}
+                    className="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer underline"
+                  >
+                    Saldo completo
+                  </button>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-slate-500">Descuento ($)</label>
-                  <input 
-                    type="number" min="0" value={discount} onChange={e => setDiscount(Number(e.target.value))}
-                    className="border border-slate-700 rounded p-2 text-sm bg-white text-slate-700 outline-none focus:border-indigo-500"
-                  />
-                </div>
+                <input 
+                  type="number"
+                  required
+                  min="1"
+                  max={paymentModal.remaining_amount ?? paymentModal.amount}
+                  value={payAmount} 
+                  onChange={e => setPayAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="border border-slate-300 rounded p-2.5 text-base font-bold bg-white text-slate-800 outline-none focus:border-indigo-500"
+                  placeholder="Ej: 5000"
+                />
+                <p className="text-[10px] text-slate-500">
+                  Podés cobrar una fracción de la cuota o el total pendiente (${(paymentModal.remaining_amount ?? paymentModal.amount).toLocaleString('en-US')}).
+                </p>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-500">Mtodo de Pago *</label>
+                <label className="text-xs font-semibold text-slate-700">Método de Pago *</label>
                 <select 
                   required value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}
-                  className="border border-slate-700 rounded p-2.5 text-sm bg-white text-slate-700 outline-none focus:border-indigo-500"
+                  className="border border-slate-300 rounded p-2.5 text-xs bg-white text-slate-700 outline-none focus:border-indigo-500"
                 >
-                  <option value=""> Seleccionar </option>
                   <option value="Cash">Efectivo</option>
                   <option value="Bank Transfer">Transferencia Bancaria</option>
-                  <option value="Debit/Credit Card">Tarjeta de Dbito/Crdito</option>
+                  <option value="Debit/Credit Card">Tarjeta de Débito/Crédito</option>
                 </select>
               </div>
               
@@ -378,9 +442,9 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-medium shadow-sm transition-colors cursor-pointer"
+                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold shadow-sm transition-colors cursor-pointer"
                 >
-                  Confirmar Cobro
+                  Confirmar Cobro {payAmount ? `($${Number(payAmount).toLocaleString('en-US')})` : ''}
                 </button>
               </div>
             </form>
@@ -396,13 +460,16 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
             <div className="p-5 bg-slate-50 border-b border-slate-200 flex justify-between items-start">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg"></span>
                   <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Instituto de Idiomas</h2>
                 </div>
                 <p className="text-[10px] text-slate-500 mt-0.5">Recibo Oficial de Pago</p>
               </div>
-              <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-bold px-2.5 py-1 rounded border border-emerald-800/50">
-                PAGADO 
+              <span className={`text-[10px] font-bold px-2.5 py-1 rounded border ${
+                receiptModal.status === 'Paid' 
+                  ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800/50' 
+                  : 'bg-blue-950/80 text-blue-400 border-blue-800/50'
+              }`}>
+                {receiptModal.status === 'Paid' ? 'SALDADO' : 'PAGO PARCIAL'}
               </span>
             </div>
 
@@ -410,11 +477,11 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
             <div className="p-5 space-y-4 text-xs">
               <div className="flex justify-between items-center bg-slate-50/60 p-3 rounded-lg border border-slate-200/60">
                 <div>
-                  <span className="text-slate-500 text-[10px] uppercase block font-semibold">N Recibo</span>
-                  <span className="font-mono font-bold text-indigo-400">#REC-2026-{receiptModal.id}</span>
+                  <span className="text-slate-500 text-[10px] uppercase block font-semibold">N° Recibo</span>
+                  <span className="font-mono font-bold text-indigo-500">#REC-2026-{receiptModal.id}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-slate-500 text-[10px] uppercase block font-semibold">Fecha de Emisin</span>
+                  <span className="text-slate-500 text-[10px] uppercase block font-semibold">Fecha de Emisión</span>
                   <span className="font-semibold text-slate-600">{receiptModal.payment_date || new Date().toLocaleDateString('en-US')}</span>
                 </div>
               </div>
@@ -430,11 +497,11 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                   <span className="font-mono text-slate-600">{currentStudent?.dni || '-'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Comisin / Curso:</span>
-                  <span className="font-semibold text-indigo-300">{receiptModal.section || currentStudent?.course || 'Curso de Idioma'}</span>
+                  <span className="text-slate-500">Comisión / Curso:</span>
+                  <span className="font-semibold text-indigo-600">{receiptModal.section || currentStudent?.course || 'Curso de Idioma'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Concepto Abonado:</span>
+                  <span className="text-slate-500">Concepto:</span>
                   <span className="font-medium text-slate-700">Cuota {receiptModal.installment_month} 2026</span>
                 </div>
               </div>
@@ -445,36 +512,34 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                   <span className="text-slate-500">Cuota Base:</span>
                   <span className="text-slate-600">${receiptModal.amount.toLocaleString('en-US')}</span>
                 </div>
-                {receiptModal.surcharge > 0 && (
-                  <div className="flex justify-between text-rose-400">
-                    <span>Recargo por Mora:</span>
-                    <span>+${receiptModal.surcharge.toLocaleString('en-US')}</span>
-                  </div>
-                )}
-                {receiptModal.discount > 0 && (
-                  <div className="flex justify-between text-emerald-400">
-                    <span>Descuento Aplicado:</span>
-                    <span>-${receiptModal.discount.toLocaleString('en-US')}</span>
-                  </div>
-                )}
-                {receiptModal.paymentMethod && (
-                  <div className="flex justify-between text-slate-500">
-                    <span>Mtodo de Pago:</span>
-                    <span className="capitalize text-slate-600">
-                      {receiptModal.paymentMethod === 'Cash' ? 'Efectivo' : 
-                       receiptModal.paymentMethod === 'Bank Transfer' ? 'Transferencia Bancaria' : 
-                       receiptModal.paymentMethod === 'Debit/Credit Card' ? 'Tarjeta de Dbito/Crdito' : 
-                       receiptModal.paymentMethod}
-                    </span>
-                  </div>
-                )}
-                
-                <div className="flex justify-between items-center text-sm font-bold pt-3 border-t border-slate-200 text-slate-800">
-                  <span>Total Abonado:</span>
-                  <span className="text-emerald-400 text-base">
-                    ${(receiptModal.amount + receiptModal.surcharge - receiptModal.discount).toLocaleString('en-US')}
+
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Total Abonado a la Fecha:</span>
+                  <span className="font-semibold text-emerald-600">
+                    ${(receiptModal.total_paid || (receiptModal.status === 'Paid' ? receiptModal.amount : 0)).toLocaleString('en-US')}
                   </span>
                 </div>
+
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Saldo Restante:</span>
+                  <span className="font-semibold text-rose-500">
+                    ${(receiptModal.remaining_amount !== undefined ? receiptModal.remaining_amount : (receiptModal.status === 'Paid' ? 0 : receiptModal.amount)).toLocaleString('en-US')}
+                  </span>
+                </div>
+
+                {receiptModal.payments && receiptModal.payments.length > 0 && (
+                  <div className="pt-2 border-t border-slate-200/60 space-y-1">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Historial de Entregas:</span>
+                    {receiptModal.payments.map((p, idx) => (
+                      <div key={p.id || idx} className="flex justify-between text-[11px] bg-slate-50 p-1.5 rounded">
+                        <span className="text-slate-600">
+                          Entrega #{idx + 1} ({p.payment_date || 'Fecha'} - {p.payment_method === 'Cash' ? 'Efectivo' : p.payment_method === 'Bank Transfer' ? 'Transferencia' : 'Tarjeta'}):
+                        </span>
+                        <span className="font-semibold text-emerald-600">+${Number(p.amount).toLocaleString('en-US')}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -483,7 +548,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
               <button 
                 type="button" 
                 onClick={() => setReceiptModal(null)}
-                className="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-800 text-slate-500 rounded text-xs font-medium transition-colors cursor-pointer"
+                className="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-100 text-slate-500 rounded text-xs font-medium transition-colors cursor-pointer"
               >
                 Cerrar
               </button>
@@ -492,7 +557,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                 onClick={() => window.print()}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium shadow-sm transition-colors cursor-pointer flex items-center gap-1.5"
               >
-                 Imprimir Recibo
+                🖨️ Imprimir Recibo
               </button>
             </div>
           </div>
