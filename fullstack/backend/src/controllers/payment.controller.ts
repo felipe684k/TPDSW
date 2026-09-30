@@ -1,5 +1,5 @@
 import { type Request, type Response } from 'express';
-import { Payment, Enrollment, User, Section, Course, TuitionFee } from '../models/index.js';
+import { Payment, Enrollment, User, Section, Course, TuitionFee, AcademicYear } from '../models/index.js';
 
 /**
  * Get all registered payments
@@ -20,6 +20,10 @@ export const getAllPayments = async (req: Request, res: Response): Promise<void>
             {
               model: Section,
               as: 'section',
+              include: [
+                { model: AcademicYear, as: 'academic_year' },
+                { model: Course, as: 'course' }
+              ],
               attributes: ['id_section', 'name']
             }
           ]
@@ -36,11 +40,17 @@ export const getAllPayments = async (req: Request, res: Response): Promise<void>
 };
 
 /**
- * Get the account status of a student by user ID
+ * Get the account status of a student by user ID, optionally filtered by academic year
  */
 export const getStudentAccountStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id_user } = req.params;
+    const { id_academic_year } = req.query;
+
+    const sectionWhere: any = {};
+    if (id_academic_year) {
+      sectionWhere.id_academic_year = Number(id_academic_year);
+    }
 
     // Find enrollments of the student
     const enrollments: any = await Enrollment.findAll({
@@ -49,6 +59,7 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
         {
           model: Section,
           as: 'section',
+          where: Object.keys(sectionWhere).length > 0 ? sectionWhere : undefined,
           include: [
             {
               model: Course,
@@ -59,6 +70,10 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
                   as: 'tuition_fees'
                 }
               ]
+            },
+            {
+              model: AcademicYear,
+              as: 'academic_year'
             }
           ]
         },
@@ -72,8 +87,8 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
     if (!enrollments || enrollments.length === 0) {
       res.status(200).json({ 
         status: 'ok', 
-        message: 'The student has no registered enrollments', 
-        data: { enrollments: [], installmets: [] } 
+        message: 'The student has no registered enrollments for this academic period', 
+        data: { enrollments: [], installments: [] } 
       });
       return;
     }
@@ -100,6 +115,15 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
 
     for (const enroll of enrollments) {
       const course = enroll.section?.course;
+      const ay = enroll.section?.academic_year;
+      const ayName = ay?.name || 'Ciclo Lectivo';
+      const ayYear = ay?.start_date 
+        ? new Date(ay.start_date).getFullYear() 
+        : (ay?.name?.match(/\d{4}/) ? parseInt(ay.name.match(/\d{4}/)![0], 10) : currentYear);
+      
+      const isPastYear = ayYear < currentYear;
+      const isFutureYear = ayYear > currentYear;
+
       let baseAmount = 12000;
       if (course) {
         if (course.tuition_fees && course.tuition_fees.length > 0) {
@@ -110,10 +134,19 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
       }
 
       const registeredPayments: any[] = enroll.payments || [];
-      const monthsToShow = academicMonths.filter(m => 
-        m.monthNum <= currentMonthNum || 
-        registeredPayments.some(p => p.installment_month?.toLowerCase() === m.name.toLowerCase())
-      );
+      
+      // Determine which months are due / displayed:
+      // If it's a past academic year (e.g. 2025): ALL academic months (3 to 12) are due!
+      // If it's the current year: months up to current month (or any month with a payment).
+      // If it's a future year: only months that have registered payments.
+      const monthsToShow = isPastYear
+        ? academicMonths
+        : isFutureYear
+        ? academicMonths.filter(m => registeredPayments.some(p => p.installment_month?.toLowerCase() === m.name.toLowerCase()))
+        : academicMonths.filter(m => 
+            m.monthNum <= currentMonthNum || 
+            registeredPayments.some(p => p.installment_month?.toLowerCase() === m.name.toLowerCase())
+          );
 
       monthsToShow.forEach((m) => {
         const monthPayments = registeredPayments.filter(
@@ -121,7 +154,7 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
         );
         const totalPaid = monthPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
         const remainingAmount = Math.max(0, baseAmount - totalPaid);
-        const dueDate = `10/${m.monthNum.toString().padStart(2, '0')}/${currentYear}`;
+        const dueDate = `10/${m.monthNum.toString().padStart(2, '0')}/${ayYear}`;
 
         let status = 'Pending';
         if (totalPaid >= baseAmount) {
@@ -135,7 +168,12 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
         installmentResults.push({
           id: lastPayment ? lastPayment.id_payment : `pending_${enroll.id_enrollment}_${m.monthNum}`,
           id_enrollment: enroll.id_enrollment,
+          id_course: course?.id_course,
+          course_name: course?.course_name || 'Curso',
           section: enroll.section?.name || 'Section',
+          id_academic_year: ay?.id_academic_year,
+          academic_year_name: ayName,
+          year: ayYear,
           installment_month: m.name,
           amount: baseAmount,
           total_paid: totalPaid,
@@ -191,6 +229,10 @@ export const registerPayment = async (req: Request, res: Response): Promise<void
               model: Course,
               as: 'course',
               include: [{ model: TuitionFee, as: 'tuition_fees' }]
+            },
+            {
+              model: AcademicYear,
+              as: 'academic_year'
             }
           ]
         },
@@ -284,6 +326,12 @@ export const registerPayment = async (req: Request, res: Response): Promise<void
  */
 export const getDebtors = async (req: Request, res: Response): Promise<void> => {
   try {
+    const { id_academic_year } = req.query;
+    const sectionWhere: any = {};
+    if (id_academic_year) {
+      sectionWhere.id_academic_year = Number(id_academic_year);
+    }
+
     const enrollments: any = await Enrollment.findAll({
       where: { status: 'Active' },
       include: [
@@ -295,11 +343,16 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
         {
           model: Section,
           as: 'section',
+          where: Object.keys(sectionWhere).length > 0 ? sectionWhere : undefined,
           include: [
             {
               model: Course,
               as: 'course',
               include: [{ model: TuitionFee, as: 'tuition_fees' }]
+            },
+            {
+              model: AcademicYear,
+              as: 'academic_year'
             }
           ]
         },
@@ -313,6 +366,7 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
     const debtorsMap = new Map();
     const now = new Date();
     const currentMonthNum = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
 
     const academicMonths = [
       { name: 'March', monthNum: 3 },
@@ -327,13 +381,19 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
       { name: 'December', monthNum: 12 }
     ];
 
-    const dueMonths = academicMonths.filter(m => m.monthNum <= currentMonthNum);
-
     for (const enroll of enrollments) {
       const userObj = enroll.user;
       if (!userObj) continue;
 
       const course = enroll.section?.course;
+      const ay = enroll.section?.academic_year;
+      const ayYear = ay?.start_date 
+        ? new Date(ay.start_date).getFullYear() 
+        : (ay?.name?.match(/\d{4}/) ? parseInt(ay.name.match(/\d{4}/)![0], 10) : currentYear);
+      const isPastYear = ayYear < currentYear;
+
+      const dueMonths = isPastYear ? academicMonths : academicMonths.filter(m => m.monthNum <= currentMonthNum);
+
       let baseAmount = 12000;
       if (course) {
         if (course.tuition_fees && course.tuition_fees.length > 0) {
@@ -366,6 +426,7 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
           fullName: `${userObj.last_name}, ${userObj.first_name}`,
           dni: userObj.dni,
           course: enroll.section?.name || 'General Course',
+          academic_year: ay?.name || 'General',
           unpaidInstallments: unpaidInstallments.length,
           totalDebt
         });

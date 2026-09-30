@@ -277,7 +277,7 @@ export default function Students() {
         studentId={enrollStudentId}
         onSuccess={() => {
           setEnrollStudentId(null)
-          setToast({ text: "Enrollment registered succesfully", type: 'success' })
+          setToast({ text: "INSCRIPCION REGISTRADA CORRECTAMENTE", type: 'success' })
           setTimeout(() => setToast(null), 3000)
         }}
       />

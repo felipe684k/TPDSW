@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 
 import { API_BASE_URL } from '../../biz/config'
 import { paymentService, type Installment } from '../../biz/services/payment.service'
+import { academicYearService, type AcademicYear } from '../../biz/services/academicYear.service'
 
 interface Student {
   id: number
@@ -21,6 +22,10 @@ interface PaymentModalProps {
 export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModalProps) {
   const [studentsList, setStudentsList] = useState<Student[]>([])
   const [selectedStudent, setSelectedStudent] = useState<number | null>(studentId)
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
+  const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<number | ''>('')
+  const [enrollmentsList, setEnrollmentsList] = useState<any[]>([])
+  const [selectedEnrollmentId, setSelectedEnrollmentId] = useState<number | ''>('')
   const [installments, setInstallments] = useState<Installment[]>([])
   const [enrollmentId, setEnrollmentId] = useState<number | null>(null)
   const [hasEnrollment, setHasEnrollment] = useState<boolean>(true)
@@ -34,15 +39,39 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
   useEffect(() => {
     if (isOpen) {
       fetchStudents()
+      fetchAcademicYears()
     }
   }, [isOpen])
 
   useEffect(() => {
-    if (isOpen && studentId && studentsList.length > 0) {
+    if (isOpen && studentId) {
       setSelectedStudent(studentId)
-      loadAccountStatus(studentId)
+      loadAccountStatus(studentId, selectedAcademicYearId)
     }
-  }, [isOpen, studentId, studentsList.length])
+  }, [isOpen, studentId])
+
+  const fetchAcademicYears = async () => {
+    try {
+      const data = await academicYearService.getAcademicYears()
+      if (data && Array.isArray(data) && data.length > 0) {
+        setAcademicYears(data)
+        if (!selectedAcademicYearId) {
+          const currentYear = new Date().getFullYear()
+          const matched = data.find(ay => {
+            const yr = new Date(ay.start_date).getFullYear()
+            return yr === currentYear || ay.name.includes(currentYear.toString())
+          })
+          const defaultId = matched ? matched.id_academic_year! : data[data.length - 1].id_academic_year!
+          setSelectedAcademicYearId(defaultId)
+          if (studentId) {
+            loadAccountStatus(studentId, defaultId)
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error loading academic years:', e)
+    }
+  }
 
   const fetchStudents = async () => {
     try {
@@ -72,17 +101,26 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
     ])
   }
 
-  const loadAccountStatus = async (id: number) => {
+  const loadAccountStatus = async (id: number, academicYearId?: number | '') => {
     setLoading(true)
     try {
-      const data = await paymentService.getStudentAccountStatus(id)
+      const ayParam = academicYearId !== undefined 
+        ? (academicYearId === '' ? undefined : Number(academicYearId)) 
+        : (selectedAcademicYearId === '' ? undefined : Number(selectedAcademicYearId))
+      const data = await paymentService.getStudentAccountStatus(id, ayParam)
       const enrolls = data.enrollments || []
+      setEnrollmentsList(enrolls)
       if (enrolls.length > 0) {
         setHasEnrollment(true)
+        setSelectedEnrollmentId(prev => {
+          const exists = enrolls.some((e: any) => e.id_enrollment === prev)
+          return exists ? prev : enrolls[0].id_enrollment
+        })
         setEnrollmentId(enrolls[0].id_enrollment)
         setInstallments(data.installments || [])
       } else {
         setHasEnrollment(false)
+        setSelectedEnrollmentId('')
         setEnrollmentId(null)
         setInstallments([])
       }
@@ -121,6 +159,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
           id: idx + 1,
           id_enrollment: id,
           section: student.course || 'Section',
+          course_name: student.course || 'Curso General',
           installment_month: m.name,
           amount: base,
           total_paid: isPaid ? base : 0,
@@ -128,12 +167,20 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
           due_date: `10/${m.monthNum.toString().padStart(2, '0')}/${currentYear}`,
           status: isPaid ? 'Paid' : 'Pending',
           payment_date: isPaid ? `05/${m.monthNum.toString().padStart(2, '0')}/${currentYear}` : null,
-          payment_method: isPaid ? 'Cash' : undefined
+          payment_method: isPaid ? 'Cash' : undefined,
+          year: currentYear
         }
       })
       setInstallments(mockInstallments)
     }
     setLoading(false)
+  }
+
+  const handleAcademicYearChange = (id: number | '') => {
+    setSelectedAcademicYearId(id)
+    if (selectedStudent) {
+      loadAccountStatus(selectedStudent, id)
+    }
   }
 
   useEffect(() => {
@@ -199,7 +246,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
     try {
       await paymentService.registerPayment(payload)
       if (selectedStudent) {
-        await loadAccountStatus(selectedStudent)
+        await loadAccountStatus(selectedStudent, selectedAcademicYearId)
       }
     } catch (err) {
       console.warn('Error al registrar el pago:', err)
@@ -211,6 +258,16 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
   }
 
   const currentStudent = studentsList.find(a => a.id === selectedStudent)
+  const currentAcademicYear = academicYears.find(ay => ay.id_academic_year === selectedAcademicYearId)
+  const currentEnrollment = enrollmentsList.find((e: any) => e.id_enrollment === selectedEnrollmentId)
+  
+  // Filter installments by selected course/enrollment
+  const visibleInstallments = selectedEnrollmentId
+    ? installments.filter(inst => inst.id_enrollment === selectedEnrollmentId)
+    : installments
+
+  const visibleDebt = visibleInstallments
+    .reduce((acc, c) => acc + (c.remaining_amount !== undefined ? c.remaining_amount : (c.status === 'Paid' ? 0 : c.amount)), 0)
 
   if (!isOpen) return null;
 
@@ -218,23 +275,100 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
     <div className="fixed inset-0 bg-black/60 z-40 flex justify-end">
       <div className="bg-white w-full max-w-3xl h-full shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-right duration-300">
         
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-5">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-800">Estado de Cuenta</h1>
-            <p className="text-xs text-slate-500 mt-1">Gestión de pagos mensuales para el Ciclo Lectivo 2026.</p>
+            <p className="text-xs text-slate-500 mt-0.5">Gestión y control de pagos de cuotas por curso y alumno.</p>
           </div>
           <button onClick={onClose} className="text-slate-600 hover:bg-slate-100 bg-white border border-slate-200 p-2 shadow-sm text-sm font-medium rounded-lg cursor-pointer">
             Cerrar
           </button>
         </div>
 
+        {/* Selector de Ciclo Lectivo y Curso */}
+        <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl mb-5 space-y-3 shadow-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Ciclo Lectivo */}
+            <div>
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-1">
+                <span>📅</span> Ciclo Lectivo:
+              </label>
+              <select
+                value={selectedAcademicYearId}
+                onChange={e => handleAcademicYearChange(e.target.value === '' ? '' : Number(e.target.value))}
+                className="w-full border border-slate-300 rounded-lg p-2 text-xs bg-white text-slate-800 font-semibold outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
+              >
+                <option value="">-- Todos los Ciclos Lectivos --</option>
+                {academicYears.map(ay => (
+                  <option key={ay.id_academic_year} value={ay.id_academic_year}>
+                    {ay.name} ({new Date(ay.start_date).getFullYear()})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Curso / Comisión */}
+            <div>
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-1">
+                <span>📚</span> Curso a Consultar / Cobrar:
+              </label>
+              <select
+                disabled={enrollmentsList.length === 0}
+                value={selectedEnrollmentId}
+                onChange={e => setSelectedEnrollmentId(e.target.value === '' ? '' : Number(e.target.value))}
+                className="w-full border border-slate-300 rounded-lg p-2 text-xs bg-white text-slate-800 font-semibold outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer disabled:bg-slate-100 disabled:text-slate-400"
+              >
+                {enrollmentsList.length > 1 && (
+                  <option value="">-- Ver Todos los Cursos ({enrollmentsList.length}) --</option>
+                )}
+                {enrollmentsList.map((enr: any) => (
+                  <option key={enr.id_enrollment} value={enr.id_enrollment}>
+                    {enr.section?.course?.course_name || 'Curso'} ({enr.section?.name || 'Comisión'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
+          {enrollmentsList.length > 1 && (
+            <div className="flex items-center gap-1.5 pt-2 border-t border-slate-200/60 overflow-x-auto text-[11px]">
+              <span className="text-slate-500 font-semibold text-[10px] uppercase tracking-wider whitespace-nowrap">Cursos del alumno:</span>
+              <button
+                type="button"
+                onClick={() => setSelectedEnrollmentId('')}
+                className={`px-2.5 py-1 rounded-full font-semibold cursor-pointer transition-colors whitespace-nowrap ${
+                  selectedEnrollmentId === ''
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                Todos los cursos
+              </button>
+              {enrollmentsList.map((enr: any) => (
+                <button
+                  type="button"
+                  key={enr.id_enrollment}
+                  onClick={() => setSelectedEnrollmentId(enr.id_enrollment)}
+                  className={`px-2.5 py-1 rounded-full font-semibold cursor-pointer transition-colors whitespace-nowrap ${
+                    selectedEnrollmentId === enr.id_enrollment
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {enr.section?.course?.course_name || 'Curso'}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
       {/* Warning if no enrollment */}
       {selectedStudent && !hasEnrollment && !loading && (
-        <div className="bg-amber-950/40 border border-amber-800/60 text-amber-300 p-4 rounded-xl text-xs flex items-center gap-3">
+        <div className="bg-amber-50 border border-amber-300 text-amber-900 p-4 rounded-xl text-xs flex items-start gap-3 mb-5">
           <span className="text-lg">⚠️</span>
           <div>
-            <strong>El alumno no tiene una inscripción activa en comisiones.</strong>
-            <p className="text-[11px] text-amber-700 mt-0.5">Para cobrar cuotas, el alumno debe ser inscripto previamente en el módulo de <em>Inscripciones</em>.</p>
+            <strong className="font-bold">No se registran inscripciones para este Ciclo Lectivo {currentAcademicYear ? `(${currentAcademicYear.name})` : ''}.</strong>
+            <p className="text-[11px] text-amber-700 mt-1">El alumno no cursó o aún no fue inscripto a comisiones en este período. Podés seleccionar otro ciclo arriba o inscribirlo desde el módulo de <em>Inscripciones</em>.</p>
           </div>
         </div>
       )}
@@ -245,19 +379,22 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
           <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
             <div>
               <h2 className="text-sm font-bold text-slate-700">Estado de Cuenta - {currentStudent?.fullName}</h2>
-              <div className="flex gap-2 items-center mt-1">
-                <p className="text-xs text-slate-500">Ciclo Lectivo 2026 (Marzo - Diciembre)</p>
-                <span className="text-[10px] font-semibold bg-indigo-950/40 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-800/40">
-                  {installments.length} Cuotas Devengadas
+              <div className="flex flex-wrap gap-2 items-center mt-1">
+                <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
+                  {currentEnrollment ? `${currentEnrollment.section?.course?.course_name || 'Curso'} (${currentEnrollment.section?.name || 'Comisión'})` : 'Todos los Cursos'}
+                </span>
+                <p className="text-xs text-slate-500">
+                  {currentAcademicYear ? currentAcademicYear.name : 'Ciclo Lectivo'}
+                </p>
+                <span className="text-[10px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full border border-slate-200">
+                  {visibleInstallments.length} Cuotas
                 </span>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-xs text-slate-500 block">Deuda Vencida a la Fecha</span>
+              <span className="text-xs text-slate-500 block">Deuda Pendiente</span>
               <span className="text-lg font-bold text-rose-500">
-                ${installments
-                  .reduce((acc, c) => acc + (c.remaining_amount !== undefined ? c.remaining_amount : (c.status === 'Paid' ? 0 : c.amount)), 0)
-                  .toLocaleString('en-US')}
+                ${visibleDebt.toLocaleString('en-US')}
               </span>
             </div>
           </div>
@@ -265,11 +402,11 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
           <div className="p-5">
             {loading ? (
               <div className="text-center py-8 text-xs text-slate-500">Cargando estado de cuenta...</div>
-            ) : installments.length === 0 ? (
-              <div className="text-center py-8 text-xs text-slate-500">No hay cuotas devengadas registradas para este alumno.</div>
+            ) : visibleInstallments.length === 0 ? (
+              <div className="text-center py-8 text-xs text-slate-500">No hay cuotas devengadas registradas para el curso seleccionado.</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {installments.map((installment) => {
+                {visibleInstallments.map((installment) => {
                   const remAmount = installment.remaining_amount !== undefined 
                     ? installment.remaining_amount 
                     : (installment.status === 'Paid' ? 0 : installment.amount);
@@ -289,8 +426,15 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">{installment.installment_month} 2026</span>
-                          <span className="block text-[10px] text-slate-500">Vencimiento: {installment.due_date}</span>
+                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            {installment.installment_month} {installment.year || ''}
+                          </span>
+                          <span className="block text-[11px] font-semibold text-indigo-600 truncate max-w-[170px]" title={installment.course_name ? `${installment.course_name} (${installment.section})` : installment.section}>
+                            {installment.course_name ? `${installment.course_name}` : installment.section}
+                          </span>
+                          <span className="block text-[10px] text-slate-400">
+                            Vencimiento: {installment.due_date}
+                          </span>
                         </div>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                           isPaid 
@@ -377,7 +521,12 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
             
             <form onSubmit={handleProcessPayment} className="p-5 space-y-4">
               <div className="bg-slate-50 border border-slate-200/60 rounded-lg p-3 text-center mb-2">
-                <span className="block text-xs text-slate-500 uppercase tracking-wider">Cuota de {paymentModal.installment_month} 2026</span>
+                <span className="block text-xs text-slate-500 uppercase tracking-wider">
+                  Cuota de {paymentModal.installment_month} {paymentModal.year || ''}
+                </span>
+                <span className="text-xs font-bold text-indigo-700 block mt-0.5">
+                  {paymentModal.course_name ? `${paymentModal.course_name} · ${paymentModal.section}` : paymentModal.section}
+                </span>
                 <div className="grid grid-cols-3 gap-1 mt-2 text-xs">
                   <div>
                     <span className="text-slate-400 block text-[10px]">Total</span>
@@ -478,7 +627,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
               <div className="flex justify-between items-center bg-slate-50/60 p-3 rounded-lg border border-slate-200/60">
                 <div>
                   <span className="text-slate-500 text-[10px] uppercase block font-semibold">N° Recibo</span>
-                  <span className="font-mono font-bold text-indigo-500">#REC-2026-{receiptModal.id}</span>
+                  <span className="font-mono font-bold text-indigo-500">#REC-{receiptModal.year || '2026'}-{receiptModal.id}</span>
                 </div>
                 <div className="text-right">
                   <span className="text-slate-500 text-[10px] uppercase block font-semibold">Fecha de Emisión</span>
@@ -502,7 +651,9 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Concepto:</span>
-                  <span className="font-medium text-slate-700">Cuota {receiptModal.installment_month} 2026</span>
+                  <span className="font-medium text-slate-700">
+                    Cuota {receiptModal.installment_month} {receiptModal.year || ''} {receiptModal.academic_year_name ? `(${receiptModal.academic_year_name})` : ''}
+                  </span>
                 </div>
               </div>
 

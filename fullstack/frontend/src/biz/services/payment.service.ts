@@ -13,7 +13,12 @@ export interface SubPayment {
 export interface Installment {
   id: number | string;
   id_enrollment?: number;
+  id_course?: number;
+  course_name?: string;
   section?: string;
+  id_academic_year?: number;
+  academic_year_name?: string;
+  year?: number;
   installment_month: string;
   amount: number;
   total_paid: number;
@@ -49,6 +54,7 @@ export interface Debtor {
   fullName: string;
   dni: string;
   course: string;
+  academic_year?: string;
   unpaidInstallments: number;
   totalDebt: number;
 }
@@ -61,8 +67,11 @@ export const paymentService = {
     return json.data || [];
   },
 
-  getStudentAccountStatus: async (idUser: number): Promise<AccountStatus> => {
-    const response = await fetch(`${API_URL}/student/${idUser}`);
+  getStudentAccountStatus: async (idUser: number, idAcademicYear?: number): Promise<AccountStatus> => {
+    const url = idAcademicYear 
+      ? `${API_URL}/student/${idUser}?id_academic_year=${idAcademicYear}` 
+      : `${API_URL}/student/${idUser}`;
+    const response = await fetch(url);
     if (!response.ok) throw new Error('Error fetching account status');
     const json = await response.json();
     return json.data || { enrollments: [], installments: [] };
@@ -81,8 +90,11 @@ export const paymentService = {
     return json.data;
   },
 
-  getDebtors: async (): Promise<Debtor[]> => {
-    const response = await fetch(`${API_URL}/debtors`);
+  getDebtors: async (idAcademicYear?: number): Promise<Debtor[]> => {
+    const url = idAcademicYear 
+      ? `${API_URL}/debtors?id_academic_year=${idAcademicYear}` 
+      : `${API_URL}/debtors`;
+    const response = await fetch(url);
     if (!response.ok) throw new Error('Error fetching debtors');
     const json = await response.json();
     return json.data || [];
