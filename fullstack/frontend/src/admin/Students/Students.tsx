@@ -14,12 +14,12 @@ export default function Students() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [studentToDelete, setStudentToDelete] = useState<number | null>(null) 
+  const [studentToDelete, setStudentToDelete] = useState<number | null>(null)
   const [paymentStudentId, setPaymentStudentId] = useState<number | null>(null)
   const [enrollStudentId, setEnrollStudentId] = useState<number | null>(null)
-  
+
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const [toast, setToast] = useState<{text: string, type: 'success' | 'danger'} | null>(null)
+  const [toast, setToast] = useState<{ text: string, type: 'success' | 'danger' } | null>(null)
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -97,7 +97,7 @@ export default function Students() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    
+
     try {
       if (editingId) {
         await studentService.updateStudent(editingId, {
@@ -119,13 +119,13 @@ export default function Students() {
 
       setIsModalOpen(false)
       setFormData({ first_name: '', last_name: '', dni: '', phone: '', email: '', level_code: '', birth_date: '' })
-      
+
       setToast({ text: editingId ? "Alumno actualizado exitosamente" : "Alumno registrado exitosamente", type: 'success' })
       setTimeout(() => setToast(null), 3000)
-      
+
       setEditingId(null)
       fetchStudents()
-      
+
     } catch (error) {
       console.error("Error saving student", error)
       setErrorMsg("No se pudo guardar el alumno. Por favor verifique que el DNI y/o Email no estén duplicados o intente nuevamente.")
@@ -167,21 +167,21 @@ export default function Students() {
       header: 'Acciones',
       render: (s: Student) => (
         <div className="flex gap-2 items-center">
-          <button 
+          <button
             onClick={() => setPaymentStudentId(s.id!)}
             className="text-emerald-400 hover:text-emerald-300 font-semibold text-2xs cursor-pointer"
           >
             💰 Pagar
           </button>
           <span className="text-slate-600">|</span>
-          <button 
+          <button
             onClick={() => setEnrollStudentId(s.id!)}
             className="text-blue-400 hover:text-blue-300 font-semibold text-2xs cursor-pointer"
           >
             📝 Inscribir
           </button>
           <span className="text-slate-600">|</span>
-          <button 
+          <button
             onClick={() => handleEdit(s)}
             className="text-indigo-400 hover:text-indigo-300 font-semibold text-2xs cursor-pointer"
           >
@@ -217,11 +217,10 @@ export default function Students() {
       </div>
 
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
-          toast.type === 'success' 
-            ? 'border-emerald-500/50 text-emerald-400 shadow-emerald-900/20' 
-            : 'border-rose-500/50 text-rose-400 shadow-rose-900/20'
-        }`}>
+        <div className={`fixed bottom-6 right-6 z-50 bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${toast.type === 'success'
+          ? 'border-emerald-500/50 text-emerald-400 shadow-emerald-900/20'
+          : 'border-rose-500/50 text-rose-400 shadow-rose-900/20'
+          }`}>
           <span className="text-lg">{toast.type === 'success' ? '✅' : '🗑️'}</span>
           <span className="font-medium text-sm tracking-wide">{toast.text}</span>
         </div>
@@ -241,7 +240,7 @@ export default function Students() {
         </div>
       </div>
 
-      <DataTable 
+      <DataTable
         title="Lista General"
         columns={columns}
         data={filteredStudents}
@@ -249,7 +248,7 @@ export default function Students() {
         emptyMessage={isFromBackend ? 'Ningún alumno registrado coincide con la búsqueda.' : 'Cargando alumnos...'}
       />
 
-      <StudentFormModal 
+      <StudentFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmit}
@@ -278,7 +277,7 @@ export default function Students() {
         studentId={enrollStudentId}
         onSuccess={() => {
           setEnrollStudentId(null)
-          setToast({ text: "Inscripción registrada (Simulación)", type: 'success' })
+          setToast({ text: "Enrollment registered succesfully", type: 'success' })
           setTimeout(() => setToast(null), 3000)
         }}
       />

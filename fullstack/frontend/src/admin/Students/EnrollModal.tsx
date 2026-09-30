@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { sectionService, type Section } from '../../biz/services/section.service'
+import { enrollmentService } from '../../biz/services/enrollment.service'
 import { academicYearService, type AcademicYear } from '../../biz/services/academicYear.service'
 import Modal from '../../shared/components/Modal'
 
@@ -10,10 +11,10 @@ interface EnrollModalProps {
   onSuccess: () => void
 }
 
-export default function EnrollModal({ isOpen, onClose, onSuccess }: EnrollModalProps) {
+export default function EnrollModal({ isOpen, onClose, studentId, onSuccess }: EnrollModalProps) {
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
   const [sections, setSections] = useState<Section[]>([])
-  
+
   const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<number | ''>('')
   const [selectedCourseId, setSelectedCourseId] = useState<number | ''>('')
   const [selectedSectionId, setSelectedSectionId] = useState<number | ''>('')
@@ -73,12 +74,26 @@ export default function EnrollModal({ isOpen, onClose, onSuccess }: EnrollModalP
   const availableCourses = Array.from(new Map(sections.filter(s => s.course).map(s => [s.course!.id_course, s.course])).values())
   const availableSections = sections.filter(s => s.id_course === selectedCourseId)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedSectionId || !paymentMethod) return
+    if (!selectedSectionId || !paymentMethod || !studentId) return
+    try {
+      setLoading(true) // Set loading state
 
-    // Since the CRUD is not ready, we simulate success
-    onSuccess()
+      // Use enrollment service to create the enrollment
+      await enrollmentService.createEnrollment({
+        id_user: studentId,
+        id_section: selectedSectionId,
+      })
+
+      onSuccess()
+
+    } catch (error) {
+      console.error("Error creando inscripción", error)
+      alert("Hubo un error al inscribir al alumno")
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (!isOpen) return null
@@ -91,13 +106,13 @@ export default function EnrollModal({ isOpen, onClose, onSuccess }: EnrollModalP
       maxWidth="max-w-md"
       footer={
         <>
-          <button 
+          <button
             type="button" onClick={onClose}
             className="flex-1 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 rounded text-xs font-medium transition-colors cursor-pointer"
           >
             Cancelar
           </button>
-          <button 
+          <button
             type="submit" form="enrollForm"
             className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium shadow-sm transition-all cursor-pointer"
             disabled={!selectedSectionId || !paymentMethod}
@@ -110,8 +125,8 @@ export default function EnrollModal({ isOpen, onClose, onSuccess }: EnrollModalP
       <form id="enrollForm" onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="text-xs font-semibold text-slate-500 block mb-1">Ciclo Lectivo</label>
-          <select 
-            value={selectedAcademicYearId} 
+          <select
+            value={selectedAcademicYearId}
             onChange={handleAcademicYearChange}
             className="w-full border border-slate-300 bg-slate-50 text-slate-700 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
           >
@@ -124,9 +139,9 @@ export default function EnrollModal({ isOpen, onClose, onSuccess }: EnrollModalP
 
         <div>
           <label className="text-xs font-semibold text-slate-500 block mb-1">Curso *</label>
-          <select 
+          <select
             required
-            value={selectedCourseId} 
+            value={selectedCourseId}
             onChange={handleCourseChange}
             className="w-full border border-slate-300 bg-slate-50 text-slate-700 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
             disabled={loading || availableCourses.length === 0}
@@ -143,9 +158,9 @@ export default function EnrollModal({ isOpen, onClose, onSuccess }: EnrollModalP
 
         <div>
           <label className={`text-xs font-semibold block mb-1 ${!selectedCourseId ? 'text-slate-600' : 'text-slate-500'}`}>Comisión *</label>
-          <select 
+          <select
             required
-            value={selectedSectionId} 
+            value={selectedSectionId}
             onChange={e => setSelectedSectionId(Number(e.target.value))}
             className="w-full border border-slate-300 bg-slate-50 text-slate-700 rounded p-2.5 text-xs outline-none focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100"
             disabled={!selectedCourseId || availableSections.length === 0}
@@ -168,9 +183,9 @@ export default function EnrollModal({ isOpen, onClose, onSuccess }: EnrollModalP
 
         <div>
           <label className="text-xs font-semibold text-slate-500 block mb-1">Método de Pago (Matrícula) *</label>
-          <select 
+          <select
             required
-            value={paymentMethod} 
+            value={paymentMethod}
             onChange={e => setPaymentMethod(e.target.value)}
             className="w-full border border-slate-300 bg-slate-50 text-slate-700 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
           >
