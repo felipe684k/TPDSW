@@ -3,8 +3,6 @@ import { API_BASE_URL } from '../config';
 export interface Course {
   id_course?: number;
   course_name: string;
-  weekly_hours: number;
-  days_per_week: number;
   registration_fee: number;
   level_code: number;
   active?: boolean;

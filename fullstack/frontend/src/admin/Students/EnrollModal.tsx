@@ -173,7 +173,7 @@ export default function EnrollModal({ isOpen, onClose, studentId, onSuccess }: E
               <option value="">-- Seleccionar Comisión --</option>
             )}
             {availableSections.map(s => (
-              <option key={s.id_section} value={s.id_section}>{s.name} (Cupos: {(s as any).capacity})</option>
+              <option key={s.id_section} value={s.id_section}>{s.name}</option>
             ))}
           </select>
           {availableSections.length === 0 && selectedCourseId && (

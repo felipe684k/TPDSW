@@ -176,8 +176,22 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
       {loading ? (
         <div className="text-slate-500 text-xs">Cargando comisiones...</div>
       ) : sections.length === 0 ? (
-        <div className="text-center p-6 text-xs text-slate-500 border border-dashed border-slate-200 rounded-lg">
-          Aún no hay comisiones creadas para este curso en este ciclo lectivo.
+        <div className="text-center p-8 text-xs text-slate-500 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50 flex flex-col items-center justify-center gap-2">
+          <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center text-lg mb-1">
+            📋
+          </div>
+          <p className="font-medium text-slate-600">Aún no hay comisiones creadas para este curso en este ciclo lectivo.</p>
+          <p className="text-[11px] text-slate-400 max-w-sm">Creá una comisión para asignar profesores, aulas, días y horarios de cursada.</p>
+          <button 
+            type="button"
+            onClick={() => {
+              if(!selectedAcademicYearId) { setToast({text:'Debe seleccionar un ciclo lectivo', type:'danger'}); return; }
+              setModalOpen(true);
+            }} 
+            className="cursor-pointer mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-sm transition-all"
+          >
+            ➕ Crear primera comisión
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

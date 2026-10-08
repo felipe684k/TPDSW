@@ -36,8 +36,6 @@ export default function Courses() {
   const [formData, setFormData] = useState({
     course_name: '',
     level_code: '',
-    weekly_hours: '',
-    days_per_week: '',
     registration_fee: '',
     initial_tuition_fee: ''
   })
@@ -69,7 +67,7 @@ export default function Courses() {
 
   const handleOpenModalCreate = () => {
     setEditingId(null)
-    setFormData({ course_name: '', level_code: '', weekly_hours: '', days_per_week: '', registration_fee: '', initial_tuition_fee: '' })
+    setFormData({ course_name: '', level_code: '', registration_fee: '', initial_tuition_fee: '' })
     setModalOpen(true)
     setToast(null)
   }
@@ -83,8 +81,6 @@ export default function Courses() {
     setFormData({ 
       course_name: course.course_name, 
       level_code: course.level_code.toString(), 
-      weekly_hours: course.weekly_hours.toString(), 
-      days_per_week: course.days_per_week.toString(), 
       registration_fee: course.registration_fee.toString(), 
       initial_tuition_fee: lastTuitionFee.toString()
     })
@@ -98,8 +94,6 @@ export default function Courses() {
       const dataToSave = {
         course_name: formData.course_name,
         level_code: Number(formData.level_code),
-        weekly_hours: Number(formData.weekly_hours),
-        days_per_week: Number(formData.days_per_week),
         registration_fee: Number(formData.registration_fee),
         initial_tuition_fee: Number(formData.initial_tuition_fee)
       }
@@ -240,70 +234,93 @@ export default function Courses() {
                             onClick={() => setExpandedCourse(expandedCourse === course.id_course ? null : course.id_course!)}
                             className="w-full p-5 flex flex-col md:flex-row items-center justify-between gap-6 cursor-pointer text-left focus:outline-none"
                           >
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full md:w-1/4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-500 border border-amber-200">
-                                  {expandedCourse === course.id_course ? '📂' : '📁'}
-                                </div>
-                                <h3 className="text-base font-bold text-slate-800">{course.course_name}</h3>
+                            {/* Left: Icon and Course Name */}
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-500 border border-amber-200 shrink-0">
+                                {expandedCourse === course.id_course ? '📂' : '📁'}
                               </div>
-                            </div>
-
-                            {/* Course Attributes */}
-                            <div className="flex flex-row justify-around items-center w-full md:w-2/4 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                              <div className="text-center">
-                                <span className="text-[10px] text-slate-500 block mb-1">Horas Semanales</span>
-                                <span className="text-sm font-semibold text-slate-600 font-mono">{course.weekly_hours} hrs</span>
-                              </div>
-                              <div className="text-center px-4 border-l border-r border-slate-200">
-                                <span className="text-[10px] text-slate-500 block mb-1">Días x Semana</span>
-                                <span className="text-sm font-semibold text-slate-600 font-mono">{course.days_per_week}</span>
-                              </div>
-                              <div className="text-center">
-                                <span className="text-[10px] text-slate-500 block mb-1">Matrícula</span>
-                                <span className="text-sm font-semibold text-slate-600">${Number(course.registration_fee).toLocaleString('en-US')}</span>
-                              </div>
-                            </div>
-
-                            {/* Tuition Fee and Actions */}
-                            <div className="flex flex-row justify-between items-center w-full md:w-1/4">
                               <div>
+                                <h3 className="text-base font-bold text-slate-800">{course.course_name}</h3>
+                                <span className="text-[11px] text-slate-400 font-normal">Gestionar comisiones y horarios</span>
+                              </div>
+                            </div>
+
+                            {/* Center: Matrícula & Cuota Mensual lado a lado */}
+                            <div className="flex flex-row items-center gap-6 bg-slate-50 px-5 py-3 rounded-xl border border-slate-200">
+                              <div className="text-center">
+                                <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block mb-1">Matrícula</span>
+                                <span className="text-sm font-bold text-slate-700 font-mono">
+                                  ${Number(course.registration_fee).toLocaleString('en-US')}
+                                </span>
+                              </div>
+                              <div className="h-10 w-px bg-slate-200"></div>
+                              <div className="text-center">
+                                <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">Cuota Mensual</span>
                                 {activeFee ? (
-                                  <>
-                                    <span className="text-[10px] text-slate-500 block">Cuota Actual</span>
-                                    <span className="text-base font-bold text-emerald-600">${Number(activeFee.monthly_cost).toLocaleString('en-US')}</span>
-                                    <div className="flex gap-2 mt-1">
+                                  <div>
+                                    <span className="text-sm font-bold text-emerald-600 font-mono">
+                                      ${Number(activeFee.monthly_cost).toLocaleString('en-US')}
+                                    </span>
+                                    <div className="flex items-center justify-center gap-1.5 mt-1">
                                       <div 
                                         onClick={(e) => { e.stopPropagation(); setSelectedCourse(course); setNewTuitionFeeAmount(''); setUpdateTuitionFeeModalOpen(true); }}
-                                        className="cursor-pointer text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded border border-slate-200 transition-colors"
+                                        className="cursor-pointer text-[10px] font-medium bg-emerald-100/70 hover:bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded border border-emerald-300 transition-colors"
+                                        title="Actualizar valor de la cuota mensual"
                                       >
-                                        Actualizar
+                                        ✏️ Actualizar
                                       </div>
                                       <div 
                                         onClick={(e) => { e.stopPropagation(); setSelectedCourse(course); setHistoryModalOpen(true); }}
-                                        className="cursor-pointer text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded border border-slate-200 transition-colors"
+                                        className="cursor-pointer text-[10px] font-medium bg-white hover:bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200 transition-colors"
+                                        title="Ver historial de valores de la cuota"
                                       >
-                                        Historial
+                                        📜 Historial
                                       </div>
                                     </div>
-                                  </>
+                                  </div>
                                 ) : (
-                                  <span className="text-[10px] text-slate-500 block">Sin cuota</span>
+                                  <span className="text-xs text-slate-400 block font-medium">Sin cuota</span>
                                 )}
                               </div>
-                              <div className="flex flex-col gap-1 border-l border-slate-200 pl-4 ml-4">
+                            </div>
+
+                            {/* Right: Actions for the Course */}
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-1">
                                 <button 
+                                  type="button"
                                   onClick={(e) => { e.stopPropagation(); handleEdit(course); }} 
-                                  className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                                  className="text-xs font-semibold text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50 transition-colors"
                                 >
                                   Editar
                                 </button>
                                 <button 
+                                  type="button"
                                   onClick={(e) => { e.stopPropagation(); promptDelete(course.id_course!); }} 
-                                  className="text-xs font-semibold text-rose-500 hover:text-rose-700"
+                                  className="text-xs font-semibold text-rose-500 hover:text-rose-700 px-2 py-1 rounded hover:bg-rose-50 transition-colors"
                                 >
                                   Desactivar
                                 </button>
+                              </div>
+
+                              {/* Flecha pequeña a la derecha de desactivar para desplegar/guardar comisiones */}
+                              <div 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedCourse(expandedCourse === course.id_course ? null : course.id_course!);
+                                }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                                title={expandedCourse === course.id_course ? 'Ocultar comisiones' : 'Ver comisiones'}
+                              >
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg" 
+                                  className={`h-4 w-4 transition-transform duration-200 ${expandedCourse === course.id_course ? 'rotate-180 text-indigo-600' : ''}`} 
+                                  fill="none" 
+                                  viewBox="0 0 24 24" 
+                                  stroke="currentColor"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                                </svg>
                               </div>
                             </div>
                           </button>
@@ -364,20 +381,6 @@ export default function Courses() {
               { value: '', label: '— Elegir Nivel —' },
               ...levels.map(l => ({ value: l?.level_code?.toString() || '', label: l.name }))
             ]}
-          />
-
-          <FormInput 
-            label="Horas Semanales *"
-            type="number" required placeholder="4" min="1"
-            value={formData.weekly_hours}
-            onChange={e => setFormData({...formData, weekly_hours: e.target.value})}
-          />
-
-          <FormInput 
-            label="Días por Semana *"
-            type="number" required placeholder="2" min="1" max="7"
-            value={formData.days_per_week}
-            onChange={e => setFormData({...formData, days_per_week: e.target.value})}
           />
 
           <FormInput 

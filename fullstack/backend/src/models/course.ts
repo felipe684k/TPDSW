@@ -11,14 +11,6 @@ export const Course = sequelize.define('Course', {
     type: DataTypes.STRING(150),
     allowNull: false
   },
-  weekly_hours: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
-  days_per_week: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
   registration_fee: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false

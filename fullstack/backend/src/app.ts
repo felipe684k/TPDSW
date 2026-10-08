@@ -1,7 +1,7 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
-import { sequelize, User } from './models/index.js';
+import { sequelize, User, Level } from './models/index.js';
 
 async function seedDefaultUsers() {
   try {
@@ -51,11 +51,32 @@ async function seedDefaultUsers() {
   }
 }
 
+async function seedDefaultLevels() {
+  try {
+    const count = await Level.count();
+    if (count === 0) {
+      const levelsData = ['A1 - Principiante', 'A2 - Elemental', 'B1 - Intermedio', 'B2 - Intermedio Alto', 'C1 - Avanzado', 'C2 - Maestria'];
+      const createdLevels: any[] = [];
+      for (const name of levelsData) {
+        const level: any = await Level.create({ name });
+        createdLevels.push(level);
+      }
+      for (let i = 0; i < createdLevels.length - 1; i++) {
+        await createdLevels[i].update({ next_level_code: createdLevels[i + 1].level_code });
+      }
+      console.log('📚 Niveles iniciales creados exitosamente');
+    }
+  } catch (error) {
+    console.error('❌ Error inicializando niveles:', error);
+  }
+}
+
 // Sync models with the database (creates missing tables automatically)
 sequelize.sync({ alter: true })
   .then(async () => {
     console.log('✅ Database tables synchronized');
     await seedDefaultUsers();
+    await seedDefaultLevels();
   })
   .catch((err) => console.error('❌ Error synchronizing tables:', err));
 

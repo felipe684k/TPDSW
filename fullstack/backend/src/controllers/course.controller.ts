@@ -19,7 +19,7 @@ export const getAllCourses = async (req: Request, res: Response): Promise<void> 
 
 export const createCourse = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { course_name, level_code, weekly_hours, days_per_week, registration_fee, initial_tuition_fee } = req.body;
+    const { course_name, level_code, registration_fee, initial_tuition_fee } = req.body;
     
     // Basic validation
     if (!course_name || !level_code || !initial_tuition_fee) {
@@ -30,8 +30,6 @@ export const createCourse = async (req: Request, res: Response): Promise<void> =
     const newCourse: any = await Course.create({
       course_name,
       level_code,
-      weekly_hours,
-      days_per_week,
       registration_fee,
       active: true
     });
@@ -53,7 +51,7 @@ export const createCourse = async (req: Request, res: Response): Promise<void> =
 export const updateCourse = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { course_name, level_code, weekly_hours, days_per_week, registration_fee } = req.body;
+    const { course_name, level_code, registration_fee } = req.body;
     
     const existingCourse = await Course.findOne({ where: { id_course: id } });
     if (!existingCourse) {
@@ -64,8 +62,6 @@ export const updateCourse = async (req: Request, res: Response): Promise<void> =
     await Course.update({
       course_name,
       level_code,
-      weekly_hours,
-      days_per_week,
       registration_fee
     }, { where: { id_course: id } });
 
