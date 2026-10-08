@@ -2,6 +2,7 @@ import { type Request, type Response } from 'express';
 import { Op } from 'sequelize';
 import { User } from '../models/user.js';
 import { sequelize, Level, UserLevel } from '../models/index.js';
+import bcrypt from 'bcryptjs';
 
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -33,7 +34,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
             WHERE user_level.id_user = User.id 
             ORDER BY start_date DESC 
             LIMIT 1
-          ) = ${sequelize.escape(level as string)}`) 
+          ) = ${sequelize.escape(level as string)}`)
         ]
       };
     }
@@ -52,11 +53,11 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
     const cleanUsers = users.map(u => {
       const data = u.toJSON();
       const lastLevel = data.levels && data.levels.length > 0 ? data.levels[0] : null;
-      
+
       return {
         ...data,
         current_level: lastLevel ? lastLevel.name : 'No Level Assigned',
-        levels: undefined 
+        levels: undefined
       };
     });
 
@@ -71,7 +72,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
 export const checkStudentDni = async (req: Request, res: Response): Promise<void> => {
   try {
     const { dni } = req.params;
-    
+
     // First, search active
     let student: any = await User.findOne({ where: { dni, role: 'STUDENT', active: true } });
     if (student) {
@@ -104,41 +105,61 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, password } = req.body;
 
-    if (username === 'admin' && password === '12345') {
-      res.status(200).json({ 
-        status: 'ok', 
-        message: 'Login successful', 
-        data: { role: 'ADMIN', username: 'admin', first_name: 'Secretariat' } 
+    if (!username || !password) {
+      res.status(400).json({ 
+        status: 'error', 
+        message: 'Por favor ingresa usuario y contraseña', 
+        data: null 
       });
       return;
     }
 
-    if (username === 'user' && password === '12345') {
-      res.status(200).json({ 
-        status: 'ok', 
-        message: 'Login successful', 
-        data: { role: 'STUDENT', username: 'user', first_name: 'Test', last_name: 'User', dni: '11223344', email: 'user@test.com' } 
-      });
-      return;
-    }
-
-    const foundUser = await User.findOne({
+    // Buscamos el usuario en la base de datos por su username
+    const foundUser: any = await User.findOne({
       where: {
         username: username,
-        password: password,
         active: true
       }
     });
 
     if (!foundUser) {
-      res.status(401).json({ status: 'error', message: 'Incorrect username or password', data: null });
+      res.status(401).json({ 
+        status: 'error', 
+        message: 'Usuario o contraseña incorrectos', 
+        data: null 
+      });
       return;
     }
 
-    res.status(200).json({ status: 'ok', message: 'Login successful', data: foundUser });
+    // Verificamos la contraseña con bcrypt (con fallback para contraseñas previas sin hashear)
+    const isPasswordValid = await bcrypt.compare(password, foundUser.password).catch(() => false) 
+      || (foundUser.password === password);
+
+    if (!isPasswordValid) {
+      res.status(401).json({ 
+        status: 'error', 
+        message: 'Usuario o contraseña incorrectos', 
+        data: null 
+      });
+      return;
+    }
+
+    // Limpiamos la contraseña antes de devolver los datos del usuario al frontend
+    const userData = foundUser.toJSON();
+    delete userData.password;
+
+    res.status(200).json({ 
+      status: 'ok', 
+      message: 'Login successful', 
+      data: userData 
+    });
   } catch (error: any) {
     console.error('Error logging in:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Internal server error logging in', data: null });
+    res.status(500).json({ 
+      status: 'db_error', 
+      message: 'Internal server error logging in', 
+      data: null 
+    });
   }
 };
 
@@ -171,6 +192,8 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       res.status(400).json({ status: 'error', message: 'Missing required fields', data: null });
       return;
     }
+    const hashedPassword = await bcrypt.hash(password, 10);
+
 
     const activeExistingUser: any = await User.findOne({ where: { dni } });
     if (activeExistingUser) {
@@ -194,7 +217,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         birth_date,
         email,
         username,
-        password,
+        password: hashedPassword,
         dni,
         active: true
       });
@@ -206,8 +229,17 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+
     const newUser = await User.create({
-      dni, first_name, last_name, phone, birth_date, email, username, password, role: 'STUDENT', active: true 
+      dni,
+      first_name,
+      last_name,
+      phone,
+      birth_date,
+      email, username,
+      password: hashedPassword,
+      role: 'STUDENT',
+      active: true
     });
 
     if (level_code) {
@@ -241,14 +273,16 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     if (birth_date !== undefined) dataToUpdate.birth_date = birth_date;
     if (email !== undefined) dataToUpdate.email = email;
     if (username !== undefined) dataToUpdate.username = username;
-    if (password !== undefined) dataToUpdate.password = password;
+    if (password !== undefined && password.trim() !== '') {
+      dataToUpdate.password = await bcrypt.hash(password, 10);
+    }
 
     await User.update(dataToUpdate, { where: { id: id, role: 'STUDENT', active: true } });
 
     if (level_code) {
-       await UserLevel.destroy({ where: { id_user: id } });
-       const actualDate = new Date().toISOString().split('T')[0];
-       await UserLevel.create({ id_user: id, level_code: level_code, start_date: actualDate });
+      await UserLevel.destroy({ where: { id_user: id } });
+      const actualDate = new Date().toISOString().split('T')[0];
+      await UserLevel.create({ id_user: id, level_code: level_code, start_date: actualDate });
     }
 
     res.status(200).json({ status: 'ok', message: 'Student updated successfully', data: { dni, ...dataToUpdate } });
@@ -261,9 +295,9 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
 export const deleteUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    
+
     const student: any = await User.findOne({ where: { id: id, role: 'STUDENT', active: true } });
-    
+
     if (!student) {
       res.status(404).json({ status: 'error', message: 'Active student not found with ID ' + id, data: null });
       return;
@@ -271,7 +305,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
 
     const ts = Date.now();
     await User.update(
-      { 
+      {
         active: false,
         email: student.email ? `${student.email}_deleted_${ts}` : null,
         username: `${student.username}_deleted_${ts}`,
@@ -279,7 +313,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
       },
       { where: { id: id, role: 'STUDENT', active: true } }
     );
-    
+
     res.status(200).json({ status: 'ok', message: 'Student deactivated successfully', data: null });
   } catch (error: any) {
     console.error('Error deactivating student:', error?.message || error);

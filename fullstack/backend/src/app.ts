@@ -1,10 +1,62 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
-import { sequelize } from './models/index.js';
+import bcrypt from 'bcryptjs';
+import { sequelize, User } from './models/index.js';
+
+async function seedDefaultUsers() {
+  try {
+    // 1. Admin user
+    const admin: any = await User.findOne({ where: { username: 'admin' } });
+    if (!admin) {
+      const adminPasswordHash = await bcrypt.hash('12345', 10);
+      await User.create({
+        dni: '00000000',
+        first_name: 'Secretaría',
+        last_name: 'Administración',
+        email: 'admin@instituto.com',
+        username: 'admin',
+        password: adminPasswordHash,
+        role: 'ADMIN',
+        active: true
+      });
+      console.log('👤 Usuario admin inicial creado (admin / 12345)');
+    } else if (typeof admin.password === 'string' && !admin.password.startsWith('$2')) {
+      const adminPasswordHash = await bcrypt.hash('12345', 10);
+      await admin.update({ password: adminPasswordHash });
+      console.log('🔑 Contraseña de admin actualizada a hash');
+    }
+
+    // 2. Student demo user
+    const student: any = await User.findOne({ where: { username: 'user' } });
+    if (!student) {
+      const studentPasswordHash = await bcrypt.hash('12345', 10);
+      await User.create({
+        dni: '11223344',
+        first_name: 'Alumno',
+        last_name: 'Prueba',
+        email: 'user@instituto.com',
+        username: 'user',
+        password: studentPasswordHash,
+        role: 'STUDENT',
+        active: true
+      });
+      console.log('👤 Usuario estudiante inicial creado (user / 12345)');
+    } else if (typeof student.password === 'string' && !student.password.startsWith('$2')) {
+      const studentPasswordHash = await bcrypt.hash('12345', 10);
+      await student.update({ password: studentPasswordHash });
+      console.log('🔑 Contraseña de estudiante actualizada a hash');
+    }
+  } catch (error) {
+    console.error('❌ Error inicializando usuarios por defecto:', error);
+  }
+}
 
 // Sync models with the database (creates missing tables automatically)
 sequelize.sync({ alter: true })
-  .then(() => console.log('✅ Database tables synchronized'))
+  .then(async () => {
+    console.log('✅ Database tables synchronized');
+    await seedDefaultUsers();
+  })
   .catch((err) => console.error('❌ Error synchronizing tables:', err));
 
 import userRouter from './routes/user.router.js';
