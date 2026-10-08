@@ -1,5 +1,5 @@
 import { type Request, type Response } from 'express';
-import { Payment, Enrollment, User, Section, Course, TuitionFee, AcademicYear } from '../models/index.js';
+import { Payment, Enrollment, User, Section, Course, TuitionFee, AcademicYear, Classroom, Schedule } from '../models/index.js';
 
 /**
  * Get all registered payments
@@ -74,6 +74,19 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
             {
               model: AcademicYear,
               as: 'academic_year'
+            },
+            {
+              model: Classroom,
+              as: 'classroom'
+            },
+            {
+              model: Schedule,
+              as: 'schedules'
+            },
+            {
+              model: User,
+              as: 'professors',
+              attributes: ['id', 'first_name', 'last_name', 'email']
             }
           ]
         },
