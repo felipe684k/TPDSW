@@ -106,15 +106,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-      res.status(400).json({ 
-        status: 'error', 
-        message: 'Por favor ingresa usuario y contraseña', 
-        data: null 
+      res.status(400).json({
+        status: 'error',
+        message: 'Por favor ingresa usuario y contraseña',
+        data: null
       });
       return;
     }
 
-    // Buscamos el usuario en la base de datos por su username
     const foundUser: any = await User.findOne({
       where: {
         username: username,
@@ -123,42 +122,41 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
 
     if (!foundUser) {
-      res.status(401).json({ 
-        status: 'error', 
-        message: 'Usuario o contraseña incorrectos', 
-        data: null 
+      res.status(401).json({
+        status: 'error',
+        message: 'Usuario o contraseña incorrectos',
+        data: null
       });
       return;
     }
 
-    // Verificamos la contraseña con bcrypt (con fallback para contraseñas previas sin hashear)
-    const isPasswordValid = await bcrypt.compare(password, foundUser.password).catch(() => false) 
-      || (foundUser.password === password);
+
+    const isPasswordValid = await bcrypt.compare(password, foundUser.password).catch(() => false)
+      || (foundUser.password === password); // por si la contraseña no esta encriptada
 
     if (!isPasswordValid) {
-      res.status(401).json({ 
-        status: 'error', 
-        message: 'Usuario o contraseña incorrectos', 
-        data: null 
+      res.status(401).json({
+        status: 'error',
+        message: 'Usuario o contraseña incorrectos',
+        data: null
       });
       return;
     }
 
-    // Limpiamos la contraseña antes de devolver los datos del usuario al frontend
     const userData = foundUser.toJSON();
     delete userData.password;
 
-    res.status(200).json({ 
-      status: 'ok', 
-      message: 'Login successful', 
-      data: userData 
+    res.status(200).json({
+      status: 'ok',
+      message: 'Login successful',
+      data: userData
     });
   } catch (error: any) {
     console.error('Error logging in:', error?.message || error);
-    res.status(500).json({ 
-      status: 'db_error', 
-      message: 'Internal server error logging in', 
-      data: null 
+    res.status(500).json({
+      status: 'db_error',
+      message: 'Internal server error logging in',
+      data: null
     });
   }
 };
@@ -186,13 +184,15 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 
 export const createUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { dni, first_name, last_name, phone, birth_date, email, username, password, level_code } = req.body;
+    const { dni, first_name, last_name, phone, birth_date, email, level_code } = req.body;
 
-    if (!dni || !first_name || !last_name || !username || !password) {
+    if (!dni || !first_name || !last_name) {
       res.status(400).json({ status: 'error', message: 'Missing required fields', data: null });
       return;
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const username = first_name.toLowerCase().trim();
+    const hashedPassword = await bcrypt.hash(dni.toString(), 10);
 
 
     const activeExistingUser: any = await User.findOne({ where: { dni } });

@@ -6,8 +6,8 @@ export interface Student {
   phone?: string;
   birth_date?: string;
   email?: string;
-  username: string;
-  password: string;
+  username?: string;
+  password?: string;
   role: 'STUDENT' | 'PROFESSOR' | 'ADMIN';
 }
 

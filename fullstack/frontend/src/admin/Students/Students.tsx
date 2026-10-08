@@ -109,12 +109,7 @@ export default function Students() {
           birth_date: formData.birth_date
         })
       } else {
-        const newStudent = {
-          ...formData,
-          username: formData.first_name,
-          password: formData.dni
-        }
-        await studentService.createStudent(newStudent as any)
+        await studentService.createStudent(formData)
       }
 
       setIsModalOpen(false)
