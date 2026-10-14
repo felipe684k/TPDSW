@@ -108,16 +108,16 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
 
     // Academic months (March to December)
     const academicMonths = [
-      { name: 'March', monthNum: 3 },
-      { name: 'April', monthNum: 4 },
-      { name: 'May', monthNum: 5 },
-      { name: 'June', monthNum: 6 },
-      { name: 'July', monthNum: 7 },
-      { name: 'August', monthNum: 8 },
-      { name: 'September', monthNum: 9 },
-      { name: 'October', monthNum: 10 },
-      { name: 'November', monthNum: 11 },
-      { name: 'December', monthNum: 12 }
+      { name: 'Marzo', monthNum: 3 },
+      { name: 'Abril', monthNum: 4 },
+      { name: 'Mayo', monthNum: 5 },
+      { name: 'Junio', monthNum: 6 },
+      { name: 'Julio', monthNum: 7 },
+      { name: 'Agosto', monthNum: 8 },
+      { name: 'Septiembre', monthNum: 9 },
+      { name: 'Octubre', monthNum: 10 },
+      { name: 'Noviembre', monthNum: 11 },
+      { name: 'Diciembre', monthNum: 12 }
     ];
 
     const now = new Date();

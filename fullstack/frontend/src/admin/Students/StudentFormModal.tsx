@@ -14,6 +14,8 @@ interface Props {
 }
 
 export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, onChange, errorMessage, editingId }: Props) {
+  const today = new Date().toISOString().split('T')[0];
+
   return (
     <Modal
       isOpen={isOpen}
@@ -67,6 +69,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
               label="Fecha de Nacimiento"
               name="birth_date" value={formData.birth_date} onChange={onChange}
               type="date"
+              max={today}
             />
           </div>
         </div>

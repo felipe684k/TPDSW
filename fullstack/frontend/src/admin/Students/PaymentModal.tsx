@@ -323,7 +323,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                 )}
                 {enrollmentsList.map((enr: any) => (
                   <option key={enr.id_enrollment} value={enr.id_enrollment}>
-                    {enr.section?.course?.course_name || 'Curso'} ({enr.section?.name || 'Comisión'})
+                    {enr.section?.course?.course_name || enr.section?.name || 'Curso'}
                   </option>
                 ))}
               </select>
@@ -381,7 +381,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
               <h2 className="text-sm font-bold text-slate-700">Estado de Cuenta - {currentStudent?.fullName}</h2>
               <div className="flex flex-wrap gap-2 items-center mt-1">
                 <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
-                  {currentEnrollment ? `${currentEnrollment.section?.course?.course_name || 'Curso'} (${currentEnrollment.section?.name || 'Comisión'})` : 'Todos los Cursos'}
+                  {currentEnrollment ? (currentEnrollment.section?.course?.course_name || currentEnrollment.section?.name || 'Curso') : 'Todos los Cursos'}
                 </span>
                 <p className="text-xs text-slate-500">
                   {currentAcademicYear ? currentAcademicYear.name : 'Ciclo Lectivo'}
@@ -429,8 +429,8 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                           <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                             {installment.installment_month} {installment.year || ''}
                           </span>
-                          <span className="block text-[11px] font-semibold text-indigo-600 truncate max-w-[170px]" title={installment.course_name ? `${installment.course_name} (${installment.section})` : installment.section}>
-                            {installment.course_name ? `${installment.course_name}` : installment.section}
+                          <span className="block text-[11px] font-semibold text-indigo-600 truncate max-w-[170px]" title={installment.course_name || installment.section}>
+                            {installment.course_name || installment.section}
                           </span>
                           <span className="block text-[10px] text-slate-400">
                             Vencimiento: {installment.due_date}
@@ -438,10 +438,10 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                         </div>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                           isPaid 
-                            ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700/50' 
+                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' 
                             : isPartial 
-                            ? 'bg-blue-900/40 text-blue-400 border border-blue-700/50' 
-                            : 'bg-amber-900/40 text-amber-400 border border-amber-700/50'
+                            ? 'bg-blue-100 text-blue-700 border border-blue-300' 
+                            : 'bg-amber-100 text-amber-700 border border-amber-300'
                         }`}>
                           {isPaid ? 'Saldado' : isPartial ? 'Pago Parcial' : 'Pendiente'}
                         </span>

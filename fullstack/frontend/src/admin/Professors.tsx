@@ -16,6 +16,8 @@ export default function Professors() {
   
   const [editingId, setEditingId] = useState<number | null>(null)
 
+  const today = new Date().toISOString().split('T')[0]
+
   const [formData, setFormData] = useState({
     last_name: '',
     first_name: '',
@@ -250,7 +252,8 @@ export default function Professors() {
               />
               <FormInput 
                 label="Fecha de Nacimiento"
-                type="date" name="birth_date" value={formData.birth_date} onChange={handleInputChange} 
+                type="date" name="birth_date" value={formData.birth_date} onChange={handleInputChange}
+                max={today}
               />
             </div>
           </div>
