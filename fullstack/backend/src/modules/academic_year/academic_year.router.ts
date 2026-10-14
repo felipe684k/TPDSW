@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import { getAcademicYears, getAcademicYearById, createAcademicYear, updateAcademicYear, deleteAcademicYear } from '../controllers/academic_year.controller.js';
+import { 
+  getAcademicYears, 
+  getAcademicYearById, 
+  createAcademicYear, 
+  updateAcademicYear, 
+  deleteAcademicYear 
+} from './academic_year.controller.js';
 
 const router = Router();
 

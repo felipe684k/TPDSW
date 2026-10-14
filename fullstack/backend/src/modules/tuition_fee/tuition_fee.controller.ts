@@ -1,17 +1,11 @@
 import type { Request, Response } from 'express';
-import { TuitionFee, Course } from '../models/index.js';
+import { TuitionFeeService } from './tuition_fee.service.js';
+
+const tuitionFeeService = new TuitionFeeService();
 
 export const getTuitionFees = async (req: Request, res: Response) => {
   try {
-    const fees = await TuitionFee.findAll({
-      include: [{
-        model: Course,
-        as: 'course',
-        attributes: ['course_name'],
-        where: { active: true }
-      }],
-      order: [['start_date', 'DESC']]
-    });
+    const fees = await tuitionFeeService.findAll();
     res.json(fees);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching tuition fees' });
@@ -21,7 +15,7 @@ export const getTuitionFees = async (req: Request, res: Response) => {
 export const createTuitionFee = async (req: Request, res: Response) => {
   try {
     const { id_course, monthly_cost, start_date } = req.body;
-    const newFee = await TuitionFee.create({
+    const newFee = await tuitionFeeService.create({
       id_course,
       monthly_cost,
       start_date
