@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllEnrollments, createEnrollment, updateEnrollment, deleteEnrollment } from '../controllers/enrollment.controller.js';
+import { getAllEnrollments, createEnrollment, updateEnrollment, deleteEnrollment } from './enrollment.controller.js';
 
 const router = Router();
 

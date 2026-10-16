@@ -81,10 +81,10 @@ sequelize.sync({ alter: true })
   .catch((err) => console.error('❌ Error synchronizing tables:', err));
 
 import userRouter from './routes/user.router.js';
-import professorRouter from './routes/professor.router.js';
+import professorRouter from './modules/professor/professor.router.js';
 import levelRoutes from './modules/level/level.router.js';
-import courseRoutes from './routes/course.router.js';
-import enrollmentRoutes from './routes/enrollment.router.js';
+import courseRoutes from './modules/course/course.router.js';
+import enrollmentRoutes from './modules/enrollment/enrollment.router.js';
 import tuitionFeeRoutes from './modules/tuition_fee/tuition_fee.router.js';
 import classroomRoutes from './modules/classroom/classroom.router.js';
 import academicYearRoutes from './modules/academic_year/academic_year.router.js';

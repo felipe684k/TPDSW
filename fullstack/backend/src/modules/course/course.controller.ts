@@ -1,15 +1,11 @@
 import { type Request, type Response } from 'express';
-import { Course, Level, TuitionFee } from '../models/index.js';
+import { CourseService } from './course.service.js';
+
+const courseService = new CourseService();
 
 export const getAllCourses = async (req: Request, res: Response): Promise<void> => {
   try {
-    const courses = await Course.findAll({
-      where: { active: true },
-      include: [
-        { model: Level, as: 'level' },
-        { model: TuitionFee, as: 'tuition_fees' }
-      ]
-    });
+    const courses = await courseService.findAll();
     res.status(200).json({ status: 'ok', data: courses });
   } catch (error: any) {
     console.error('Error fetching courses:', error);
@@ -27,18 +23,11 @@ export const createCourse = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const newCourse: any = await Course.create({
+    const newCourse = await courseService.create({
       course_name,
       level_code,
       registration_fee,
-      active: true
-    });
-
-    // Create associated tuition fee
-    await TuitionFee.create({
-      id_course: newCourse.id_course,
-      start_date: new Date(),
-      monthly_cost: initial_tuition_fee
+      initial_tuition_fee
     });
 
     res.status(201).json({ status: 'ok', message: 'Course created successfully', data: newCourse });
@@ -53,17 +42,15 @@ export const updateCourse = async (req: Request, res: Response): Promise<void> =
     const { id } = req.params;
     const { course_name, level_code, registration_fee } = req.body;
     
-    const existingCourse = await Course.findOne({ where: { id_course: id } });
+    const existingCourse = await courseService.update(id, {
+      course_name,
+      level_code,
+      registration_fee
+    });
     if (!existingCourse) {
       res.status(404).json({ status: 'error', message: 'Course not found' });
       return;
     }
-
-    await Course.update({
-      course_name,
-      level_code,
-      registration_fee
-    }, { where: { id_course: id } });
 
     res.status(200).json({ status: 'ok', message: 'Course updated successfully' });
   } catch (error: any) {
@@ -76,14 +63,11 @@ export const deleteCourse = async (req: Request, res: Response): Promise<void> =
   try {
     const { id } = req.params;
     
-    const existingCourse = await Course.findOne({ where: { id_course: id } });
+    const existingCourse = await courseService.delete(id);
     if (!existingCourse) {
       res.status(404).json({ status: 'error', message: 'Course not found' });
       return;
     }
-
-    // Logical delete
-    await Course.update({ active: false }, { where: { id_course: id } });
     
     res.status(200).json({ status: 'ok', message: 'Course deactivated successfully' });
   } catch (error: any) {
