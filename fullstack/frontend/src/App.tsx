@@ -38,12 +38,15 @@ export default function App() {
       localStorage.setItem('userRole', userRole)
       if (userData) localStorage.setItem('userData', JSON.stringify(userData))
     } else {
+      //limpia el localStorage
       localStorage.removeItem('isLoggedIn')
       localStorage.removeItem('userRole')
       localStorage.removeItem('userData')
       localStorage.removeItem('activeTab')
     }
-  }, [isLoggedIn, userRole, userData])
+  }, [isLoggedIn, userRole, userData]) 
+  //se ejecuta cuando cambia alguno de estos estados
+  //tambien se ejecuta al comienzo pero no entra porq isLoggedIn es false
 
   useEffect(() => {
     localStorage.setItem('activeTab', activeTab)
@@ -52,13 +55,18 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   if (!isLoggedIn) {
+    //si isLoggedIn es false, le mando el formulario y la funcion onLogin
+    //y espero la respuesta
     return <Login onLogin={(role, data) => {
       //Login seria como una funcion en donde se le envia el parametro onLogin, 
-      // lo unco que se envia es la funcion pero no se ejecuta todavia
+      // lo unico que se envia es la funcion pero no se ejecuta todavia, 
+      // la ejecuta login.tsx en caso de que inicie sesion correctamente
+
+      //asiganamos los datos recibidos a los estados que creamos
       setUserRole(role);
       setUserData(data);
       setIsLoggedIn(true);
-      setActiveTab(SIDEBAR_TABS.DASHBOARD);
+      setActiveTab(SIDEBAR_TABS.DASHBOARD);//seteamos en el principio
     }} />
   }
 

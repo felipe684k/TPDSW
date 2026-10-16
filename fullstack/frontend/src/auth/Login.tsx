@@ -1,22 +1,30 @@
 import { useState } from 'react'
 import { API_BASE_URL } from '../biz/config'
 
+//interfaz de typescript
 interface LoginProps {
   onLogin: (role: 'ADMIN' | 'STUDENT', userData: any) => void
-} // definimos el tipo que tiene que ser props (objeto que recibe la funcion Login)
+  //login exige que quien lo use le pase la props onLogin
+  //(role: 'ADMIN' | 'STUDENT', userData: any) son los parametros que debe recibir
+  //=> void indica que la props es una funcion que no retorna nada
+} 
+//la interface define la forma y estructura de las props del Login
 
 export default function Login({ onLogin }: LoginProps) { 
-  // {onLogin} es la unica propiedad de props, se usa para no tener que poner props.onLogin todo el tiempo, 
-  // en este instante todavia no se ejecuto la funcion
+  //recibimos el objeto de propiedades onLogin (de app.tsx)
+  //onLogin debe cumplir con la interface declarada anteriormente
   const [username, setUsername] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
-
+  //LOS SET NO CORTAN EJECUCION, REACT LOS REVISA CUANDO TERMINA LA MISMA Y SI TIENE QUE HACER CAMBIOS VUELVE A DIBUJAR
+  //declaramos el handle
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setErrorMsg(null)
+    //hace que no se recargue la pag, basicamente le decimos q nos encargamos nosotros con react
+    setErrorMsg(null) //limpiamos los mensajes de error
     
+    // miramos nuestras variables de estados que seteamos en el forms
     if (!username || !password) {
       setErrorMsg('Por favor ingresa tu nombre de usuario y contraseña.')
       return
@@ -25,21 +33,26 @@ export default function Login({ onLogin }: LoginProps) {
     setIsLoading(true)
 
     try {
+      //LLAMAMOS AL BACKEND CON UN POST A LOGIN Y ESPERAMOS LA RESPUESTA
       const response = await fetch(`${API_BASE_URL}/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username, password: password })
       })
 
+      //LO PASAMOS A OBJETO DE JS
       const data = await response.json()
 
+      //SI EL BACKEND NO RESPONDE EXITO
       if (!response.ok) {
         setErrorMsg(data.message || 'Nombre de usuario o contraseña incorrectos.')
         setIsLoading(false)
         return
       }
 
-      onLogin(data.data.role as 'ADMIN' | 'STUDENT', data.data)
+      //ACA EL USUARIO LOGRO INGRESAR
+      //EJECUTAMOS LA FUNCION onLogin QUE NOS PASO app.tsx
+      onLogin(data.data.role as 'ADMIN' | 'STUDENT', data.data) //manda el rol y el usuario completo
       
     } catch (error) {
       console.error(error)
@@ -89,7 +102,11 @@ export default function Login({ onLogin }: LoginProps) {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             
+            {/*onSubmit es un atributo propio de html
+            cuando alguien dispara el evento submit se ejecuta la funcion handleSubmit*/}
+            
             <div className="space-y-4">
+
               {/* Username Field */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
@@ -106,12 +123,13 @@ export default function Login({ onLogin }: LoginProps) {
                     required
                     value={username}
                     onChange={e => setUsername(e.target.value)}
+                    {/* SETEAMOS EL NOMBRE DE USUARIO*/}
+
                     placeholder="ej. admin"
                     className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-400"
                   />
                 </div>
               </div>
-
               {/* Password Field */}
               <div className="flex flex-col gap-1.5">
                 <div className="flex justify-between items-center">
@@ -133,6 +151,8 @@ export default function Login({ onLogin }: LoginProps) {
                     required
                     value={password}
                     onChange={e => setPassword(e.target.value)}
+                    {/*SETEAMOS LA CONTRASENIA*/}
+
                     placeholder="••••••••"
                     className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-400"
                   />
@@ -155,6 +175,9 @@ export default function Login({ onLogin }: LoginProps) {
             {/* Submit button */}
             <button 
               type="submit"
+
+              {/* SE EJECUTA EL SUBMIT QUE DISPARA EL HANDLE */}
+              
               disabled={isLoading}
               className="cursor-pointer w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium py-3 rounded-lg text-sm shadow-md shadow-blue-600/20 transition-all disabled:opacity-70 flex justify-center items-center gap-2 mt-2"
             >
@@ -172,7 +195,7 @@ export default function Login({ onLogin }: LoginProps) {
             </button>
           </form>
 
-          {/* Error message */}
+          {/* Error message = SI HAY ERRORES PORQUE YA INTENTO INGRESAR ANTES MUESTRA EL MSJ SETEADO*/}
           {errorMsg && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3.5 text-sm text-red-600 flex items-start gap-2.5 animate-in fade-in slide-in-from-top-1">
               <svg className="w-5 h-5 shrink-0 text-red-500 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
