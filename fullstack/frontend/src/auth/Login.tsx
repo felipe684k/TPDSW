@@ -123,7 +123,7 @@ export default function Login({ onLogin }: LoginProps) {
                     required
                     value={username}
                     onChange={e => setUsername(e.target.value)}
-                    {/* SETEAMOS EL NOMBRE DE USUARIO*/}
+                    /* SETEAMOS EL NOMBRE DE USUARIO*/
 
                     placeholder="ej. admin"
                     className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-400"
@@ -151,7 +151,7 @@ export default function Login({ onLogin }: LoginProps) {
                     required
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    {/*SETEAMOS LA CONTRASENIA*/}
+                    /*SETEAMOS LA CONTRASENIA*/
 
                     placeholder="••••••••"
                     className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-400"
@@ -176,7 +176,7 @@ export default function Login({ onLogin }: LoginProps) {
             <button 
               type="submit"
 
-              {/* SE EJECUTA EL SUBMIT QUE DISPARA EL HANDLE */}
+              /* SE EJECUTA EL SUBMIT QUE DISPARA EL HANDLE */
               
               disabled={isLoading}
               className="cursor-pointer w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium py-3 rounded-lg text-sm shadow-md shadow-blue-600/20 transition-all disabled:opacity-70 flex justify-center items-center gap-2 mt-2"
