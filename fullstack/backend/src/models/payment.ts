@@ -40,7 +40,7 @@ export const Payment = sequelize.define('Payment', {
   payment_method: {
     type: DataTypes.STRING(50),
     allowNull: true,
-    defaultValue: 'Cash'
+    defaultValue: 'Efectivo'
   }
 }, {
   tableName: 'payment',

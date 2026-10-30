@@ -23,7 +23,7 @@ export const courseService = {
   getCourses: async (): Promise<Course[]> => {
     try {
       const response = await fetch(API_URL);
-      if (!response.ok) throw new Error('Error fetching courses');
+      if (!response.ok) throw new Error('Error al obtener los cursos');
       const json = await response.json();
       return json.data || [];
     } catch (error) {
@@ -39,7 +39,7 @@ export const courseService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(courseData),
       });
-      if (!response.ok) throw new Error('Error creating course');
+      if (!response.ok) throw new Error('Error al crear el curso');
       const json = await response.json();
       return json.data;
     } catch (error) {
@@ -55,7 +55,7 @@ export const courseService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(courseData),
       });
-      if (!response.ok) throw new Error('Error updating course');
+      if (!response.ok) throw new Error('Error al actualizar el curso');
       const json = await response.json();
       return json.data;
     } catch (error) {
@@ -69,7 +69,7 @@ export const courseService = {
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
       });
-      if (!response.ok) throw new Error('Error deactivating course');
+      if (!response.ok) throw new Error('Error al desactivar el curso');
     } catch (error) {
       console.error(error);
       throw error;

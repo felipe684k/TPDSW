@@ -64,7 +64,8 @@ export default function Students() {
             last_name: data.last_name || '',
             phone: data.phone || '',
             email: data.email ? data.email.split('_deleted_')[0] : '',
-            birth_date: data.birth_date ? data.birth_date.split('T')[0] : ''
+            birth_date: data.birth_date ? data.birth_date.split('T')[0] : '',
+            level_code: data.level_code ? String(data.level_code) : prev.level_code
           }));
         }
       }).catch(console.error);
@@ -88,9 +89,10 @@ export default function Students() {
       dni: student.dni || '',
       phone: student.phone || '',
       email: student.email || '',
-      level_code: (student as any).level_code || '',
+      level_code: student.level_code !== undefined && student.level_code !== null ? String(student.level_code) : '',
       birth_date: student.birth_date ? student.birth_date.split('T')[0] : ''
     })
+    setErrorMsg(null)
     setIsModalOpen(true)
   }
 
@@ -106,7 +108,8 @@ export default function Students() {
           last_name: formData.last_name,
           phone: formData.phone,
           email: formData.email,
-          birth_date: formData.birth_date
+          birth_date: formData.birth_date,
+          level_code: formData.level_code
         })
       } else {
         await studentService.createStudent(formData)
@@ -149,6 +152,17 @@ export default function Students() {
     {
       header: 'DNI',
       render: (s: Student) => <span className="font-mono text-slate-500">{s.dni}</span>,
+    },
+    {
+      header: 'Nivel',
+      render: (s: Student) => (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold ${
+          s.level_code ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-500'
+        }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${s.level_code ? 'bg-indigo-500' : 'bg-slate-400'}`}></span>
+          {s.current_level && s.current_level !== 'No Level Assigned' ? s.current_level : 'Sin nivel asignado'}
+        </span>
+      ),
     },
     {
       header: 'Teléfono',
@@ -270,9 +284,10 @@ export default function Students() {
         isOpen={enrollStudentId != null}
         onClose={() => setEnrollStudentId(null)}
         studentId={enrollStudentId}
+        student={students.find(s => s.id === enrollStudentId) || null}
         onSuccess={() => {
           setEnrollStudentId(null)
-          setToast({ text: "INSCRIPCION REGISTRADA CORRECTAMENTE", type: 'success' })
+          setToast({ text: "Inscripción registrada exitosamente", type: 'success' })
           setTimeout(() => setToast(null), 3000)
         }}
       />

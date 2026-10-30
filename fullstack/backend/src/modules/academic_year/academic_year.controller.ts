@@ -9,7 +9,7 @@ export const getAcademicYears = async (req: Request, res: Response) => {
     res.json({ success: true, data: academicYears });
   } catch (error) {
     console.error('Error fetching academic years:', error);
-    res.status(500).json({ success: false, message: 'Error fetching academic years' });
+    res.status(500).json({ success: false, message: 'Error al obtener los ciclos lectivos' });
   }
 };
 
@@ -18,13 +18,13 @@ export const getAcademicYearById = async (req: Request, res: Response): Promise<
     const { id } = req.params;
     const academicYear = await academicYearService.findById(Number(id));
     if (!academicYear) {
-      res.status(404).json({ success: false, message: 'Academic year not found' });
+      res.status(404).json({ success: false, message: 'Ciclo lectivo no encontrado' });
       return;
     }
     res.json({ success: true, data: academicYear });
   } catch (error) {
     console.error('Error fetching academic year:', error);
-    res.status(500).json({ success: false, message: 'Error fetching academic year' });
+    res.status(500).json({ success: false, message: 'Error al obtener el ciclo lectivo' });
   }
 };
 
@@ -35,7 +35,7 @@ export const createAcademicYear = async (req: Request, res: Response) => {
     res.status(201).json({ success: true, data: newAcademicYear });
   } catch (error) {
     console.error('Error creating academic year:', error);
-    res.status(500).json({ success: false, message: 'Error creating academic year' });
+    res.status(500).json({ success: false, message: 'Error al crear el ciclo lectivo' });
   }
 };
 
@@ -46,14 +46,14 @@ export const updateAcademicYear = async (req: Request, res: Response): Promise<v
     
     const academicYear = await academicYearService.update(Number(id), { name, start_date, end_date });
     if (!academicYear) {
-      res.status(404).json({ success: false, message: 'Academic year not found' });
+      res.status(404).json({ success: false, message: 'Ciclo lectivo no encontrado' });
       return;
     }
 
     res.json({ success: true, data: academicYear });
   } catch (error) {
     console.error('Error updating academic year:', error);
-    res.status(500).json({ success: false, message: 'Error updating academic year' });
+    res.status(500).json({ success: false, message: 'Error al actualizar el ciclo lectivo' });
   }
 };
 
@@ -62,12 +62,12 @@ export const deleteAcademicYear = async (req: Request, res: Response): Promise<v
     const { id } = req.params;
     const deleted = await academicYearService.delete(Number(id));
     if (!deleted) {
-      res.status(404).json({ success: false, message: 'Academic year not found' });
+      res.status(404).json({ success: false, message: 'Ciclo lectivo no encontrado' });
       return;
     }
-    res.json({ success: true, message: 'Academic year deleted successfully' });
+    res.json({ success: true, message: 'Ciclo lectivo eliminado exitosamente' });
   } catch (error) {
     console.error('Error deleting academic year:', error);
-    res.status(500).json({ success: false, message: 'Error deleting academic year' });
+    res.status(500).json({ success: false, message: 'Error al eliminar el ciclo lectivo' });
   }
 };

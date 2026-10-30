@@ -9,9 +9,9 @@ export class ProfessorService {
       role: 'PROFESSOR'
     };
 
-    if (status === 'Active') {
+    if (status === 'Activo' || status === 'Active') {
       searchConditions.active = true;
-    } else if (status === 'Leave' || status === 'Inactive') {
+    } else if (status === 'Licencia' || status === 'Inactivo' || status === 'Leave' || status === 'Inactive') {
       searchConditions.active = false;
     }
 
@@ -33,13 +33,11 @@ export class ProfessorService {
   }
 
   async checkDni(dni: any) {
-    // First, look for an active one
     let prof: any = await User.findOne({ where: { dni, role: 'PROFESSOR', active: true } });
     if (prof) {
       return prof;
     }
 
-    // Second, look for an inactive one
     prof = await User.findOne({
       where: {
         dni: { [Op.like]: `${dni}_deleted_%` },
@@ -99,8 +97,8 @@ export class ProfessorService {
       phone,
       email,
       birth_date,
-      username: dni, // Default username is DNI
-      password: dni, // Default password is DNI
+      username: dni,
+      password: dni,
       role: 'PROFESSOR',
       active: true
     });

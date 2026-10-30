@@ -8,10 +8,10 @@ export const getAllProfessors = async (req: Request, res: Response): Promise<voi
     const { search, status } = req.query;
     const professors = await professorService.findAll({ search, status });
 
-    res.status(200).json({ status: 'ok', message: 'Professors fetched successfully', data: professors });
+    res.status(200).json({ status: 'ok', message: 'Profesores obtenidos exitosamente', data: professors });
   } catch (error: any) {
     console.error('Error querying professors:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Internal error', data: [] });
+    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: [] });
   }
 };
 
@@ -28,7 +28,7 @@ export const checkProfessorDni = async (req: Request, res: Response): Promise<vo
     res.status(200).json({ status: 'not_found', data: null });
   } catch (error: any) {
     console.error('Error checking professor DNI:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Internal error', data: null });
+    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
   }
 };
 
@@ -37,7 +37,7 @@ export const createProfessor = async (req: Request, res: Response): Promise<void
     const { dni, first_name, last_name, phone, email, birth_date } = req.body;
 
     if (!dni || !first_name || !last_name) {
-      res.status(400).json({ status: 'error', message: 'DNI, First Name and Last Name are required', data: null });
+      res.status(400).json({ status: 'error', message: 'DNI, Nombre y Apellido son obligatorios', data: null });
       return;
     }
 
@@ -51,19 +51,19 @@ export const createProfessor = async (req: Request, res: Response): Promise<void
     });
 
     if (result.conflict) {
-      res.status(409).json({ status: 'error', message: 'A user with DNI already exists: ' + dni, data: null });
+      res.status(409).json({ status: 'error', message: 'Ya existe un usuario con el DNI: ' + dni, data: null });
       return;
     }
 
     if (result.reactivated) {
-      res.status(201).json({ status: 'ok', message: 'Professor reactivated successfully', data: result.data });
+      res.status(201).json({ status: 'ok', message: 'Profesor reactivado exitosamente', data: result.data });
       return;
     }
 
-    res.status(201).json({ status: 'ok', message: 'Professor registered successfully', data: result.data });
+    res.status(201).json({ status: 'ok', message: 'Profesor registrado exitosamente', data: result.data });
   } catch (error: any) {
     console.error('Error registering professor:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Internal server error', data: null });
+    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
   }
 };
 
@@ -83,14 +83,14 @@ export const updateProfessor = async (req: Request, res: Response): Promise<void
     });
 
     if (!updatedData) {
-      res.status(404).json({ status: 'error', message: 'Professor not found with ID ' + id, data: null });
+      res.status(404).json({ status: 'error', message: 'No se encontró un profesor con ID ' + id, data: null });
       return;
     }
 
-    res.status(200).json({ status: 'ok', message: 'Professor updated successfully', data: updatedData });
+    res.status(200).json({ status: 'ok', message: 'Profesor actualizado exitosamente', data: updatedData });
   } catch (error: any) {
     console.error('Error updating professor:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Internal error', data: null });
+    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
   }
 };
 
@@ -101,13 +101,13 @@ export const deleteProfessor = async (req: Request, res: Response): Promise<void
     const deleted = await professorService.delete(id);
 
     if (!deleted) {
-      res.status(404).json({ status: 'error', message: 'Active professor not found with ID ' + id, data: null });
+      res.status(404).json({ status: 'error', message: 'No se encontró un profesor activo con ID ' + id, data: null });
       return;
     }
 
-    res.status(200).json({ status: 'ok', message: 'Professor deactivated successfully', data: null });
+    res.status(200).json({ status: 'ok', message: 'Profesor desactivado exitosamente', data: null });
   } catch (error: any) {
     console.error('Error deactivating professor:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Internal error', data: null });
+    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
   }
 };

@@ -15,7 +15,7 @@ const API_URL = `${API_BASE_URL}/tuition-fees`;
 export const tuitionFeeService = {
   getTuitionFees: async (): Promise<TuitionFee[]> => {
     const response = await fetch(API_URL);
-    if (!response.ok) throw new Error('Error fetching tuition fees');
+    if (!response.ok) throw new Error('Error al obtener las cuotas');
     return response.json();
   },
 
@@ -25,7 +25,7 @@ export const tuitionFeeService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Error creating tuition fee');
+    if (!response.ok) throw new Error('Error al crear la cuota');
     return response.json();
   }
 };

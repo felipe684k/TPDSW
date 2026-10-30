@@ -1,8 +1,28 @@
 import { type Request, type Response } from 'express';
+import { Op } from 'sequelize';
 import { Payment, Enrollment, User, Section, Course, TuitionFee, AcademicYear, Classroom, Schedule } from '../models/index.js';
 
+const ACADEMIC_MONTHS = [
+  { name: 'Marzo', enName: 'March', monthNum: 3 },
+  { name: 'Abril', enName: 'April', monthNum: 4 },
+  { name: 'Mayo', enName: 'May', monthNum: 5 },
+  { name: 'Junio', enName: 'June', monthNum: 6 },
+  { name: 'Julio', enName: 'July', monthNum: 7 },
+  { name: 'Agosto', enName: 'August', monthNum: 8 },
+  { name: 'Septiembre', enName: 'September', monthNum: 9 },
+  { name: 'Octubre', enName: 'October', monthNum: 10 },
+  { name: 'Noviembre', enName: 'November', monthNum: 11 },
+  { name: 'Diciembre', enName: 'December', monthNum: 12 }
+];
+
+const matchesMonth = (value: string | undefined, m: { name: string; enName: string }) => {
+  if (!value) return false;
+  const lower = value.toLowerCase();
+  return lower === m.name.toLowerCase() || lower === m.enName.toLowerCase();
+};
+
 /**
- * Get all registered payments
+ * Obtener todos los pagos registrados
  */
 export const getAllPayments = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -35,12 +55,12 @@ export const getAllPayments = async (req: Request, res: Response): Promise<void>
     res.status(200).json({ status: 'ok', data: payments });
   } catch (error: any) {
     console.error('Error fetching payments:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error querying payments', data: [] });
+    res.status(500).json({ status: 'db_error', message: 'Error al consultar los pagos', data: [] });
   }
 };
 
 /**
- * Get the account status of a student by user ID, optionally filtered by academic year
+ * Obtener el estado de cuenta de un alumno por ID de usuario, opcionalmente filtrado por ciclo lectivo
  */
 export const getStudentAccountStatus = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -52,7 +72,6 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
       sectionWhere.id_academic_year = Number(id_academic_year);
     }
 
-    // Find enrollments of the student
     const enrollments: any = await Enrollment.findAll({
       where: { id_user: id_user },
       include: [
@@ -100,25 +119,11 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
     if (!enrollments || enrollments.length === 0) {
       res.status(200).json({ 
         status: 'ok', 
-        message: 'The student has no registered enrollments for this academic period', 
+        message: 'El alumno no posee inscripciones registradas para este período académico', 
         data: { enrollments: [], installments: [] } 
       });
       return;
     }
-
-    // Academic months (March to December)
-    const academicMonths = [
-      { name: 'Marzo', monthNum: 3 },
-      { name: 'Abril', monthNum: 4 },
-      { name: 'Mayo', monthNum: 5 },
-      { name: 'Junio', monthNum: 6 },
-      { name: 'Julio', monthNum: 7 },
-      { name: 'Agosto', monthNum: 8 },
-      { name: 'Septiembre', monthNum: 9 },
-      { name: 'Octubre', monthNum: 10 },
-      { name: 'Noviembre', monthNum: 11 },
-      { name: 'Diciembre', monthNum: 12 }
-    ];
 
     const now = new Date();
     const currentMonthNum = now.getMonth() + 1;
@@ -148,32 +153,26 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
 
       const registeredPayments: any[] = enroll.payments || [];
       
-      // Determine which months are due / displayed:
-      // If it's a past academic year (e.g. 2025): ALL academic months (3 to 12) are due!
-      // If it's the current year: months up to current month (or any month with a payment).
-      // If it's a future year: only months that have registered payments.
       const monthsToShow = isPastYear
-        ? academicMonths
+        ? ACADEMIC_MONTHS
         : isFutureYear
-        ? academicMonths.filter(m => registeredPayments.some(p => p.installment_month?.toLowerCase() === m.name.toLowerCase()))
-        : academicMonths.filter(m => 
+        ? ACADEMIC_MONTHS.filter(m => registeredPayments.some(p => matchesMonth(p.installment_month, m)))
+        : ACADEMIC_MONTHS.filter(m => 
             m.monthNum <= currentMonthNum || 
-            registeredPayments.some(p => p.installment_month?.toLowerCase() === m.name.toLowerCase())
+            registeredPayments.some(p => matchesMonth(p.installment_month, m))
           );
 
       monthsToShow.forEach((m) => {
-        const monthPayments = registeredPayments.filter(
-          p => p.installment_month?.toLowerCase() === m.name.toLowerCase()
-        );
+        const monthPayments = registeredPayments.filter(p => matchesMonth(p.installment_month, m));
         const totalPaid = monthPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
         const remainingAmount = Math.max(0, baseAmount - totalPaid);
         const dueDate = `10/${m.monthNum.toString().padStart(2, '0')}/${ayYear}`;
 
-        let status = 'Pending';
+        let status = 'Pendiente';
         if (totalPaid >= baseAmount) {
-          status = 'Paid';
+          status = 'Pagado';
         } else if (totalPaid > 0) {
-          status = 'Partial';
+          status = 'Parcial';
         }
 
         const lastPayment = monthPayments.length > 0 ? monthPayments[monthPayments.length - 1] : null;
@@ -183,7 +182,7 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
           id_enrollment: enroll.id_enrollment,
           id_course: course?.id_course,
           course_name: course?.course_name || 'Curso',
-          section: enroll.section?.name || 'Section',
+          section: enroll.section?.name || 'Comisión',
           id_academic_year: ay?.id_academic_year,
           academic_year_name: ayName,
           year: ayYear,
@@ -209,12 +208,12 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
     res.status(200).json({ status: 'ok', data: { enrollments, installments: installmentResults } });
   } catch (error: any) {
     console.error('Error fetching account status:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error querying account status', data: null });
+    res.status(500).json({ status: 'db_error', message: 'Error al consultar el estado de cuenta', data: null });
   }
 };
 
 /**
- * Register a new tuition payment (supports partial / fragmented payments)
+ * Registrar un nuevo pago de cuota (admite pagos parciales / fraccionados)
  */
 export const registerPayment = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -225,13 +224,12 @@ export const registerPayment = async (req: Request, res: Response): Promise<void
     if (!numEnrollmentId || isNaN(numEnrollmentId)) {
       res.status(400).json({ 
         status: 'error', 
-        message: 'A valid previous enrollment is required to register a payment.', 
+        message: 'Se requiere una inscripción válida para registrar un pago.', 
         data: null 
       });
       return;
     }
 
-    // Validate that enrollment exists with course tuition fee info and past payments
     const existingEnrollment: any = await Enrollment.findByPk(numEnrollmentId, {
       include: [
         {
@@ -259,7 +257,7 @@ export const registerPayment = async (req: Request, res: Response): Promise<void
     if (!existingEnrollment) {
       res.status(404).json({ 
         status: 'error', 
-        message: 'The specified enrollment was not found in the database.', 
+        message: 'No se encontró la inscripción especificada en la base de datos.', 
         data: null 
       });
       return;
@@ -271,7 +269,6 @@ export const registerPayment = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    // Determine base amount for the month
     const course = existingEnrollment.section?.course;
     let baseAmount = 12000;
     if (course) {
@@ -282,7 +279,6 @@ export const registerPayment = async (req: Request, res: Response): Promise<void
       }
     }
 
-    // Previous payments for this month
     const previousPayments: any[] = existingEnrollment.payments?.filter(
       (p: any) => p.installment_month?.toLowerCase() === installment_month.toLowerCase()
     ) || [];
@@ -307,9 +303,8 @@ export const registerPayment = async (req: Request, res: Response): Promise<void
 
     const actualDate = payment_date || new Date().toISOString().split('T')[0];
     const newTotalPaid = alreadyPaid + payAmount;
-    const newStatus = newTotalPaid >= baseAmount ? 'Paid' : 'Partial';
+    const newStatus = newTotalPaid >= baseAmount ? 'Pagado' : 'Parcial';
 
-    // Create new payment record
     const newPayment = await Payment.create({
       id_enrollment: numEnrollmentId,
       payment_date: actualDate,
@@ -318,24 +313,24 @@ export const registerPayment = async (req: Request, res: Response): Promise<void
       discount: 0,
       status: newStatus,
       installment_month,
-      payment_method: payment_method || 'Cash'
+      payment_method: payment_method || 'Efectivo'
     });
 
     res.status(201).json({ 
       status: 'ok', 
-      message: newStatus === 'Paid' 
+      message: newStatus === 'Pagado' 
         ? 'Cuota saldada exitosamente' 
         : `Pago parcial de $${payAmount} registrado. Saldo pendiente: $${baseAmount - newTotalPaid}`, 
       data: newPayment 
     });
   } catch (error: any) {
     console.error('Error registering payment:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Internal error registering payment', data: null });
+    res.status(500).json({ status: 'db_error', message: 'Error interno al registrar el pago', data: null });
   }
 };
 
 /**
- * Get list of debtors
+ * Obtener listado de deudores
  */
 export const getDebtors = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -346,7 +341,7 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
     }
 
     const enrollments: any = await Enrollment.findAll({
-      where: { status: 'Active' },
+      where: { status: { [Op.in]: ['Activo', 'Active'] } },
       include: [
         {
           model: User,
@@ -381,19 +376,6 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
     const currentMonthNum = now.getMonth() + 1;
     const currentYear = now.getFullYear();
 
-    const academicMonths = [
-      { name: 'March', monthNum: 3 },
-      { name: 'April', monthNum: 4 },
-      { name: 'May', monthNum: 5 },
-      { name: 'June', monthNum: 6 },
-      { name: 'July', monthNum: 7 },
-      { name: 'August', monthNum: 8 },
-      { name: 'September', monthNum: 9 },
-      { name: 'October', monthNum: 10 },
-      { name: 'November', monthNum: 11 },
-      { name: 'December', monthNum: 12 }
-    ];
-
     for (const enroll of enrollments) {
       const userObj = enroll.user;
       if (!userObj) continue;
@@ -405,7 +387,7 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
         : (ay?.name?.match(/\d{4}/) ? parseInt(ay.name.match(/\d{4}/)![0], 10) : currentYear);
       const isPastYear = ayYear < currentYear;
 
-      const dueMonths = isPastYear ? academicMonths : academicMonths.filter(m => m.monthNum <= currentMonthNum);
+      const dueMonths = isPastYear ? ACADEMIC_MONTHS : ACADEMIC_MONTHS.filter(m => m.monthNum <= currentMonthNum);
 
       let baseAmount = 12000;
       if (course) {
@@ -421,9 +403,7 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
       let totalDebt = 0;
 
       for (const m of dueMonths) {
-        const monthPayments = payments.filter(
-          p => p.installment_month?.toLowerCase() === m.name.toLowerCase()
-        );
+        const monthPayments = payments.filter(p => matchesMonth(p.installment_month, m));
         const totalPaid = monthPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
         const remaining = Math.max(0, baseAmount - totalPaid);
 
@@ -438,7 +418,7 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
           id: userObj.id,
           fullName: `${userObj.last_name}, ${userObj.first_name}`,
           dni: userObj.dni,
-          course: enroll.section?.name || 'General Course',
+          course: enroll.section?.name || 'Curso General',
           academic_year: ay?.name || 'General',
           unpaidInstallments: unpaidInstallments.length,
           totalDebt
@@ -449,6 +429,6 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
     res.status(200).json({ status: 'ok', data: Array.from(debtorsMap.values()) });
   } catch (error: any) {
     console.error('Error fetching debtors:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error querying debtors', data: [] });
+    res.status(500).json({ status: 'db_error', message: 'Error al consultar los deudores', data: [] });
   }
 };

@@ -45,7 +45,7 @@ export const sectionService = {
       body: JSON.stringify(sectionData)
     });
     const json = await res.json();
-    if (!json.success) throw new Error(json.message || 'Unknown error');
+    if (!json.success) throw new Error(json.message || 'Error desconocido al crear la comisión');
     return json.data;
   },
 

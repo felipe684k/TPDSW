@@ -56,16 +56,17 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
 
       return {
         ...data,
-        current_level: lastLevel ? lastLevel.name : 'No Level Assigned',
+        current_level: lastLevel ? lastLevel.name : 'Sin nivel asignado',
+        level_code: lastLevel ? String(lastLevel.level_code) : '',
         levels: undefined
       };
     });
 
-    res.status(200).json({ status: 'ok', message: 'List fetched successfully', data: cleanUsers });
+    res.status(200).json({ status: 'ok', message: 'Lista obtenida exitosamente', data: cleanUsers });
 
   } catch (error: any) {
     console.error('Error querying users:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Internal error', data: [] });
+    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: [] });
   }
 };
 
@@ -74,9 +75,21 @@ export const checkStudentDni = async (req: Request, res: Response): Promise<void
     const { dni } = req.params;
 
     // First, search active
-    let student: any = await User.findOne({ where: { dni, role: 'STUDENT', active: true } });
+    let student: any = await User.findOne({
+      where: { dni, role: 'STUDENT', active: true },
+      include: [{ model: Level, as: 'levels' }]
+    });
     if (student) {
-      res.status(200).json({ status: 'ok', data: student });
+      const data = student.toJSON();
+      const lastLevel = data.levels && data.levels.length > 0 ? data.levels[0] : null;
+      res.status(200).json({
+        status: 'ok',
+        data: {
+          ...data,
+          level_code: lastLevel ? String(lastLevel.level_code) : '',
+          current_level: lastLevel ? lastLevel.name : 'Sin nivel asignado',
+        }
+      });
       return;
     }
 
@@ -86,18 +99,28 @@ export const checkStudentDni = async (req: Request, res: Response): Promise<void
         dni: { [Op.like]: `${dni}_deleted_%` },
         role: 'STUDENT',
         active: false
-      }
+      },
+      include: [{ model: Level, as: 'levels' }]
     });
 
     if (student) {
-      res.status(200).json({ status: 'ok', data: student });
+      const data = student.toJSON();
+      const lastLevel = data.levels && data.levels.length > 0 ? data.levels[0] : null;
+      res.status(200).json({
+        status: 'ok',
+        data: {
+          ...data,
+          level_code: lastLevel ? String(lastLevel.level_code) : '',
+          current_level: lastLevel ? lastLevel.name : 'Sin nivel asignado',
+        }
+      });
       return;
     }
 
     res.status(200).json({ status: 'not_found', data: null });
   } catch (error: any) {
     console.error('Error checking student DNI:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Internal error', data: null });
+    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
   }
 };
 
@@ -148,14 +171,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     res.status(200).json({
       status: 'ok',
-      message: 'Login successful',
+      message: 'Inicio de sesión exitoso',
       data: userData
     });
   } catch (error: any) {
     console.error('Error logging in:', error?.message || error);
     res.status(500).json({
       status: 'db_error',
-      message: 'Internal server error logging in',
+      message: 'Error interno al iniciar sesión',
       data: null
     });
   }
@@ -172,13 +195,13 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
       }
     });
     if (!foundUser) {
-      res.status(404).json({ status: 'error', message: 'No active student found with ID: ' + id, data: null });
+      res.status(404).json({ status: 'error', message: 'No se encontró un alumno activo con ID: ' + id, data: null });
       return;
     }
-    res.status(200).json({ status: 'ok', message: 'Student found successfully', data: foundUser });
+    res.status(200).json({ status: 'ok', message: 'Alumno encontrado exitosamente', data: foundUser });
   } catch (error: any) {
     console.error('Error finding student with ID ' + req.params.id + ':', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Internal server error finding student', data: null });
+    res.status(500).json({ status: 'db_error', message: 'Error interno al buscar el alumno', data: null });
   }
 };
 
@@ -187,7 +210,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     const { dni, first_name, last_name, phone, birth_date, email, level_code } = req.body;
 
     if (!dni || !first_name || !last_name) {
-      res.status(400).json({ status: 'error', message: 'Missing required fields', data: null });
+      res.status(400).json({ status: 'error', message: 'Faltan campos obligatorios', data: null });
       return;
     }
 
@@ -197,7 +220,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 
     const activeExistingUser: any = await User.findOne({ where: { dni } });
     if (activeExistingUser) {
-      res.status(409).json({ status: 'error', message: 'An active user with DNI already exists: ' + dni, data: null });
+      res.status(409).json({ status: 'error', message: 'Ya existe un usuario activo con el DNI: ' + dni, data: null });
       return;
     }
 
@@ -221,11 +244,14 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         dni,
         active: true
       });
-      if (level_code) {
-        const actualDate = new Date().toISOString().split('T')[0];
-        await UserLevel.create({ id_user: inactiveUser.id, level_code: level_code, start_date: actualDate });
+      if (level_code !== undefined) {
+        await UserLevel.destroy({ where: { id_user: inactiveUser.id } });
+        if (level_code !== '' && level_code !== null) {
+          const actualDate = new Date().toISOString().split('T')[0];
+          await UserLevel.create({ id_user: inactiveUser.id, level_code: Number(level_code), start_date: actualDate });
+        }
       }
-      res.status(200).json({ status: 'ok', message: 'Student reactivated successfully', data: inactiveUser });
+      res.status(200).json({ status: 'ok', message: 'Alumno reactivado exitosamente', data: inactiveUser });
       return;
     }
 
@@ -244,13 +270,13 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 
     if (level_code) {
       const actualDate = new Date().toISOString().split('T')[0];
-      await UserLevel.create({ id_user: newUser.dataValues.id, level_code: level_code, start_date: actualDate });
+      await UserLevel.create({ id_user: newUser.dataValues.id, level_code: Number(level_code), start_date: actualDate });
     }
 
-    res.status(201).json({ status: 'ok', message: 'Student created successfully', data: newUser });
+    res.status(201).json({ status: 'ok', message: 'Alumno registrado exitosamente', data: newUser });
   } catch (error: any) {
     console.error('Error creating student:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Internal server error', data: null });
+    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
   }
 };
 
@@ -261,7 +287,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
 
     const existingUser = await User.findOne({ where: { id: id, role: 'STUDENT', active: true } });
     if (!existingUser) {
-      res.status(404).json({ status: 'error', message: 'Active student not found with ID ' + id, data: null });
+      res.status(404).json({ status: 'error', message: 'No se encontró un alumno activo con ID ' + id, data: null });
       return;
     }
 
@@ -279,16 +305,18 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
 
     await User.update(dataToUpdate, { where: { id: id, role: 'STUDENT', active: true } });
 
-    if (level_code) {
+    if (level_code !== undefined) {
       await UserLevel.destroy({ where: { id_user: id } });
-      const actualDate = new Date().toISOString().split('T')[0];
-      await UserLevel.create({ id_user: id, level_code: level_code, start_date: actualDate });
+      if (level_code !== '' && level_code !== null) {
+        const actualDate = new Date().toISOString().split('T')[0];
+        await UserLevel.create({ id_user: id, level_code: Number(level_code), start_date: actualDate });
+      }
     }
 
-    res.status(200).json({ status: 'ok', message: 'Student updated successfully', data: { dni, ...dataToUpdate } });
+    res.status(200).json({ status: 'ok', message: 'Alumno actualizado exitosamente', data: { dni, ...dataToUpdate, level_code } });
   } catch (error: any) {
     console.error('Error updating student:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Internal server error', data: null });
+    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
   }
 };
 
@@ -299,7 +327,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
     const student: any = await User.findOne({ where: { id: id, role: 'STUDENT', active: true } });
 
     if (!student) {
-      res.status(404).json({ status: 'error', message: 'Active student not found with ID ' + id, data: null });
+      res.status(404).json({ status: 'error', message: 'No se encontró un alumno activo con ID ' + id, data: null });
       return;
     }
 
@@ -314,9 +342,9 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
       { where: { id: id, role: 'STUDENT', active: true } }
     );
 
-    res.status(200).json({ status: 'ok', message: 'Student deactivated successfully', data: null });
+    res.status(200).json({ status: 'ok', message: 'Alumno desactivado exitosamente', data: null });
   } catch (error: any) {
     console.error('Error deactivating student:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Internal server error', data: null });
+    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
   }
 };

@@ -90,24 +90,22 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
           </div>
         </div>
 
-        {!editingId && (
-          <div className="space-y-3">
-            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">Académico</div>
-            <FormSelect
-              label="Nivel de Ingreso"
-              name="level_code" value={formData.level_code} onChange={onChange}
-              options={[
-                { value: "", label: "Sin nivel previo" },
-                { value: "1", label: "A1 — Principiante" },
-                { value: "2", label: "A2 — Básico" },
-                { value: "3", label: "B1 — Intermedio" },
-                { value: "4", label: "B2 — Intermedio Alto" },
-                { value: "5", label: "C1 — Avanzado" },
-                { value: "6", label: "C2 — Experto" }
-              ]}
-            />
-          </div>
-        )}
+        <div className="space-y-3">
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">Académico</div>
+          <FormSelect
+            label={editingId ? "Nivel Actual" : "Nivel de Ingreso"}
+            name="level_code" value={formData.level_code} onChange={onChange}
+            options={[
+              { value: "", label: "Sin nivel asignado" },
+              { value: "1", label: "A1 - Principiante" },
+              { value: "2", label: "A2 - Elemental" },
+              { value: "3", label: "B1 - Intermedio" },
+              { value: "4", label: "B2 - Intermedio Alto" },
+              { value: "5", label: "C1 - Avanzado" },
+              { value: "6", label: "C2 - Maestría" }
+            ]}
+          />
+        </div>
       </form>
     </Modal>
   );

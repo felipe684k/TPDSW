@@ -10,6 +10,12 @@ interface DashboardProps {
   setActiveTab: (tab: import('../shared/Sidebar.const').SidebarTab) => void
 }
 
+const normalizeStatus = (s?: string) => {
+  if (!s || s === 'Active' || s === 'Activo') return 'Activo';
+  if (s === 'Pending' || s === 'Pendiente') return 'Pendiente';
+  return 'Dado de Baja';
+};
+
 export default function Dashboard({ setActiveTab }: DashboardProps) {
   const [studentsCount, setStudentsCount] = useState<number>(0)
   const [enrollmentsList, setEnrollmentsList] = useState<any[]>([])
@@ -104,28 +110,33 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
               {enrollmentsList.length === 0 ? (
                 <tr><td colSpan={5} className="p-4 text-center text-slate-500 text-xs">No hay inscripciones para mostrar</td></tr>
               ) : (
-                enrollmentsList.slice(0, 5).map((e) => (
-                  <tr key={e.id_enrollment} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-3 text-xs font-semibold text-slate-700">{e.user?.last_name}, {e.user?.first_name}</td>
-                    <td className="p-3 text-xs text-slate-500">{e.section?.name}</td>
-                    <td className="p-3 text-xs">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold bg-indigo-50 text-indigo-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>{e.section?.course?.level?.name || '-'}
-                      </span>
-                    </td>
-                    <td className="p-3 text-xs text-slate-500">{new Date(e.enrollment_date).toLocaleDateString()}</td>
-                    <td className="p-3 text-xs">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold ${e.status === 'Active' ? 'bg-emerald-50 text-emerald-700' :
-                        e.status === 'Pending' ? 'bg-amber-50 text-amber-700' : 'bg-rose-950/30 text-rose-700'
+                enrollmentsList.slice(0, 5).map((e) => {
+                  const statusLabel = normalizeStatus(e.status);
+                  return (
+                    <tr key={e.id_enrollment} className="hover:bg-slate-50 transition-colors">
+                      <td className="p-3 text-xs font-semibold text-slate-700">{e.user?.last_name}, {e.user?.first_name}</td>
+                      <td className="p-3 text-xs text-slate-500">{e.section?.name}</td>
+                      <td className="p-3 text-xs">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold bg-indigo-50 text-indigo-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>{e.section?.course?.level?.name || '-'}
+                        </span>
+                      </td>
+                      <td className="p-3 text-xs text-slate-500">{new Date(e.enrollment_date).toLocaleDateString('es-AR')}</td>
+                      <td className="p-3 text-xs">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold ${
+                          statusLabel === 'Activo' ? 'bg-emerald-50 text-emerald-700' :
+                          statusLabel === 'Pendiente' ? 'bg-amber-50 text-amber-700' : 'bg-rose-950/30 text-rose-700'
                         }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${e.status === 'Active' ? 'bg-emerald-500' :
-                          e.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500'
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            statusLabel === 'Activo' ? 'bg-emerald-500' :
+                            statusLabel === 'Pendiente' ? 'bg-amber-500' : 'bg-rose-500'
                           }`}></span>
-                        {e.status === 'Active' ? 'Activo' : e.status === 'Pending' ? 'Pendiente' : 'Dado de Baja'}
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                          {statusLabel}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

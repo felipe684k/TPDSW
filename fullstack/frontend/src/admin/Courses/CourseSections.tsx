@@ -4,6 +4,15 @@ import { classroomService } from '../../biz/services/classroom.service'
 import { academicYearService, type AcademicYear } from '../../biz/services/academicYear.service'
 import { professorService, type Professor as User } from '../../biz/services/professor.service'
 
+const DAY_LABELS: Record<string, string> = {
+  MONDAY: 'Lunes',
+  TUESDAY: 'Martes',
+  WEDNESDAY: 'Miércoles',
+  THURSDAY: 'Jueves',
+  FRIDAY: 'Viernes',
+  SATURDAY: 'Sábado',
+}
+
 interface CourseSectionsProps {
   courseId: number;
 }
@@ -120,8 +129,9 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
       })
     } catch (error) {
       console.error(error)
-      setToast({ text: "Error al registrar la comisión", type: 'danger' })
-      setTimeout(() => setToast(null), 3000)
+      const msg = error instanceof Error ? error.message : "Error al registrar la comisión"
+      setToast({ text: msg, type: 'danger' })
+      setTimeout(() => setToast(null), 4000)
     }
   }
 
@@ -219,7 +229,7 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
                     <div className="flex flex-col gap-0.5 mt-0.5">
                       {section.schedules && section.schedules.map(h => (
                         <span key={h.id_schedule} className="text-[10px] font-semibold text-slate-700 bg-indigo-100 px-2 py-0.5 rounded border border-indigo-200">
-                          {h.day.substring(0,3)}: {h.start_time.substring(0,5)} a {h.end_time.substring(0,5)}
+                          {DAY_LABELS[h.day] || h.day}: {h.start_time.substring(0,5)} a {h.end_time.substring(0,5)}
                         </span>
                       ))}
                     </div>

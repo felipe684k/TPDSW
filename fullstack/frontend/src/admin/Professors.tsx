@@ -101,13 +101,13 @@ export default function Professors() {
       setModalOpen(false)
       setFormData({ last_name: '', first_name: '', dni: '', birth_date: '', phone: '', email: '' })
       
-      setToast({ text: editingId ? "Professor updated successfully" : "Professor registered successfully", type: 'success' })
+      setToast({ text: editingId ? "Profesor actualizado exitosamente" : "Profesor registrado exitosamente", type: 'success' })
       setTimeout(() => setToast(null), 3000)
       
       fetchProfessors()
     } catch (error) {
       console.error('Error saving professor', error)
-      alert('Error saving professor. Please verify the data.')
+      alert('Error al guardar el profesor. Por favor verificá los datos.')
     }
   }
 
@@ -120,14 +120,14 @@ export default function Professors() {
     if (!professorToDelete) return
     try {
       await professorService.deleteProfessor(professorToDelete)
-      setToast({ text: "Professor deactivated successfully", type: 'danger' })
+      setToast({ text: "Profesor desactivado exitosamente", type: 'danger' })
       setTimeout(() => setToast(null), 3000)
       fetchProfessors()
       setDeleteModalOpen(false)
       setProfessorToDelete(null)
     } catch (error) {
       console.error('Error deactivating professor', error)
-      alert('Error deactivating professor.')
+      alert('Error al desactivar el profesor.')
     }
   }
 

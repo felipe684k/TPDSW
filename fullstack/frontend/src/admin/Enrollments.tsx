@@ -3,14 +3,18 @@ import { enrollmentService, type Enrollment } from '../biz/services/enrollment.s
 import DataTable from '../shared/components/DataTable';
 import Modal from '../shared/components/Modal';
 
+const normalizeStatus = (s?: string) => {
+  if (!s || s === 'Active' || s === 'Activo') return 'Activo';
+  if (s === 'Pending' || s === 'Pendiente') return 'Pendiente';
+  return 'Dado de Baja';
+};
+
 export default function Enrollments() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
 
-  // State variables for Delete Modal
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [enrollmentToDelete, setEnrollmentToDelete] = useState<number | null>(null);
 
-  // State variables for Update Modal
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -19,7 +23,6 @@ export default function Enrollments() {
     attendance_percentage: ''
   });
 
-  // Fetch enrollments on component mount
   useEffect(() => {
     fetchEnrollments()
   }, [])
@@ -33,7 +36,6 @@ export default function Enrollments() {
     }
   }
 
-  // --- DELETE LOGIC ---
   const confirmDelete = (id: number) => {
     setEnrollmentToDelete(id);
     setDeleteModalOpen(true);
@@ -48,17 +50,16 @@ export default function Enrollments() {
       setEnrollmentToDelete(null);
     } catch (error) {
       console.error('Error deactivating enrollment:', error);
-      alert('Error deactivating enrollment.');
+      alert('Error al desactivar la inscripción.');
     }
   }
 
-  // --- UPDATE LOGIC ---
   const handleEdit = (enrollment: Enrollment) => {
     setEditingId(enrollment.id_enrollment);
 
-    // Pre-fill the form with existing data
+    const normalized = normalizeStatus(enrollment.status);
     setFormData({
-      status: enrollment.status || 'Active',
+      status: normalized === 'Dado de Baja' ? 'Activo' : normalized,
       final_grade: enrollment.final_grade ? enrollment.final_grade.toString() : '',
       attendance_percentage: enrollment.attendance_percentage ? enrollment.attendance_percentage.toString() : ''
     });
@@ -70,7 +71,6 @@ export default function Enrollments() {
     if (!editingId) return;
 
     try {
-      // Prepare payload, converting empty strings to null for the database
       const dataToSave = {
         status: formData.status,
         final_grade: formData.final_grade ? Number(formData.final_grade) : null,
@@ -78,11 +78,11 @@ export default function Enrollments() {
       };
 
       await enrollmentService.updateEnrollment(editingId, dataToSave);
-      fetchEnrollments(); // Refresh table
+      fetchEnrollments();
       setUpdateModalOpen(false);
     } catch (error) {
       console.error("Error updating enrollment:", error);
-      alert('Error saving enrollment. Please verify the data.');
+      alert('Error al guardar la inscripción. Por favor verificá los datos.');
     }
   }
 
@@ -90,7 +90,7 @@ export default function Enrollments() {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
-  // --- TABLE COLUMNS CONFIGURATION ---
+
   const columns = [
     {
       header: 'Alumno',
@@ -114,7 +114,7 @@ export default function Enrollments() {
     },
     {
       header: 'Fecha',
-      render: (e: Enrollment) => <span className="text-slate-500">{new Date(e.enrollment_date).toLocaleDateString()}</span>,
+      render: (e: Enrollment) => <span className="text-slate-500">{new Date(e.enrollment_date).toLocaleDateString('es-AR')}</span>,
     },
     {
       header: 'Asistencia',
@@ -126,16 +126,21 @@ export default function Enrollments() {
     },
     {
       header: 'Estado',
-      render: (e: Enrollment) => (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold ${e.status === 'Active' ? 'bg-emerald-50 text-emerald-700' :
-          e.status === 'Pending' ? 'bg-amber-50 text-amber-700' : 'bg-rose-950/30 text-rose-700'
+      render: (e: Enrollment) => {
+        const statusLabel = normalizeStatus(e.status);
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold ${
+            statusLabel === 'Activo' ? 'bg-emerald-50 text-emerald-700' :
+            statusLabel === 'Pendiente' ? 'bg-amber-50 text-amber-700' : 'bg-rose-950/30 text-rose-700'
           }`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${e.status === 'Active' ? 'bg-emerald-500' :
-            e.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500'
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              statusLabel === 'Activo' ? 'bg-emerald-500' :
+              statusLabel === 'Pendiente' ? 'bg-amber-500' : 'bg-rose-500'
             }`}></span>
-          {e.status === 'Active' ? 'Activo' : e.status === 'Pending' ? 'Pendiente' : 'Dado de Baja'}
-        </span>
-      ),
+            {statusLabel}
+          </span>
+        );
+      },
     },
     {
       header: 'Acciones',
@@ -159,7 +164,6 @@ export default function Enrollments() {
     },
   ]
 
-  // --- UI RENDER ---
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
@@ -233,8 +237,8 @@ export default function Enrollments() {
               onChange={handleInputChange}
               className="w-full border border-slate-300 bg-slate-50 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
             >
-              <option value="Active">Activo</option>
-              <option value="Pending">Pendiente</option>
+              <option value="Activo">Activo</option>
+              <option value="Pendiente">Pendiente</option>
             </select>
           </div>
         </form>

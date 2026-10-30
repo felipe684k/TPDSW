@@ -8,6 +8,8 @@ export interface Student {
   email?: string;
   username?: string;
   password?: string;
+  level_code?: string | number;
+  current_level?: string;
   role: 'STUDENT' | 'PROFESSOR' | 'ADMIN';
 }
 
@@ -16,11 +18,10 @@ import { API_BASE_URL } from '../config';
 const API_URL = `${API_BASE_URL}/users`;
 
 export const studentService = {
-  // Get all students (API already filters by STUDENT role)
   getStudents: async (): Promise<Student[]> => {
     try {
       const response = await fetch(API_URL);
-      if (!response.ok) throw new Error('Error fetching students');
+      if (!response.ok) throw new Error('Error al obtener los alumnos');
       const json = await response.json();
       return json.data || [];
     } catch (error) {
@@ -41,7 +42,6 @@ export const studentService = {
     }
   },
 
-  // Create a new student
   createStudent: async (student: Omit<Student, 'role'>): Promise<Student> => {
     try {
       const response = await fetch(API_URL, {
@@ -51,7 +51,7 @@ export const studentService = {
         },
         body: JSON.stringify({ ...student, role: 'STUDENT' }),
       });
-      if (!response.ok) throw new Error('Error creating student');
+      if (!response.ok) throw new Error('Error al registrar el alumno');
       return await response.json();
     } catch (error) {
       console.error(error);
@@ -59,7 +59,6 @@ export const studentService = {
     }
   },
 
-  // Update an existing student by ID
   updateStudent: async (id: number, student: Partial<Student>): Promise<Student> => {
     try {
       const response = await fetch(`${API_URL}/${id}`, {
@@ -69,7 +68,7 @@ export const studentService = {
         },
         body: JSON.stringify(student),
       });
-      if (!response.ok) throw new Error('Error updating student');
+      if (!response.ok) throw new Error('Error al actualizar el alumno');
       return await response.json();
     } catch (error) {
       console.error(error);
@@ -77,13 +76,12 @@ export const studentService = {
     }
   },
 
-  // Delete a student by ID
   deleteStudent: async (id: number): Promise<void> => {
     try {
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
       });
-      if (!response.ok) throw new Error('Error deleting student');
+      if (!response.ok) throw new Error('Error al desactivar el alumno');
     } catch (error) {
       console.error(error);
       throw error;

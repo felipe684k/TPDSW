@@ -87,13 +87,20 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
     }).format(amount);
   };
 
+  const normalizeEnrollmentStatus = (s?: string) => {
+    if (!s || s === 'Active' || s === 'Activo') return 'Activo';
+    if (s === 'Pending' || s === 'Pendiente') return 'Pendiente';
+    if (s === 'Dropped' || s === 'Dado de Baja') return 'Dado de Baja';
+    return s;
+  };
+
   return (
     <div className={`min-h-screen ${theme.layout.appBackground} font-sans p-4 md:p-8 flex flex-col`}>
       {/* Header Container - Glassmorphism */}
       <div className="relative z-10 max-w-5xl w-full mx-auto flex justify-between items-start md:items-center mb-6 bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-lg flex-col md:flex-row gap-4">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg border border-white/20">
-            {userData?.first_name?.charAt(0) || 'S'}
+            {userData?.first_name?.charAt(0) || 'A'}
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white tracking-wide">
@@ -210,7 +217,7 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
                           </span>
                         </div>
                         <span className="text-[11px] font-semibold px-2 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200">
-                          {enroll.status || 'Activo'}
+                          {normalizeEnrollmentStatus(enroll.status)}
                         </span>
                       </div>
 
@@ -287,12 +294,12 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
                           {inst.due_date || '-'}
                         </td>
                         <td className="p-3 text-sm">
-                          {inst.status === 'Paid' ? (
+                          {inst.status === 'Pagado' || inst.status === 'Paid' ? (
                             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-[11px] font-bold bg-emerald-50 text-emerald-700 border-emerald-200">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                               Pagado
                             </span>
-                          ) : inst.status === 'Partial' ? (
+                          ) : inst.status === 'Parcial' || inst.status === 'Partial' ? (
                             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-[11px] font-bold bg-blue-50 text-blue-700 border-blue-200">
                               <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                               Parcial

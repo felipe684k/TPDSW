@@ -24,7 +24,7 @@ export interface Installment {
   total_paid: number;
   remaining_amount: number;
   due_date: string;
-  status: 'Paid' | 'Partial' | 'Pending' | string;
+  status: 'Pagado' | 'Parcial' | 'Pendiente' | 'Paid' | 'Partial' | 'Pending' | string;
   payment_date: string | null;
   payment_method?: string;
   payments?: SubPayment[];
@@ -62,7 +62,7 @@ export interface Debtor {
 export const paymentService = {
   getAllPayments: async (): Promise<any[]> => {
     const response = await fetch(API_URL);
-    if (!response.ok) throw new Error('Error fetching payments');
+    if (!response.ok) throw new Error('Error al obtener los pagos');
     const json = await response.json();
     return json.data || [];
   },
@@ -72,7 +72,7 @@ export const paymentService = {
       ? `${API_URL}/student/${idUser}?id_academic_year=${idAcademicYear}` 
       : `${API_URL}/student/${idUser}`;
     const response = await fetch(url);
-    if (!response.ok) throw new Error('Error fetching account status');
+    if (!response.ok) throw new Error('Error al obtener el estado de cuenta');
     const json = await response.json();
     return json.data || { enrollments: [], installments: [] };
   },
@@ -85,7 +85,7 @@ export const paymentService = {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(json.message || 'Could not process payment.');
+      throw new Error(json.message || 'No se pudo procesar el pago.');
     }
     return json.data;
   },
@@ -95,7 +95,7 @@ export const paymentService = {
       ? `${API_URL}/debtors?id_academic_year=${idAcademicYear}` 
       : `${API_URL}/debtors`;
     const response = await fetch(url);
-    if (!response.ok) throw new Error('Error fetching debtors');
+    if (!response.ok) throw new Error('Error al obtener los deudores');
     const json = await response.json();
     return json.data || [];
   },

@@ -9,6 +9,6 @@ export const getAllLevels = async (req: Request, res: Response): Promise<void> =
         res.status(200).json({ status: 'ok', data: levels });
     } catch (error: any) {
         console.error('Error fetching levels:', error);
-        res.status(500).json({ status: 'db_error', message: 'Internal error', data: [] });
+        res.status(500).json({ status: 'db_error', message: 'Error interno al obtener los niveles', data: [] });
     }
 };

@@ -31,7 +31,7 @@ export const enrollmentService = {
     getEnrollments: async (): Promise<Enrollment[]> => {
         try {
             const response = await fetch(API_URL);
-            if (!response.ok) throw new Error('Error fetching enrollments');
+            if (!response.ok) throw new Error('Error al obtener las inscripciones');
             const json = await response.json();
             return json.data || [];
         } catch (error) {
@@ -47,8 +47,8 @@ export const enrollmentService = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(enrollmentData),
             });
-            if (!response.ok) throw new Error('Error creating enrollment');
             const json = await response.json();
+            if (!response.ok) throw new Error(json.message || 'Error al crear la inscripción');
             return json.data;
         } catch (error) {
             console.error(error);
@@ -63,7 +63,7 @@ export const enrollmentService = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(enrollmentData),
             });
-            if (!response.ok) throw new Error('Error updating enrollment');
+            if (!response.ok) throw new Error('Error al actualizar la inscripción');
             const json = await response.json();
             return json.data;
         } catch (error) {
@@ -71,15 +71,16 @@ export const enrollmentService = {
             throw error;
         }
     },
+
     deleteEnrollment: async (id: number): Promise<void> => {
         try {
             const response = await fetch(`${API_URL}/${id}`, {
                 method: 'DELETE',
             });
-            if (!response.ok) throw new Error('Error deactivating enrollment');
+            if (!response.ok) throw new Error('Error al desactivar la inscripción');
         } catch (error) {
             console.error(error);
             throw error;
         }
-    },
+    }
 };

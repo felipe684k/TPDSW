@@ -12,7 +12,7 @@ export const levelService = {
   getLevels: async (): Promise<Level[]> => {
     try {
       const response = await fetch(API_URL);
-      if (!response.ok) throw new Error('Error fetching levels');
+      if (!response.ok) throw new Error('Error al obtener los niveles');
       const json = await response.json();
       return json.data || [];
     } catch (error) {
@@ -28,7 +28,7 @@ export const levelService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Error creating level');
+      if (!response.ok) throw new Error('Error al crear el nivel');
       const json = await response.json();
       return json.data;
     } catch (error) {
@@ -44,7 +44,7 @@ export const levelService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Error updating level');
+      if (!response.ok) throw new Error('Error al actualizar el nivel');
       const json = await response.json();
       return json.data;
     } catch (error) {

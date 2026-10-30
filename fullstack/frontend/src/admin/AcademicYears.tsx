@@ -60,7 +60,7 @@ export default function AcademicYears() {
       }
       
       setModalOpen(false)
-      setToast({ text: editingId ? "Academic year updated" : "Academic year created", type: 'success' })
+      setToast({ text: editingId ? "Ciclo lectivo actualizado exitosamente" : "Ciclo lectivo creado exitosamente", type: 'success' })
       setTimeout(() => setToast(null), 3000)
       fetchAcademicYears()
     } catch (error) {

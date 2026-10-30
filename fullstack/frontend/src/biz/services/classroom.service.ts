@@ -9,7 +9,7 @@ export interface Classroom {
 export const classroomService = {
   getClassrooms: async (): Promise<Classroom[]> => {
     const response = await fetch(`${API_BASE_URL}/classrooms`);
-    if (!response.ok) throw new Error('Error fetching classrooms');
+    if (!response.ok) throw new Error('Error al obtener las aulas');
     const json = await response.json();
     return json.data;
   },
@@ -20,7 +20,7 @@ export const classroomService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(classroom),
     });
-    if (!response.ok) throw new Error('Error creating classroom');
+    if (!response.ok) throw new Error('Error al crear el aula');
     const json = await response.json();
     return json.data;
   },
@@ -31,7 +31,7 @@ export const classroomService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(classroom),
     });
-    if (!response.ok) throw new Error('Error updating classroom');
+    if (!response.ok) throw new Error('Error al actualizar el aula');
     const json = await response.json();
     return json.data;
   }

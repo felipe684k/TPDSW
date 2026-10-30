@@ -8,7 +8,7 @@ export const getTuitionFees = async (req: Request, res: Response) => {
     const fees = await tuitionFeeService.findAll();
     res.json(fees);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching tuition fees' });
+    res.status(500).json({ message: 'Error al obtener las cuotas' });
   }
 };
 
@@ -22,6 +22,6 @@ export const createTuitionFee = async (req: Request, res: Response) => {
     });
     res.status(201).json(newFee);
   } catch (error) {
-    res.status(500).json({ message: 'Error creating tuition fee' });
+    res.status(500).json({ message: 'Error al crear la cuota' });
   }
 };

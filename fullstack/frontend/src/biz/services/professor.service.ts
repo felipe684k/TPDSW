@@ -1,19 +1,16 @@
+import { API_BASE_URL } from '../config';
+
 export interface Professor {
   id?: number;
   dni: string;
   first_name: string;
   last_name: string;
   phone?: string;
-  email?: string;
   birth_date?: string;
-  username: string;
-  password: string;
+  email?: string;
   role: 'PROFESSOR';
-  active: boolean;
-  createdAt?: string;
+  active?: boolean;
 }
-
-import { API_BASE_URL } from '../config';
 
 const API_URL = `${API_BASE_URL}/professors`;
 
@@ -25,7 +22,7 @@ export const professorService = {
       if (status) url.searchParams.append('status', status);
       
       const response = await fetch(url.toString());
-      if (!response.ok) throw new Error('Error fetching professors');
+      if (!response.ok) throw new Error('Error al obtener los profesores');
       const json = await response.json();
       return json.data || [];
     } catch (error) {
@@ -53,7 +50,7 @@ export const professorService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(professor),
       });
-      if (!response.ok) throw new Error('Error registering professor');
+      if (!response.ok) throw new Error('Error al registrar el profesor');
       const json = await response.json();
       return json.data;
     } catch (error) {
@@ -69,7 +66,7 @@ export const professorService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(professor),
       });
-      if (!response.ok) throw new Error('Error updating professor');
+      if (!response.ok) throw new Error('Error al actualizar el profesor');
       const json = await response.json();
       return json.data;
     } catch (error) {
@@ -83,7 +80,7 @@ export const professorService = {
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
       });
-      if (!response.ok) throw new Error('Error deactivating professor');
+      if (!response.ok) throw new Error('Error al desactivar el profesor');
     } catch (error) {
       console.error(error);
       throw error;
