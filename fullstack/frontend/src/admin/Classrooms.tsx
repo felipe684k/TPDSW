@@ -15,6 +15,7 @@ export default function Classrooms() {
   
   const [isLoading, setIsLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [toast, setToast] = useState<{text: string, type: 'success' | 'danger'} | null>(null)
 
   useEffect(() => {
     fetchClassrooms()
@@ -44,6 +45,7 @@ export default function Classrooms() {
       setCapacity('')
     }
     setModalOpen(true)
+    setToast(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,6 +60,8 @@ export default function Classrooms() {
         await classroomService.createClassroom({ name, capacity: Number(capacity) })
       }
       setModalOpen(false)
+      setToast({ text: editingId ? "Aula actualizada exitosamente" : "Aula creada con éxito", type: 'success' })
+      setTimeout(() => setToast(null), 3000)
       fetchClassrooms()
     } catch (error) {
       console.error(error)
@@ -108,6 +112,17 @@ export default function Classrooms() {
           + Registrar Aula
         </button>
       </div>
+
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-50 bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
+          toast.type === 'success' 
+            ? 'border-emerald-500/50 text-emerald-400 shadow-emerald-900/20' 
+            : 'border-rose-500/50 text-rose-400 shadow-rose-900/20'
+        }`}>
+          <span className="text-lg">{toast.type === 'success' ? '✅' : '🗑️'}</span>
+          <span className="font-medium text-sm tracking-wide">{toast.text}</span>
+        </div>
+      )}
 
       {errorMsg && (
         <div className="bg-rose-950/50 border border-rose-800/80 rounded-lg p-3 text-xs text-rose-400">

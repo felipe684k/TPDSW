@@ -67,7 +67,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
         if (!selectedAcademicYearId) {
           const currentYear = new Date().getFullYear()
           const matched = data.find(ay => {
-            const yr = new Date(ay.start_date).getFullYear()
+            const yr = (String(ay.start_date).match(/^(\d{4})/) ? Number(String(ay.start_date).slice(0, 4)) : new Date(ay.start_date).getUTCFullYear())
             return yr === currentYear || ay.name.includes(currentYear.toString())
           })
           const defaultId = matched ? matched.id_academic_year! : data[data.length - 1].id_academic_year!
@@ -309,7 +309,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                 <option value="">-- Todos los Ciclos Lectivos --</option>
                 {academicYears.map(ay => (
                   <option key={ay.id_academic_year} value={ay.id_academic_year}>
-                    {ay.name} ({new Date(ay.start_date).getFullYear()})
+                    {ay.name} ({(String(ay.start_date).match(/^(\d{4})/) ? Number(String(ay.start_date).slice(0, 4)) : new Date(ay.start_date).getUTCFullYear())})
                   </option>
                 ))}
               </select>

@@ -273,7 +273,7 @@ export default function Enrollments() {
           <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-4 text-rose-500 text-xl">
             ⚠️
           </div>
-          <h2 className="text-lg font-bold text-slate-800 mb-2">¿Desactivar Inscripción?</h2>
+          <h2 className="text-lg font-bold text-slate-800 mb-2">¿Desactivar inscripción{(() => { const e = enrollments.find(en => en.id_enrollment === enrollmentToDelete); return e?.user ? ` de ${e.user.first_name} ${e.user.last_name}` : ''; })()}?</h2>
           <p className="text-xs text-slate-500 mb-2">
             Esta acción cambiará el estado del alumno a "Dado de Baja" y perderá el acceso al curso.
           </p>

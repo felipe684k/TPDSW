@@ -302,9 +302,9 @@ export default function Professors() {
           <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-4 text-rose-500 text-xl">
             ⚠️
           </div>
-          <h2 className="text-lg font-bold text-slate-800 mb-2">¿Desactivar profesor?</h2>
+          <h2 className="text-lg font-bold text-slate-800 mb-2">¿Desactivar a {(() => { const p = professors.find(pr => pr.id === professorToDelete); return p ? `${p.first_name} ${p.last_name}` : 'profesor'; })()}?</h2>
           <p className="text-xs text-slate-500 mb-2">
-            Esta acción deshabilitará al profesor en el sistema. Podrá ser reactivado más tarde si es necesario.
+            Esta acción deshabilitará al profesor <strong className="text-slate-700">{(() => { const p = professors.find(pr => pr.id === professorToDelete); return p ? `${p.last_name}, ${p.first_name}` : ''; })()}</strong> en el sistema. Podrá ser reactivado más tarde si es necesario.
           </p>
         </div>
       </Modal>

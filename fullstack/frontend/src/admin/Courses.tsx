@@ -433,7 +433,7 @@ export default function Courses() {
           <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl mx-auto mb-3">
             ⚠️
           </div>
-          <h3 className="text-lg font-bold text-slate-800 mb-2">Desactivar Curso</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">¿Desactivar {courses.find(c => c.id_course === courseToDelete)?.course_name || 'Curso'}?</h3>
           <p className="text-xs text-slate-500 mb-2">¿Estás seguro que deseas desactivar este curso? Quedará oculto de las listas activas.</p>
         </div>
       </Modal>

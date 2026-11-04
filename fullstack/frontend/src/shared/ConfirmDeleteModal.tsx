@@ -4,10 +4,12 @@ interface Props {
   isOpen: boolean;                  
   onClose: () => void;              
   onConfirm: () => void;            
+  title?: string;
+  itemName?: string;
   message?: string;                 
 }
 
-export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, message }: Props) {
+export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, title, itemName, message }: Props) {
   return (
     <Modal
       isOpen={isOpen}
@@ -35,7 +37,9 @@ export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, message
         <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-500 flex items-center justify-center text-xl mx-auto mb-4">
           ⚠️
         </div>
-        <h3 className="text-lg font-bold text-slate-800 mb-2">¿Estás seguro?</h3>
+        <h3 className="text-lg font-bold text-slate-800 mb-2">
+          {title || (itemName ? `¿Desactivar a ${itemName}?` : '¿Estás seguro?')}
+        </h3>
         <p className="text-sm text-slate-500 mb-2">
           {message || "Esta acción desactivará el registro del sistema. ¿Deseas continuar?"}
         </p>

@@ -271,7 +271,8 @@ export default function Students() {
         isOpen={studentToDelete != null}
         onClose={() => setStudentToDelete(null)}
         onConfirm={handleDelete}
-        message="Esta acción desactivará al alumno del sistema. ¿Estás seguro de que deseas continuar?"
+        itemName={(() => { const s = students.find(st => st.id === studentToDelete); return s ? `${s.first_name} ${s.last_name}` : undefined; })()}
+        message={(() => { const s = students.find(st => st.id === studentToDelete); return s ? `Esta acción desactivará al alumno ${s.last_name}, ${s.first_name} (DNI ${s.dni}) del sistema. ¿Estás seguro de que deseas continuar?` : "Esta acción desactivará al alumno del sistema. ¿Estás seguro de que deseas continuar?"; })()}
       />
 
       <PaymentModal

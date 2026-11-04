@@ -136,7 +136,7 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
       const ay = enroll.section?.academic_year;
       const ayName = ay?.name || 'Ciclo Lectivo';
       const ayYear = ay?.start_date 
-        ? new Date(ay.start_date).getFullYear() 
+        ? (String(ay.start_date).match(/^(\d{4})/) ? parseInt(String(ay.start_date).slice(0, 4), 10) : new Date(ay.start_date).getUTCFullYear()) 
         : (ay?.name?.match(/\d{4}/) ? parseInt(ay.name.match(/\d{4}/)![0], 10) : currentYear);
       
       const isPastYear = ayYear < currentYear;
@@ -383,7 +383,7 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
       const course = enroll.section?.course;
       const ay = enroll.section?.academic_year;
       const ayYear = ay?.start_date 
-        ? new Date(ay.start_date).getFullYear() 
+        ? (String(ay.start_date).match(/^(\d{4})/) ? parseInt(String(ay.start_date).slice(0, 4), 10) : new Date(ay.start_date).getUTCFullYear()) 
         : (ay?.name?.match(/\d{4}/) ? parseInt(ay.name.match(/\d{4}/)![0], 10) : currentYear);
       const isPastYear = ayYear < currentYear;
 
