@@ -80,7 +80,7 @@ sequelize.sync({ alter: true })
   })
   .catch((err) => console.error('❌ Error synchronizing tables:', err));
 
-import userRouter from './routes/user.router.js';
+import userRouter from './modules/user/user.router.js';
 import professorRouter from './modules/professor/professor.router.js';
 import levelRoutes from './modules/level/level.router.js';
 import courseRoutes from './modules/course/course.router.js';

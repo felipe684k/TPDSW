@@ -1,12 +1,43 @@
-import { type Request, type Response } from 'express';
 import { Op } from 'sequelize';
-import { User } from '../models/user.js';
-import { sequelize, Level, UserLevel } from '../models/index.js';
 import bcrypt from 'bcryptjs';
+import { User } from '../../models/user.js';
+import { sequelize, Level, UserLevel } from '../../models/index.js';
 
-export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { search, level } = req.query;
+export class UserError extends Error {
+  statusCode: number;
+
+  constructor(message: string, statusCode: number = 400) {
+    super(message);
+    this.name = 'UserError';
+    this.statusCode = statusCode;
+  }
+}
+
+export interface CreateUserDto {
+  dni: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  birth_date?: string;
+  email?: string;
+  level_code?: number | string;
+}
+
+export interface UpdateUserDto {
+  dni?: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  birth_date?: string;
+  email?: string;
+  username?: string;
+  password?: string;
+  level_code?: number | string;
+}
+
+export class UserService {
+  async findAll(filters: { search?: any; level?: any } = {}) {
+    const { search, level } = filters;
 
     let searchConditions: any = {
       role: 'STUDENT',
@@ -50,7 +81,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
       ]
     });
 
-    const cleanUsers = users.map(u => {
+    return users.map(u => {
       const data = u.toJSON();
       const lastLevel = data.levels && data.levels.length > 0 ? data.levels[0] : null;
 
@@ -61,39 +92,26 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
         levels: undefined
       };
     });
-
-    res.status(200).json({ status: 'ok', message: 'Lista obtenida exitosamente', data: cleanUsers });
-
-  } catch (error: any) {
-    console.error('Error querying users:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: [] });
   }
-};
 
-export const checkStudentDni = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { dni } = req.params;
-
-    // First, search active
+  async checkStudentDni(dni: string) {
+    // 1. Search active student
     let student: any = await User.findOne({
       where: { dni, role: 'STUDENT', active: true },
       include: [{ model: Level, as: 'levels' }]
     });
+
     if (student) {
       const data = student.toJSON();
       const lastLevel = data.levels && data.levels.length > 0 ? data.levels[0] : null;
-      res.status(200).json({
-        status: 'ok',
-        data: {
-          ...data,
-          level_code: lastLevel ? String(lastLevel.level_code) : '',
-          current_level: lastLevel ? lastLevel.name : 'Sin nivel asignado',
-        }
-      });
-      return;
+      return {
+        ...data,
+        level_code: lastLevel ? String(lastLevel.level_code) : '',
+        current_level: lastLevel ? lastLevel.name : 'Sin nivel asignado',
+      };
     }
 
-    // Second, search inactive
+    // 2. Search inactive/deleted student
     student = await User.findOne({
       where: {
         dni: { [Op.like]: `${dni}_deleted_%` },
@@ -106,35 +124,19 @@ export const checkStudentDni = async (req: Request, res: Response): Promise<void
     if (student) {
       const data = student.toJSON();
       const lastLevel = data.levels && data.levels.length > 0 ? data.levels[0] : null;
-      res.status(200).json({
-        status: 'ok',
-        data: {
-          ...data,
-          level_code: lastLevel ? String(lastLevel.level_code) : '',
-          current_level: lastLevel ? lastLevel.name : 'Sin nivel asignado',
-        }
-      });
-      return;
+      return {
+        ...data,
+        level_code: lastLevel ? String(lastLevel.level_code) : '',
+        current_level: lastLevel ? lastLevel.name : 'Sin nivel asignado',
+      };
     }
 
-    res.status(200).json({ status: 'not_found', data: null });
-  } catch (error: any) {
-    console.error('Error checking student DNI:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
+    return null;
   }
-};
 
-export const login = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { username, password } = req.body;
-
+  async login(username?: string, password?: string) {
     if (!username || !password) {
-      res.status(400).json({
-        status: 'error',
-        message: 'Por favor ingresa usuario y contraseña',
-        data: null
-      });
-      return;
+      throw new UserError('Por favor ingresa usuario y contraseña', 400);
     }
 
     const foundUser: any = await User.findOne({
@@ -145,48 +147,23 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
 
     if (!foundUser) {
-      res.status(401).json({
-        status: 'error',
-        message: 'Usuario o contraseña incorrectos',
-        data: null
-      });
-      return;
+      throw new UserError('Usuario o contraseña incorrectos', 401);
     }
 
-
     const isPasswordValid = await bcrypt.compare(password, foundUser.password).catch(() => false)
-      || (foundUser.password === password); // por si la contraseña no esta encriptada
+      || (foundUser.password === password); // Soporte temporal por si la contraseña no estaba hasheada
 
     if (!isPasswordValid) {
-      res.status(401).json({
-        status: 'error',
-        message: 'Usuario o contraseña incorrectos',
-        data: null
-      });
-      return;
+      throw new UserError('Usuario o contraseña incorrectos', 401);
     }
 
     const userData = foundUser.toJSON();
     delete userData.password;
 
-    res.status(200).json({
-      status: 'ok',
-      message: 'Inicio de sesión exitoso',
-      data: userData
-    });
-  } catch (error: any) {
-    console.error('Error logging in:', error?.message || error);
-    res.status(500).json({
-      status: 'db_error',
-      message: 'Error interno al iniciar sesión',
-      data: null
-    });
+    return userData;
   }
-};
 
-export const getUserById = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
+  async findById(id: number | string) {
     const foundUser = await User.findOne({
       where: {
         id: id,
@@ -194,34 +171,27 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
         active: true
       }
     });
-    if (!foundUser) {
-      res.status(404).json({ status: 'error', message: 'No se encontró un alumno activo con ID: ' + id, data: null });
-      return;
-    }
-    res.status(200).json({ status: 'ok', message: 'Alumno encontrado exitosamente', data: foundUser });
-  } catch (error: any) {
-    console.error('Error finding student with ID ' + req.params.id + ':', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno al buscar el alumno', data: null });
-  }
-};
 
-export const createUser = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { dni, first_name, last_name, phone, birth_date, email, level_code } = req.body;
+    if (!foundUser) {
+      throw new UserError('No se encontró un alumno activo con ID: ' + id, 404);
+    }
+
+    return foundUser;
+  }
+
+  async create(data: CreateUserDto) {
+    const { dni, first_name, last_name, phone, birth_date, email, level_code } = data;
 
     if (!dni || !first_name || !last_name) {
-      res.status(400).json({ status: 'error', message: 'Faltan campos obligatorios', data: null });
-      return;
+      throw new UserError('Faltan campos obligatorios', 400);
     }
 
     const username = first_name.toLowerCase().trim();
     const hashedPassword = await bcrypt.hash(dni.toString(), 10);
 
-
     const activeExistingUser: any = await User.findOne({ where: { dni } });
     if (activeExistingUser) {
-      res.status(409).json({ status: 'error', message: 'Ya existe un usuario activo con el DNI: ' + dni, data: null });
-      return;
+      throw new UserError('Ya existe un usuario activo con el DNI: ' + dni, 409);
     }
 
     const inactiveUser: any = await User.findOne({
@@ -244,6 +214,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         dni,
         active: true
       });
+
       if (level_code !== undefined) {
         await UserLevel.destroy({ where: { id_user: inactiveUser.id } });
         if (level_code !== '' && level_code !== null) {
@@ -251,10 +222,9 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
           await UserLevel.create({ id_user: inactiveUser.id, level_code: Number(level_code), start_date: actualDate });
         }
       }
-      res.status(200).json({ status: 'ok', message: 'Alumno reactivado exitosamente', data: inactiveUser });
-      return;
-    }
 
+      return { user: inactiveUser, reactivated: true };
+    }
 
     const newUser = await User.create({
       dni,
@@ -262,7 +232,8 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       last_name,
       phone,
       birth_date,
-      email, username,
+      email,
+      username,
       password: hashedPassword,
       role: 'STUDENT',
       active: true
@@ -273,22 +244,15 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       await UserLevel.create({ id_user: newUser.dataValues.id, level_code: Number(level_code), start_date: actualDate });
     }
 
-    res.status(201).json({ status: 'ok', message: 'Alumno registrado exitosamente', data: newUser });
-  } catch (error: any) {
-    console.error('Error creating student:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
+    return { user: newUser, reactivated: false };
   }
-};
 
-export const updateUser = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const { dni, first_name, last_name, phone, birth_date, email, username, password, level_code } = req.body;
+  async update(id: number | string, data: UpdateUserDto) {
+    const { dni, first_name, last_name, phone, birth_date, email, username, password, level_code } = data;
 
     const existingUser = await User.findOne({ where: { id: id, role: 'STUDENT', active: true } });
     if (!existingUser) {
-      res.status(404).json({ status: 'error', message: 'No se encontró un alumno activo con ID ' + id, data: null });
-      return;
+      throw new UserError('No se encontró un alumno activo con ID ' + id, 404);
     }
 
     const dataToUpdate: any = {};
@@ -309,26 +273,17 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
       await UserLevel.destroy({ where: { id_user: id } });
       if (level_code !== '' && level_code !== null) {
         const actualDate = new Date().toISOString().split('T')[0];
-        await UserLevel.create({ id_user: id, level_code: Number(level_code), start_date: actualDate });
+        await UserLevel.create({ id_user: Number(id), level_code: Number(level_code), start_date: actualDate });
       }
     }
 
-    res.status(200).json({ status: 'ok', message: 'Alumno actualizado exitosamente', data: { dni, ...dataToUpdate, level_code } });
-  } catch (error: any) {
-    console.error('Error updating student:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
+    return { dni, ...dataToUpdate, level_code };
   }
-};
 
-export const deleteUser = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-
+  async delete(id: number | string) {
     const student: any = await User.findOne({ where: { id: id, role: 'STUDENT', active: true } });
-
     if (!student) {
-      res.status(404).json({ status: 'error', message: 'No se encontró un alumno activo con ID ' + id, data: null });
-      return;
+      throw new UserError('No se encontró un alumno activo con ID ' + id, 404);
     }
 
     const ts = Date.now();
@@ -342,9 +297,6 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
       { where: { id: id, role: 'STUDENT', active: true } }
     );
 
-    res.status(200).json({ status: 'ok', message: 'Alumno desactivado exitosamente', data: null });
-  } catch (error: any) {
-    console.error('Error deactivating student:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
+    return true;
   }
-};
+}
