@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getSections, getSectionById, createSection, updateSection, deleteSection } from '../controllers/section.controller.js';
+import { getSections, getSectionById, createSection, updateSection, deleteSection } from './section.controller.js';
 
 const router = Router();
 
