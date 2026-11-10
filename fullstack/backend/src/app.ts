@@ -89,7 +89,7 @@ import tuitionFeeRoutes from './modules/tuition_fee/tuition_fee.router.js';
 import classroomRoutes from './modules/classroom/classroom.router.js';
 import academicYearRoutes from './modules/academic_year/academic_year.router.js';
 import sectionRoutes from './modules/section/section.router.js';
-import paymentRouter from './routes/payment.router.js';
+import paymentRouter from './modules/payment/payment.router.js';
 
 const app = express();
 const PORT = 3000;

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllPayments, getStudentAccountStatus, registerPayment, getDebtors } from '../controllers/payment.controller.js';
+import { getAllPayments, getStudentAccountStatus, registerPayment, getDebtors } from './payment.controller.js';
 
 const router = Router();
 
