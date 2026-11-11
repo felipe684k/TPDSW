@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import bcrypt from 'bcryptjs';
 import { User } from '../../models/user.js';
 import { normalizeEmail, assertUniqueUserFields } from '../user/user.service.js';
 
@@ -103,7 +104,8 @@ export class ProfessorService {
       email: cleanEmail,
       birth_date,
       username: dni,
-      password: dni,
+      // Los docentes no inician sesión, pero la clave nunca se guarda en texto plano
+      password: await bcrypt.hash(String(dni), 10),
       role: 'PROFESSOR',
       active: true
     });

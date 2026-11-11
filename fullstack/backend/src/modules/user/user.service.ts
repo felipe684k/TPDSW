@@ -1,7 +1,8 @@
 import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import { User } from '../../models/user.js';
-import { sequelize, Level, UserLevel } from '../../models/index.js';
+import { sequelize, Level, UserLevel, Enrollment } from '../../models/index.js';
+import { ENROLLMENT_STATUS } from '../../constants.js';
 
 export class UserError extends Error {
   statusCode: number;
@@ -34,6 +35,9 @@ export interface UpdateUserDto {
   password?: string;
   level_code?: number | string;
 }
+
+// Roles que pueden iniciar sesión
+export const LOGIN_ROLES = ['ADMIN', 'STUDENT'];
 
 // Un email vacío se guarda como NULL: la columna es UNIQUE y MySQL acepta varios NULL, pero no varios ''
 export function normalizeEmail(email: any): string | null {
@@ -181,7 +185,7 @@ export class UserService {
       throw new UserError('Por favor ingresa usuario y contraseña', 400);
     }
 
-    const foundUser: any = await User.findOne({
+    const foundUser: any = await User.scope('withPassword').findOne({
       where: {
         username: username,
         active: true
@@ -192,11 +196,15 @@ export class UserService {
       throw new UserError('Usuario o contraseña incorrectos', 401);
     }
 
-    const isPasswordValid = await bcrypt.compare(password, foundUser.password).catch(() => false)
-      || (foundUser.password === password); // Soporte temporal por si la contraseña no estaba hasheada
+    const isPasswordValid = await bcrypt.compare(password, foundUser.password).catch(() => false);
 
     if (!isPasswordValid) {
       throw new UserError('Usuario o contraseña incorrectos', 401);
+    }
+
+    // Solo la secretaría (ADMIN) y los alumnos (STUDENT) tienen acceso al sistema
+    if (!LOGIN_ROLES.includes(foundUser.role)) {
+      throw new UserError('Tu usuario no tiene acceso al sistema', 403);
     }
 
     const userData = foundUser.toJSON();
@@ -328,7 +336,8 @@ export class UserService {
       }
     }
 
-    return { dni, ...dataToUpdate, level_code };
+    const { password: _omitPassword, ...safeData } = dataToUpdate;
+    return { dni, ...safeData, level_code };
   }
 
   async delete(id: number | string) {
@@ -346,6 +355,12 @@ export class UserService {
         dni: `${student.dni}_deleted_${ts}`
       },
       { where: { id: id, role: 'STUDENT', active: true } }
+    );
+
+    // Al dar de baja al alumno, también se dan de baja sus inscripciones vigentes
+    await Enrollment.update(
+      { status: ENROLLMENT_STATUS.DROPPED },
+      { where: { id_user: id, status: { [Op.ne]: ENROLLMENT_STATUS.DROPPED } } }
     );
 
     return true;

@@ -6,7 +6,7 @@ import { sequelize, User, Level } from './models/index.js';
 async function seedDefaultUsers() {
   try {
     // 1. Admin user
-    const admin: any = await User.findOne({ where: { username: 'admin' } });
+    const admin: any = await User.scope('withPassword').findOne({ where: { username: 'admin' } });
     if (!admin) {
       const adminPasswordHash = await bcrypt.hash('12345', 10);
       await User.create({
@@ -27,7 +27,7 @@ async function seedDefaultUsers() {
     }
 
     // 2. Student demo user
-    const student: any = await User.findOne({ where: { username: 'user' } });
+    const student: any = await User.scope('withPassword').findOne({ where: { username: 'user' } });
     if (!student) {
       const studentPasswordHash = await bcrypt.hash('12345', 10);
       await User.create({

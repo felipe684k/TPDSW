@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { Enrollment, User, Section, Course, Level, UserLevel } from '../../models/index.js';
+import { Enrollment, User, Section, Course, Level, UserLevel, Classroom } from '../../models/index.js';
 
 export class EnrollmentService {
   async findAll() {
@@ -54,7 +54,10 @@ export class EnrollmentService {
     id_section: any;
   }) {
     const section: any = await Section.findByPk(data.id_section, {
-      include: [{ model: Course, as: 'course', include: [{ model: Level, as: 'level' }] }]
+      include: [
+        { model: Course, as: 'course', include: [{ model: Level, as: 'level' }] },
+        { model: Classroom, as: 'classroom' }
+      ]
     });
 
     if (!section || !section.course) {
@@ -71,6 +74,17 @@ export class EnrollmentService {
     });
     if (alreadyEnrolled) {
       throw new Error('El alumno ya está inscripto en esta comisión.');
+    }
+
+    // Cupo: no puede haber más inscriptos vigentes que la capacidad del aula
+    const capacity = Number(section.classroom?.capacity);
+    if (capacity > 0) {
+      const enrolledCount = await Enrollment.count({
+        where: { id_section: data.id_section, status: { [Op.ne]: 'Dado de Baja' } }
+      });
+      if (enrolledCount >= capacity) {
+        throw new Error(`La comisión no tiene cupo disponible: el aula "${section.classroom.name}" tiene capacidad para ${capacity} alumnos.`);
+      }
     }
 
     const { currentLevel, allowedLevel } = await this.getAllowedLevelForStudent(Number(data.id_user));

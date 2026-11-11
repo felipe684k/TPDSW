@@ -20,7 +20,7 @@ export default function App() {
   })
 
   const [userRole, setUserRole] = useState<'ADMIN' | 'STUDENT'>(() => {
-    return (localStorage.getItem('userRole') as any) || 'ADMIN'
+    return localStorage.getItem('userRole') as any
   })
 
   const [userData, setUserData] = useState<any>(() => {
@@ -54,7 +54,10 @@ export default function App() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
-  if (!isLoggedIn) {
+  // Solo ADMIN y STUDENT tienen pantalla; cualquier otro rol vuelve al login
+  const hasAccess = userRole === 'ADMIN' || userRole === 'STUDENT'
+
+  if (!isLoggedIn || !hasAccess) {
     //si isLoggedIn es false, le mando el formulario y la funcion onLogin
     //y espero la respuesta
     return <Login onLogin={(role, data) => {

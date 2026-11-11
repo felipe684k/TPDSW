@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { ENROLLMENT_STATUS } from '../../constants.js';
 import { Payment, Enrollment, User, Section, Course, TuitionFee, AcademicYear, Classroom, Schedule } from '../../models/index.js';
 
 export const ACADEMIC_MONTHS = [
@@ -18,6 +19,49 @@ export const matchesMonth = (value: string | undefined, m: { name: string; enNam
   if (!value) return false;
   const lower = value.toLowerCase();
   return lower === m.name.toLowerCase() || lower === m.enName.toLowerCase();
+};
+
+const DEFAULT_MONTHLY_FEE = 12000;
+
+// Fecha local en formato AAAA-MM-DD (sin pasar por UTC)
+const toLocalDateString = (value: any): string => {
+  if (!value) return '';
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+  const d = new Date(value);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+// Año calendario del ciclo lectivo (por su fecha de inicio, o por el número en el nombre)
+export const getAcademicYearNumber = (ay: any): number => {
+  if (ay?.start_date) return parseInt(toLocalDateString(ay.start_date).slice(0, 4), 10);
+  const fromName = ay?.name?.match(/\d{4}/);
+  return fromName ? parseInt(fromName[0], 10) : new Date().getFullYear();
+};
+
+/**
+ * Valor de la cuota de un mes: la tarifa vigente al vencimiento (día 10 de ese mes).
+ * Si la tarifa del curso se cargó después de ese vencimiento, se usa la primera tarifa.
+ * Sin mes (por ejemplo, un mes desconocido) se usa la tarifa más reciente.
+ */
+export const getMonthlyFee = (course: any, year?: number, monthNum?: number): number => {
+  const fees = [...(course?.tuition_fees || [])].sort((a: any, b: any) =>
+    toLocalDateString(a.start_date).localeCompare(toLocalDateString(b.start_date)) ||
+    Number(a.id_tuition_fee) - Number(b.id_tuition_fee)
+  );
+
+  if (fees.length === 0) {
+    return Number(course?.registration_fee) || DEFAULT_MONTHLY_FEE;
+  }
+
+  let chosen = fees[fees.length - 1];
+  if (year && monthNum) {
+    const dueDate = `${year}-${String(monthNum).padStart(2, '0')}-10`;
+    chosen = fees[0];
+    for (const fee of fees) {
+      if (toLocalDateString(fee.start_date) <= dueDate) chosen = fee;
+    }
+  }
+  return Number(chosen.monthly_cost) || DEFAULT_MONTHLY_FEE;
 };
 
 export class PaymentError extends Error {
@@ -135,34 +179,25 @@ export class PaymentService {
       const course = enroll.section?.course;
       const ay = enroll.section?.academic_year;
       const ayName = ay?.name || 'Ciclo Lectivo';
-      const ayYear = ay?.start_date
-        ? (String(ay.start_date).match(/^(\d{4})/) ? parseInt(String(ay.start_date).slice(0, 4), 10) : new Date(ay.start_date).getUTCFullYear())
-        : (ay?.name?.match(/\d{4}/) ? parseInt(ay.name.match(/\d{4}/)![0], 10) : currentYear);
+      const ayYear = getAcademicYearNumber(ay);
 
       const isPastYear = ayYear < currentYear;
       const isFutureYear = ayYear > currentYear;
-
-      let baseAmount = 12000;
-      if (course) {
-        if (course.tuition_fees && course.tuition_fees.length > 0) {
-          baseAmount = Number(course.tuition_fees[0].monthly_cost) || 12000;
-        } else if (course.registration_fee) {
-          baseAmount = Number(course.registration_fee) || 12000;
-        }
-      }
+      const isDropped = enroll.status === ENROLLMENT_STATUS.DROPPED;
 
       const registeredPayments: any[] = enroll.payments || [];
+      const hasPayments = (m: typeof ACADEMIC_MONTHS[number]) =>
+        registeredPayments.some(p => matchesMonth(p.installment_month, m));
 
-      const monthsToShow = isPastYear
+      // Una inscripción dada de baja ya no genera cuotas a cobrar: solo se muestran los meses que se pagaron
+      const monthsToShow = isDropped || isFutureYear
+        ? ACADEMIC_MONTHS.filter(hasPayments)
+        : isPastYear
         ? ACADEMIC_MONTHS
-        : isFutureYear
-        ? ACADEMIC_MONTHS.filter(m => registeredPayments.some(p => matchesMonth(p.installment_month, m)))
-        : ACADEMIC_MONTHS.filter(m =>
-            m.monthNum <= currentMonthNum ||
-            registeredPayments.some(p => matchesMonth(p.installment_month, m))
-          );
+        : ACADEMIC_MONTHS.filter(m => m.monthNum <= currentMonthNum || hasPayments(m));
 
       monthsToShow.forEach((m) => {
+        const baseAmount = getMonthlyFee(course, ayYear, m.monthNum);
         const monthPayments = registeredPayments.filter(p => matchesMonth(p.installment_month, m));
         const totalPaid = monthPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
         const remainingAmount = Math.max(0, baseAmount - totalPaid);
@@ -253,15 +288,13 @@ export class PaymentService {
       throw new PaymentError('Monto y mes de cuota válidos son requeridos.', 400);
     }
 
-    const course = existingEnrollment.section?.course;
-    let baseAmount = 12000;
-    if (course) {
-      if (course.tuition_fees && course.tuition_fees.length > 0) {
-        baseAmount = Number(course.tuition_fees[0].monthly_cost) || 12000;
-      } else if (course.registration_fee) {
-        baseAmount = Number(course.registration_fee) || 12000;
-      }
+    if (existingEnrollment.status === ENROLLMENT_STATUS.DROPPED) {
+      throw new PaymentError('No se pueden registrar pagos de una inscripción dada de baja.', 400);
     }
+
+    const course = existingEnrollment.section?.course;
+    const month = ACADEMIC_MONTHS.find(m => matchesMonth(installment_month, m));
+    const baseAmount = getMonthlyFee(course, getAcademicYearNumber(existingEnrollment.section?.academic_year), month?.monthNum);
 
     const previousPayments: any[] = existingEnrollment.payments?.filter(
       (p: any) => p.installment_month?.toLowerCase() === installment_month.toLowerCase()
@@ -351,21 +384,15 @@ export class PaymentService {
 
       const course = enroll.section?.course;
       const ay = enroll.section?.academic_year;
-      const ayYear = ay?.start_date
-        ? (String(ay.start_date).match(/^(\d{4})/) ? parseInt(String(ay.start_date).slice(0, 4), 10) : new Date(ay.start_date).getUTCFullYear())
-        : (ay?.name?.match(/\d{4}/) ? parseInt(ay.name.match(/\d{4}/)![0], 10) : currentYear);
+      const ayYear = getAcademicYearNumber(ay);
       const isPastYear = ayYear < currentYear;
+      const isFutureYear = ayYear > currentYear;
 
-      const dueMonths = isPastYear ? ACADEMIC_MONTHS : ACADEMIC_MONTHS.filter(m => m.monthNum <= currentMonthNum);
-
-      let baseAmount = 12000;
-      if (course) {
-        if (course.tuition_fees && course.tuition_fees.length > 0) {
-          baseAmount = Number(course.tuition_fees[0].monthly_cost) || 12000;
-        } else if (course.registration_fee) {
-          baseAmount = Number(course.registration_fee) || 12000;
-        }
-      }
+      const dueMonths = isPastYear
+        ? ACADEMIC_MONTHS
+        : isFutureYear
+        ? []
+        : ACADEMIC_MONTHS.filter(m => m.monthNum <= currentMonthNum);
 
       const payments: any[] = enroll.payments || [];
       const unpaidInstallments: string[] = [];
@@ -374,7 +401,7 @@ export class PaymentService {
       for (const m of dueMonths) {
         const monthPayments = payments.filter(p => matchesMonth(p.installment_month, m));
         const totalPaid = monthPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-        const remaining = Math.max(0, baseAmount - totalPaid);
+        const remaining = Math.max(0, getMonthlyFee(course, ayYear, m.monthNum) - totalPaid);
 
         if (remaining > 0) {
           unpaidInstallments.push(m.name);

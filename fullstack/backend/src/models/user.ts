@@ -53,7 +53,25 @@ export const User = sequelize.define('User', {
   }
 }, {
   tableName: 'user',
-  timestamps: false
+  timestamps: false,
+  // Por defecto nunca se lee el password (tampoco en los include de otras consultas)
+  defaultScope: {
+    attributes: { exclude: ['password'] }
+  },
+  // Solo el login y la carga inicial piden el password explícitamente
+  scopes: {
+    withPassword: {
+      attributes: { include: ['password'] }
+    }
+  }
 });
+
+// Aunque el objeto tenga el password (por ejemplo, recién creado), nunca se envía en un JSON
+const originalToJSON = (User as any).prototype.toJSON;
+(User as any).prototype.toJSON = function () {
+  const values = originalToJSON.call(this);
+  delete values.password;
+  return values;
+};
 
 export default User;
