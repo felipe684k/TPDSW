@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { Enrollment, User, Section, Course, Level, UserLevel } from '../../models/index.js';
 
 export class EnrollmentService {
@@ -58,6 +59,18 @@ export class EnrollmentService {
 
     if (!section || !section.course) {
       throw new Error('La comisión o el curso seleccionado no existe.');
+    }
+
+    // Un alumno no puede inscribirse dos veces en la misma comisión (salvo que se haya dado de baja)
+    const alreadyEnrolled = await Enrollment.findOne({
+      where: {
+        id_user: data.id_user,
+        id_section: data.id_section,
+        status: { [Op.ne]: 'Dado de Baja' }
+      }
+    });
+    if (alreadyEnrolled) {
+      throw new Error('El alumno ya está inscripto en esta comisión.');
     }
 
     const { currentLevel, allowedLevel } = await this.getAllowedLevelForStudent(Number(data.id_user));

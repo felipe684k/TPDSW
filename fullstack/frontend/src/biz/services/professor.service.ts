@@ -50,7 +50,10 @@ export const professorService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(professor),
       });
-      if (!response.ok) throw new Error('Error al registrar el profesor');
+      if (!response.ok) {
+      const errorJson = await response.json().catch(() => null);
+      throw new Error(errorJson?.message || 'Error al registrar el profesor');
+    }
       const json = await response.json();
       return json.data;
     } catch (error) {
@@ -66,7 +69,10 @@ export const professorService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(professor),
       });
-      if (!response.ok) throw new Error('Error al actualizar el profesor');
+      if (!response.ok) {
+      const errorJson = await response.json().catch(() => null);
+      throw new Error(errorJson?.message || 'Error al actualizar el profesor');
+    }
       const json = await response.json();
       return json.data;
     } catch (error) {

@@ -65,6 +65,7 @@ export default function AcademicYears() {
       fetchAcademicYears()
     } catch (error) {
       console.error(error)
+      alert(error instanceof Error ? error.message : 'Error al guardar el ciclo lectivo')
     }
   }
 

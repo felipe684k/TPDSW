@@ -107,7 +107,7 @@ export default function Professors() {
       fetchProfessors()
     } catch (error) {
       console.error('Error saving professor', error)
-      alert('Error al guardar el profesor. Por favor verificá los datos.')
+      alert(error instanceof Error ? error.message : 'Error al guardar el profesor. Por favor verificá los datos.')
     }
   }
 

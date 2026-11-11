@@ -1,5 +1,6 @@
 import { type Request, type Response } from 'express';
 import { ProfessorService } from './professor.service.js';
+import { UserError } from '../user/user.service.js';
 
 const professorService = new ProfessorService();
 
@@ -62,6 +63,10 @@ export const createProfessor = async (req: Request, res: Response): Promise<void
 
     res.status(201).json({ status: 'ok', message: 'Profesor registrado exitosamente', data: result.data });
   } catch (error: any) {
+    if (error instanceof UserError) {
+      res.status(error.statusCode).json({ status: 'error', message: error.message, data: null });
+      return;
+    }
     console.error('Error registering professor:', error?.message || error);
     res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
   }
@@ -89,6 +94,10 @@ export const updateProfessor = async (req: Request, res: Response): Promise<void
 
     res.status(200).json({ status: 'ok', message: 'Profesor actualizado exitosamente', data: updatedData });
   } catch (error: any) {
+    if (error instanceof UserError) {
+      res.status(error.statusCode).json({ status: 'error', message: error.message, data: null });
+      return;
+    }
     console.error('Error updating professor:', error?.message || error);
     res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
   }

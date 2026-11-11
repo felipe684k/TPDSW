@@ -111,6 +111,7 @@ export default function Courses() {
       fetchCourses()
     } catch (error) {
       console.error('Error saving course', error)
+      alert(error instanceof Error ? error.message : 'Error al guardar el curso')
     }
   }
 

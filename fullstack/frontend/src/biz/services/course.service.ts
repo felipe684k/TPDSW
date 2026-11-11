@@ -39,7 +39,10 @@ export const courseService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(courseData),
       });
-      if (!response.ok) throw new Error('Error al crear el curso');
+      if (!response.ok) {
+      const errorJson = await response.json().catch(() => null);
+      throw new Error(errorJson?.message || 'Error al crear el curso');
+    }
       const json = await response.json();
       return json.data;
     } catch (error) {
@@ -55,7 +58,10 @@ export const courseService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(courseData),
       });
-      if (!response.ok) throw new Error('Error al actualizar el curso');
+      if (!response.ok) {
+      const errorJson = await response.json().catch(() => null);
+      throw new Error(errorJson?.message || 'Error al actualizar el curso');
+    }
       const json = await response.json();
       return json.data;
     } catch (error) {

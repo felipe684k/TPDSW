@@ -51,7 +51,10 @@ export const studentService = {
         },
         body: JSON.stringify({ ...student, role: 'STUDENT' }),
       });
-      if (!response.ok) throw new Error('Error al registrar el alumno');
+      if (!response.ok) {
+      const errorJson = await response.json().catch(() => null);
+      throw new Error(errorJson?.message || 'Error al registrar el alumno');
+    }
       return await response.json();
     } catch (error) {
       console.error(error);
@@ -68,7 +71,10 @@ export const studentService = {
         },
         body: JSON.stringify(student),
       });
-      if (!response.ok) throw new Error('Error al actualizar el alumno');
+      if (!response.ok) {
+      const errorJson = await response.json().catch(() => null);
+      throw new Error(errorJson?.message || 'Error al actualizar el alumno');
+    }
       return await response.json();
     } catch (error) {
       console.error(error);

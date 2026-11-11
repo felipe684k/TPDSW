@@ -35,6 +35,48 @@ export interface UpdateUserDto {
   level_code?: number | string;
 }
 
+// Un email vacío se guarda como NULL: la columna es UNIQUE y MySQL acepta varios NULL, pero no varios ''
+export function normalizeEmail(email: any): string | null {
+  const clean = typeof email === 'string' ? email.trim() : '';
+  return clean === '' ? null : clean;
+}
+
+// Genera un username libre a partir del nombre: "juan", "juan2", "juan3"...
+export async function generateUniqueUsername(base: string, excludeId?: number | string): Promise<string> {
+  const cleanBase = base.toLowerCase().trim() || 'usuario';
+  let candidate = cleanBase;
+  let suffix = 2;
+  while (true) {
+    const where: any = { username: candidate };
+    if (excludeId !== undefined) where.id = { [Op.ne]: excludeId };
+    const taken = await User.findOne({ where });
+    if (!taken) return candidate;
+    candidate = `${cleanBase}${suffix++}`;
+  }
+}
+
+// Verifica que DNI y email no estén usados por otro usuario
+export async function assertUniqueUserFields(
+  fields: { dni?: string; email?: string | null; username?: string },
+  excludeId?: number | string
+) {
+  const notMe = excludeId !== undefined ? { id: { [Op.ne]: excludeId } } : {};
+
+  if (fields.username) {
+    const usernameTaken = await User.findOne({ where: { username: fields.username, ...notMe } });
+    if (usernameTaken) throw new UserError('Ya existe un usuario con el nombre de usuario: ' + fields.username, 409);
+  }
+
+  if (fields.dni) {
+    const dniTaken = await User.findOne({ where: { dni: fields.dni, ...notMe } });
+    if (dniTaken) throw new UserError('Ya existe un usuario activo con el DNI: ' + fields.dni, 409);
+  }
+  if (fields.email) {
+    const emailTaken = await User.findOne({ where: { email: fields.email, ...notMe } });
+    if (emailTaken) throw new UserError('Ya existe un usuario con el email: ' + fields.email, 409);
+  }
+}
+
 export class UserService {
   async findAll(filters: { search?: any; level?: any } = {}) {
     const { search, level } = filters;
@@ -186,7 +228,7 @@ export class UserService {
       throw new UserError('Faltan campos obligatorios', 400);
     }
 
-    const username = first_name.toLowerCase().trim();
+    const cleanEmail = normalizeEmail(email);
     const hashedPassword = await bcrypt.hash(dni.toString(), 10);
 
     const activeExistingUser: any = await User.findOne({ where: { dni } });
@@ -202,13 +244,17 @@ export class UserService {
       }
     });
 
+    // El alumno reactivado se excluye para no chocar consigo mismo
+    await assertUniqueUserFields({ email: cleanEmail }, inactiveUser?.id);
+    const username = await generateUniqueUsername(first_name, inactiveUser?.id);
+
     if (inactiveUser) {
       await inactiveUser.update({
         first_name,
         last_name,
         phone,
         birth_date,
-        email,
+        email: cleanEmail,
         username,
         password: hashedPassword,
         dni,
@@ -232,7 +278,7 @@ export class UserService {
       last_name,
       phone,
       birth_date,
-      email,
+      email: cleanEmail,
       username,
       password: hashedPassword,
       role: 'STUDENT',
@@ -261,11 +307,16 @@ export class UserService {
     if (last_name !== undefined) dataToUpdate.last_name = last_name;
     if (phone !== undefined) dataToUpdate.phone = phone;
     if (birth_date !== undefined) dataToUpdate.birth_date = birth_date;
-    if (email !== undefined) dataToUpdate.email = email;
+    if (email !== undefined) dataToUpdate.email = normalizeEmail(email);
     if (username !== undefined) dataToUpdate.username = username;
     if (password !== undefined && password.trim() !== '') {
       dataToUpdate.password = await bcrypt.hash(password, 10);
     }
+
+    await assertUniqueUserFields(
+      { dni: dataToUpdate.dni, email: dataToUpdate.email, username: dataToUpdate.username },
+      id
+    );
 
     await User.update(dataToUpdate, { where: { id: id, role: 'STUDENT', active: true } });
 

@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { AcademicYearService } from './academic_year.service.js';
+import { AcademicYearService, AcademicYearError } from './academic_year.service.js';
 
 const academicYearService = new AcademicYearService();
 
@@ -34,6 +34,10 @@ export const createAcademicYear = async (req: Request, res: Response) => {
     const newAcademicYear = await academicYearService.create({ name, start_date, end_date });
     res.status(201).json({ success: true, data: newAcademicYear });
   } catch (error) {
+    if (error instanceof AcademicYearError) {
+      res.status(error.statusCode).json({ success: false, message: error.message });
+      return;
+    }
     console.error('Error creating academic year:', error);
     res.status(500).json({ success: false, message: 'Error al crear el ciclo lectivo' });
   }
@@ -52,6 +56,10 @@ export const updateAcademicYear = async (req: Request, res: Response): Promise<v
 
     res.json({ success: true, data: academicYear });
   } catch (error) {
+    if (error instanceof AcademicYearError) {
+      res.status(error.statusCode).json({ success: false, message: error.message });
+      return;
+    }
     console.error('Error updating academic year:', error);
     res.status(500).json({ success: false, message: 'Error al actualizar el ciclo lectivo' });
   }

@@ -20,7 +20,10 @@ export const classroomService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(classroom),
     });
-    if (!response.ok) throw new Error('Error al crear el aula');
+    if (!response.ok) {
+      const errorJson = await response.json().catch(() => null);
+      throw new Error(errorJson?.message || 'Error al crear el aula');
+    }
     const json = await response.json();
     return json.data;
   },
@@ -31,7 +34,10 @@ export const classroomService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(classroom),
     });
-    if (!response.ok) throw new Error('Error al actualizar el aula');
+    if (!response.ok) {
+      const errorJson = await response.json().catch(() => null);
+      throw new Error(errorJson?.message || 'Error al actualizar el aula');
+    }
     const json = await response.json();
     return json.data;
   }

@@ -126,7 +126,7 @@ export default function Students() {
 
     } catch (error) {
       console.error("Error saving student", error)
-      setErrorMsg("No se pudo guardar el alumno. Por favor verifique que el DNI y/o Email no estén duplicados o intente nuevamente.")
+      setErrorMsg(error instanceof Error ? error.message : "No se pudo guardar el alumno. Intente nuevamente.")
     }
   }
 

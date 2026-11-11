@@ -65,7 +65,7 @@ export default function Classrooms() {
       fetchClassrooms()
     } catch (error) {
       console.error(error)
-      setErrorMsg('Error al guardar el aula')
+      alert(error instanceof Error ? error.message : 'Error al guardar el aula')
     } finally {
       setIsLoading(false)
     }

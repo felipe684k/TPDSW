@@ -1,5 +1,5 @@
 import { type Request, type Response } from 'express';
-import { CourseService } from './course.service.js';
+import { CourseService, CourseError } from './course.service.js';
 
 const courseService = new CourseService();
 
@@ -31,6 +31,10 @@ export const createCourse = async (req: Request, res: Response): Promise<void> =
 
     res.status(201).json({ status: 'ok', message: 'Curso registrado exitosamente', data: newCourse });
   } catch (error: any) {
+    if (error instanceof CourseError) {
+      res.status(error.statusCode).json({ status: 'error', message: error.message });
+      return;
+    }
     console.error('Error creating course:', error);
     res.status(500).json({ status: 'db_error', message: 'Error interno al crear el curso' });
   }
@@ -53,6 +57,10 @@ export const updateCourse = async (req: Request, res: Response): Promise<void> =
 
     res.status(200).json({ status: 'ok', message: 'Curso actualizado exitosamente' });
   } catch (error: any) {
+    if (error instanceof CourseError) {
+      res.status(error.statusCode).json({ status: 'error', message: error.message });
+      return;
+    }
     console.error('Error updating course:', error);
     res.status(500).json({ status: 'db_error', message: 'Error interno al actualizar el curso' });
   }

@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { User } from '../../models/user.js';
+import { normalizeEmail, assertUniqueUserFields } from '../user/user.service.js';
 
 export class ProfessorService {
   async findAll(filters: { search?: any; status?: any }) {
@@ -76,12 +77,16 @@ export class ProfessorService {
       }
     });
 
+    // Email vacío -> NULL, y no puede estar usado por otro usuario
+    const cleanEmail = normalizeEmail(email);
+    await assertUniqueUserFields({ email: cleanEmail }, inactiveProfessor?.id);
+
     if (inactiveProfessor) {
       await inactiveProfessor.update({
         first_name,
         last_name,
         phone,
-        email,
+        email: cleanEmail,
         birth_date,
         dni,
         username: dni,
@@ -95,7 +100,7 @@ export class ProfessorService {
       first_name,
       last_name,
       phone,
-      email,
+      email: cleanEmail,
       birth_date,
       username: dni,
       password: dni,
@@ -127,9 +132,11 @@ export class ProfessorService {
     if (first_name !== undefined) dataToUpdate.first_name = first_name;
     if (last_name !== undefined) dataToUpdate.last_name = last_name;
     if (phone !== undefined) dataToUpdate.phone = phone;
-    if (email !== undefined) dataToUpdate.email = email;
+    if (email !== undefined) dataToUpdate.email = normalizeEmail(email);
     if (birth_date !== undefined) dataToUpdate.birth_date = birth_date;
     if (active !== undefined) dataToUpdate.active = active;
+
+    await assertUniqueUserFields({ dni: dataToUpdate.dni, email: dataToUpdate.email }, id);
 
     await User.update(dataToUpdate, { where: { id, role: 'PROFESSOR' } });
 
