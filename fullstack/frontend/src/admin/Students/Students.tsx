@@ -11,6 +11,7 @@ export default function Students() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [students, setStudents] = useState<Student[]>([])
   const [isFromBackend, setIsFromBackend] = useState(false)
+  const [loadFailed, setLoadFailed] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
 
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -40,8 +41,10 @@ export default function Students() {
       const data = await studentService.getStudents()
       setStudents(data)
       setIsFromBackend(true)
+      setLoadFailed(false)
     } catch (error) {
       console.error("Error loading students", error)
+      setLoadFailed(true)
     }
   }
 
@@ -254,7 +257,7 @@ export default function Students() {
         columns={columns}
         data={filteredStudents}
         totalCount={filteredStudents.length}
-        emptyMessage={isFromBackend ? 'Ningún alumno registrado coincide con la búsqueda.' : 'Cargando alumnos...'}
+        emptyMessage={loadFailed ? 'No se pudieron cargar los alumnos.' : isFromBackend ? 'Ningún alumno registrado coincide con la búsqueda.' : 'Cargando alumnos...'}
       />
 
       <StudentFormModal

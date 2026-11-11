@@ -1,3 +1,4 @@
+import ConnectionBanner from '../shared/ConnectionBanner';
 import { useState, useEffect } from 'react';
 import { theme } from '../shared/theme';
 import { paymentService, type Installment } from '../biz/services/payment.service';
@@ -96,6 +97,10 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
 
   return (
     <div className={`min-h-screen ${theme.layout.appBackground} font-sans p-4 md:p-8 flex flex-col`}>
+      <div className="relative z-10 max-w-5xl w-full mx-auto">
+        <ConnectionBanner />
+      </div>
+
       {/* Header Container - Glassmorphism */}
       <div className="relative z-10 max-w-5xl w-full mx-auto flex justify-between items-start md:items-center mb-6 bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-lg flex-col md:flex-row gap-4">
         <div className="flex items-center gap-4">

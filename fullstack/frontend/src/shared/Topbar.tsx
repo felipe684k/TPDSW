@@ -1,28 +1,17 @@
-import { useState, useEffect } from 'react'
-import { API_BASE_URL } from '../biz/config'
 import { type SidebarTab } from "./Sidebar.const"
 import { theme } from './theme'
+import { useConnectionState } from '../biz/connectionStatus'
+
+const STATUS_LABEL = {
+  checking: 'Verificando...',
+  ok: 'Sistema conectado',
+  db_down: 'Base de datos desconectada',
+  api_down: 'Servidor desconectado',
+} as const
 
 export default function Topbar({ activeTab, setIsSidebarOpen }: { activeTab: SidebarTab, setIsSidebarOpen: (isOpen: boolean) => void }) {
-  const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking')
-
-  useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/health`)
-        if (res.ok) {
-          setBackendStatus('connected')
-        } else {
-          setBackendStatus('disconnected')
-        }
-      } catch {
-        setBackendStatus('disconnected')
-      }
-    }
-    checkBackend()
-    const interval = setInterval(checkBackend, 10000)
-    return () => clearInterval(interval)
-  }, [])
+  // El estado lo actualiza el monitor de conexión (App.tsx) y cada pedido a la API
+  const connection = useConnectionState()
 
   return (
     <header className={`h-16 ${theme.topbar.wrapper} px-6 flex items-center justify-between shrink-0`}>
@@ -45,12 +34,11 @@ export default function Topbar({ activeTab, setIsSidebarOpen }: { activeTab: Sid
         {/* Backend status indicator */}
         <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-full bg-white/10 border border-white/10 backdrop-blur-sm">
           <span className={`w-2 h-2 rounded-full ${
-            backendStatus === 'connected' ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]' :
-            backendStatus === 'disconnected' ? 'bg-rose-400' : 'bg-amber-400'
+            connection === 'ok' ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]' :
+            connection === 'checking' ? 'bg-amber-400' : 'bg-rose-400'
           }`} />
           <span className="hidden md:block text-white/90">
-            {backendStatus === 'connected' ? 'API Conectada' :
-             backendStatus === 'disconnected' ? 'API Desconectada' : 'Verificando...'}
+            {STATUS_LABEL[connection]}
           </span>
         </div>
 

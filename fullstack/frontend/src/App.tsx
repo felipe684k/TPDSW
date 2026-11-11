@@ -11,10 +11,15 @@ import Classrooms from './admin/Classrooms'
 import AcademicYears from './admin/AcademicYears'
 import Login from './auth/Login'
 import StudentDashboard from './student/StudentDashboard'
+import ConnectionBanner from './shared/ConnectionBanner'
+import { useConnectionMonitor } from './biz/connectionStatus'
 
 import { theme } from './shared/theme'
 
 export default function App() {
+  // Revisa cada 5 s si el backend y la base de datos responden (para detectar caídas y reconexiones)
+  useConnectionMonitor()
+
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     return localStorage.getItem('isLoggedIn') === 'true'
   })
@@ -85,6 +90,8 @@ export default function App() {
         <Topbar activeTab={activeTab} setIsSidebarOpen={setIsSidebarOpen} />
 
         <div className={`flex-1 overflow-y-auto p-6 ${theme.layout.mainContainer}`}>
+          <ConnectionBanner />
+
           {activeTab === SIDEBAR_TABS.DASHBOARD && (
             <Dashboard
               setActiveTab={setActiveTab}

@@ -1,22 +1,24 @@
-import { type Request, type Response } from 'express';
+import { type Request, type Response, type NextFunction } from 'express';
+import { isDatabaseConnectionError } from '../../middlewares/errorHandler.js';
 import { ProfessorService } from './professor.service.js';
 import { UserError } from '../user/user.service.js';
 
 const professorService = new ProfessorService();
 
-export const getAllProfessors = async (req: Request, res: Response): Promise<void> => {
+export const getAllProfessors = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { search, status } = req.query;
     const professors = await professorService.findAll({ search, status });
 
     res.status(200).json({ status: 'ok', message: 'Profesores obtenidos exitosamente', data: professors });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     console.error('Error querying professors:', error?.message || error);
     res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: [] });
   }
 };
 
-export const checkProfessorDni = async (req: Request, res: Response): Promise<void> => {
+export const checkProfessorDni = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { dni } = req.params;
     const prof = await professorService.checkDni(dni);
@@ -28,12 +30,13 @@ export const checkProfessorDni = async (req: Request, res: Response): Promise<vo
 
     res.status(200).json({ status: 'not_found', data: null });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     console.error('Error checking professor DNI:', error?.message || error);
     res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
   }
 };
 
-export const createProfessor = async (req: Request, res: Response): Promise<void> => {
+export const createProfessor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { dni, first_name, last_name, phone, email, birth_date } = req.body;
 
@@ -63,6 +66,7 @@ export const createProfessor = async (req: Request, res: Response): Promise<void
 
     res.status(201).json({ status: 'ok', message: 'Profesor registrado exitosamente', data: result.data });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     if (error instanceof UserError) {
       res.status(error.statusCode).json({ status: 'error', message: error.message, data: null });
       return;
@@ -72,7 +76,7 @@ export const createProfessor = async (req: Request, res: Response): Promise<void
   }
 };
 
-export const updateProfessor = async (req: Request, res: Response): Promise<void> => {
+export const updateProfessor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { dni, first_name, last_name, phone, email, birth_date, active } = req.body;
@@ -94,6 +98,7 @@ export const updateProfessor = async (req: Request, res: Response): Promise<void
 
     res.status(200).json({ status: 'ok', message: 'Profesor actualizado exitosamente', data: updatedData });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     if (error instanceof UserError) {
       res.status(error.statusCode).json({ status: 'error', message: error.message, data: null });
       return;
@@ -103,7 +108,7 @@ export const updateProfessor = async (req: Request, res: Response): Promise<void
   }
 };
 
-export const deleteProfessor = async (req: Request, res: Response): Promise<void> => {
+export const deleteProfessor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -116,6 +121,7 @@ export const deleteProfessor = async (req: Request, res: Response): Promise<void
 
     res.status(200).json({ status: 'ok', message: 'Profesor desactivado exitosamente', data: null });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     console.error('Error deactivating professor:', error?.message || error);
     res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
   }

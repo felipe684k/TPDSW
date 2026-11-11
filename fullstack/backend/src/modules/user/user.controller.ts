@@ -1,20 +1,22 @@
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import { isDatabaseConnectionError } from '../../middlewares/errorHandler.js';
 import { UserService, UserError } from './user.service.js';
 
 const userService = new UserService();
 
-export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
+export const getAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { search, level } = req.query;
     const cleanUsers = await userService.findAll({ search, level });
     res.status(200).json({ status: 'ok', message: 'Lista obtenida exitosamente', data: cleanUsers });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     console.error('Error querying users:', error?.message || error);
     res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: [] });
   }
 };
 
-export const checkStudentDni = async (req: Request, res: Response): Promise<void> => {
+export const checkStudentDni = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { dni } = req.params;
     if (!dni) {
@@ -30,12 +32,13 @@ export const checkStudentDni = async (req: Request, res: Response): Promise<void
 
     res.status(200).json({ status: 'not_found', data: null });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     console.error('Error checking student DNI:', error?.message || error);
     res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
   }
 };
 
-export const login = async (req: Request, res: Response): Promise<void> => {
+export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { username, password } = req.body;
     const userData = await userService.login(username, password);
@@ -46,6 +49,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       data: userData
     });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     if (error instanceof UserError || error?.statusCode) {
       res.status(error.statusCode || 400).json({
         status: 'error',
@@ -63,12 +67,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const getUserById = async (req: Request, res: Response): Promise<void> => {
+export const getUserById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const foundUser = await userService.findById(id as string);
     res.status(200).json({ status: 'ok', message: 'Alumno encontrado exitosamente', data: foundUser });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     if (error instanceof UserError || error?.statusCode) {
       res.status(error.statusCode || 404).json({ status: 'error', message: error.message, data: null });
       return;
@@ -78,7 +83,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const createUser = async (req: Request, res: Response): Promise<void> => {
+export const createUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { dni, first_name, last_name, phone, birth_date, email, level_code } = req.body;
     const result = await userService.create({
@@ -98,6 +103,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 
     res.status(201).json({ status: 'ok', message: 'Alumno registrado exitosamente', data: result.user });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     if (error instanceof UserError || error?.statusCode) {
       res.status(error.statusCode || 400).json({ status: 'error', message: error.message, data: null });
       return;
@@ -107,7 +113,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-export const updateUser = async (req: Request, res: Response): Promise<void> => {
+export const updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { dni, first_name, last_name, phone, birth_date, email, username, password, level_code } = req.body;
@@ -130,6 +136,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
       data: updatedData
     });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     if (error instanceof UserError || error?.statusCode) {
       res.status(error.statusCode || 400).json({ status: 'error', message: error.message, data: null });
       return;
@@ -139,12 +146,13 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+export const deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     await userService.delete(id as string);
     res.status(200).json({ status: 'ok', message: 'Alumno desactivado exitosamente', data: null });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     if (error instanceof UserError || error?.statusCode) {
       res.status(error.statusCode || 400).json({ status: 'error', message: error.message, data: null });
       return;

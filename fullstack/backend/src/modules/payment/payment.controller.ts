@@ -1,4 +1,5 @@
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import { isDatabaseConnectionError } from '../../middlewares/errorHandler.js';
 import { PaymentService, PaymentError } from './payment.service.js';
 
 const paymentService = new PaymentService();
@@ -6,11 +7,12 @@ const paymentService = new PaymentService();
 /**
  * Obtener todos los pagos registrados
  */
-export const getAllPayments = async (req: Request, res: Response): Promise<void> => {
+export const getAllPayments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const payments = await paymentService.findAll();
     res.status(200).json({ status: 'ok', data: payments });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     console.error('Error fetching payments:', error?.message || error);
     res.status(500).json({ status: 'db_error', message: 'Error al consultar los pagos', data: [] });
   }
@@ -19,7 +21,7 @@ export const getAllPayments = async (req: Request, res: Response): Promise<void>
 /**
  * Obtener el estado de cuenta de un alumno por ID de usuario
  */
-export const getStudentAccountStatus = async (req: Request, res: Response): Promise<void> => {
+export const getStudentAccountStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id_user } = req.params;
     if (!id_user) {
@@ -51,6 +53,7 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
       }
     });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     if (error instanceof PaymentError || error?.statusCode) {
       res.status(error.statusCode || 400).json({ status: 'error', message: error.message, data: null });
       return;
@@ -63,7 +66,7 @@ export const getStudentAccountStatus = async (req: Request, res: Response): Prom
 /**
  * Registrar un nuevo pago de cuota
  */
-export const registerPayment = async (req: Request, res: Response): Promise<void> => {
+export const registerPayment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id_enrollment, installment_month, amount, payment_method, payment_date } = req.body;
 
@@ -81,6 +84,7 @@ export const registerPayment = async (req: Request, res: Response): Promise<void
       data: result.payment
     });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     if (error instanceof PaymentError || error?.statusCode) {
       res.status(error.statusCode || 400).json({ status: 'error', message: error.message, data: null });
       return;
@@ -93,7 +97,7 @@ export const registerPayment = async (req: Request, res: Response): Promise<void
 /**
  * Obtener listado de deudores
  */
-export const getDebtors = async (req: Request, res: Response): Promise<void> => {
+export const getDebtors = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id_academic_year } = req.query;
     const debtors = await paymentService.getDebtors(
@@ -101,6 +105,7 @@ export const getDebtors = async (req: Request, res: Response): Promise<void> => 
     );
     res.status(200).json({ status: 'ok', data: debtors });
   } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
     console.error('Error fetching debtors:', error?.message || error);
     res.status(500).json({ status: 'db_error', message: 'Error al consultar los deudores', data: [] });
   }

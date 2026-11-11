@@ -2,6 +2,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'   /*createRoot is a function responsible for creating the mount point for the application in the DOM*/
 import './index.css'    /*Imports the main CSS file*/
 import App from './App.tsx'    /*Imports the main component*/
+import { installConnectionInterceptor } from './biz/connectionStatus'
+
+// Cada respuesta de la API actualiza el estado de conexión (backend / base de datos)
+installConnectionInterceptor()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>  {/*StrictMode duplica la ejecucion de ciertos componentes para detectar errores en el codigo*/}

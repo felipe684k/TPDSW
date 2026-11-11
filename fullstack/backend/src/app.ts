@@ -2,6 +2,7 @@ import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import { sequelize, User, Level } from './models/index.js';
+import { errorHandler, isDatabaseConnectionError, DB_UNAVAILABLE_MESSAGE } from './middlewares/errorHandler.js';
 
 async function seedDefaultUsers() {
   try {
@@ -71,14 +72,27 @@ async function seedDefaultLevels() {
   }
 }
 
-// Sync models with the database (creates missing tables automatically)
-sequelize.sync({ alter: true })
-  .then(async () => {
+// Sincroniza las tablas y carga los datos iniciales. Si MySQL todavía no está disponible
+// (por ejemplo, el backend arrancó antes que el gestor), reintenta cada 5 segundos.
+const DB_RETRY_MS = 5000;
+
+async function initDatabase(attempt = 1): Promise<void> {
+  try {
+    await sequelize.sync({ alter: true });
     console.log('✅ Database tables synchronized');
     await seedDefaultUsers();
     await seedDefaultLevels();
-  })
-  .catch((err) => console.error('❌ Error synchronizing tables:', err));
+  } catch (err: any) {
+    if (isDatabaseConnectionError(err)) {
+      console.error(`⏳ Base de datos no disponible (intento ${attempt}). Reintentando en ${DB_RETRY_MS / 1000} s...`);
+      setTimeout(() => initDatabase(attempt + 1), DB_RETRY_MS);
+      return;
+    }
+    console.error('❌ Error synchronizing tables:', err);
+  }
+}
+
+initDatabase();
 
 import userRouter from './modules/user/user.router.js';
 import professorRouter from './modules/professor/professor.router.js';
@@ -109,8 +123,14 @@ app.use('/api/academic-years', academicYearRoutes);
 app.use('/api/sections', sectionRoutes);
 app.use('/api/payments', paymentRouter);
 
-app.get('/api/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok', message: 'Backend connected successfully 🚀' });
+// Health check: además de responder, verifica que la base de datos esté disponible
+app.get('/api/health', async (req: Request, res: Response) => {
+  try {
+    await sequelize.authenticate();
+    res.json({ status: 'ok', database: 'up', message: 'Backend y base de datos funcionando 🚀' });
+  } catch {
+    res.status(503).json({ status: 'db_unavailable', database: 'down', message: DB_UNAVAILABLE_MESSAGE });
+  }
 });
 
 app.get('/', (req: Request, res: Response) => {
@@ -118,6 +138,9 @@ app.get('/', (req: Request, res: Response) => {
     message: 'The Backend now runs 100% with TypeScript! 🚀',
   });
 });
+
+// Middleware global de errores: siempre va después de todas las rutas
+app.use(errorHandler);
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Backend server running on: http://localhost:${PORT}`);

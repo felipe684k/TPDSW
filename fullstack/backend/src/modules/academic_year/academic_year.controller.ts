@@ -1,19 +1,21 @@
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import { isDatabaseConnectionError } from '../../middlewares/errorHandler.js';
 import { AcademicYearService, AcademicYearError } from './academic_year.service.js';
 
 const academicYearService = new AcademicYearService();
 
-export const getAcademicYears = async (req: Request, res: Response) => {
+export const getAcademicYears = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const academicYears = await academicYearService.findAll();
     res.json({ success: true, data: academicYears });
   } catch (error) {
+    if (isDatabaseConnectionError(error)) return next(error);
     console.error('Error fetching academic years:', error);
     res.status(500).json({ success: false, message: 'Error al obtener los ciclos lectivos' });
   }
 };
 
-export const getAcademicYearById = async (req: Request, res: Response): Promise<void> => {
+export const getAcademicYearById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const academicYear = await academicYearService.findById(Number(id));
@@ -23,17 +25,19 @@ export const getAcademicYearById = async (req: Request, res: Response): Promise<
     }
     res.json({ success: true, data: academicYear });
   } catch (error) {
+    if (isDatabaseConnectionError(error)) return next(error);
     console.error('Error fetching academic year:', error);
     res.status(500).json({ success: false, message: 'Error al obtener el ciclo lectivo' });
   }
 };
 
-export const createAcademicYear = async (req: Request, res: Response) => {
+export const createAcademicYear = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, start_date, end_date } = req.body;
     const newAcademicYear = await academicYearService.create({ name, start_date, end_date });
     res.status(201).json({ success: true, data: newAcademicYear });
   } catch (error) {
+    if (isDatabaseConnectionError(error)) return next(error);
     if (error instanceof AcademicYearError) {
       res.status(error.statusCode).json({ success: false, message: error.message });
       return;
@@ -43,7 +47,7 @@ export const createAcademicYear = async (req: Request, res: Response) => {
   }
 };
 
-export const updateAcademicYear = async (req: Request, res: Response): Promise<void> => {
+export const updateAcademicYear = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { name, start_date, end_date } = req.body;
@@ -56,6 +60,7 @@ export const updateAcademicYear = async (req: Request, res: Response): Promise<v
 
     res.json({ success: true, data: academicYear });
   } catch (error) {
+    if (isDatabaseConnectionError(error)) return next(error);
     if (error instanceof AcademicYearError) {
       res.status(error.statusCode).json({ success: false, message: error.message });
       return;
@@ -65,7 +70,7 @@ export const updateAcademicYear = async (req: Request, res: Response): Promise<v
   }
 };
 
-export const deleteAcademicYear = async (req: Request, res: Response): Promise<void> => {
+export const deleteAcademicYear = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const deleted = await academicYearService.delete(Number(id));
@@ -75,6 +80,7 @@ export const deleteAcademicYear = async (req: Request, res: Response): Promise<v
     }
     res.json({ success: true, message: 'Ciclo lectivo eliminado exitosamente' });
   } catch (error) {
+    if (isDatabaseConnectionError(error)) return next(error);
     console.error('Error deleting academic year:', error);
     res.status(500).json({ success: false, message: 'Error al eliminar el ciclo lectivo' });
   }
