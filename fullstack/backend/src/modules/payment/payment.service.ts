@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { ENROLLMENT_STATUS } from '../../constants.js';
+import { ENROLLMENT_STATUS, INSTALLMENT_STATUS } from '../../constants.js';
 import { Payment, Enrollment, User, Section, Course, TuitionFee, AcademicYear, Classroom, Schedule } from '../../models/index.js';
 
 export const ACADEMIC_MONTHS = [
@@ -189,12 +189,9 @@ export class PaymentService {
       const hasPayments = (m: typeof ACADEMIC_MONTHS[number]) =>
         registeredPayments.some(p => matchesMonth(p.installment_month, m));
 
-      // Una inscripción dada de baja ya no genera cuotas a cobrar: solo se muestran los meses que se pagaron
-      const monthsToShow = isDropped || isFutureYear
-        ? ACADEMIC_MONTHS.filter(hasPayments)
-        : isPastYear
-        ? ACADEMIC_MONTHS
-        : ACADEMIC_MONTHS.filter(m => m.monthNum <= currentMonthNum || hasPayments(m));
+      // Se muestran todas las cuotas del ciclo (también las que todavía no vencieron, para poder adelantarlas).
+      // Una inscripción dada de baja ya no genera cuotas a cobrar: solo se muestran los meses que se pagaron.
+      const monthsToShow = isDropped ? ACADEMIC_MONTHS.filter(hasPayments) : ACADEMIC_MONTHS;
 
       monthsToShow.forEach((m) => {
         const baseAmount = getMonthlyFee(course, ayYear, m.monthNum);
@@ -202,12 +199,14 @@ export class PaymentService {
         const totalPaid = monthPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
         const remainingAmount = Math.max(0, baseAmount - totalPaid);
         const dueDate = `10/${m.monthNum.toString().padStart(2, '0')}/${ayYear}`;
+        // Vencida: ciclo pasado, o mes actual / anterior del ciclo en curso (mismo criterio que deudores)
+        const isDue = isPastYear || (!isFutureYear && m.monthNum <= currentMonthNum);
 
-        let status = 'Pendiente';
+        let status: string = isDue ? INSTALLMENT_STATUS.PENDING : INSTALLMENT_STATUS.UPCOMING;
         if (totalPaid >= baseAmount) {
-          status = 'Pagado';
+          status = INSTALLMENT_STATUS.PAID;
         } else if (totalPaid > 0) {
-          status = 'Parcial';
+          status = INSTALLMENT_STATUS.PARTIAL;
         }
 
         const lastPayment = monthPayments.length > 0 ? monthPayments[monthPayments.length - 1] : null;
@@ -226,6 +225,7 @@ export class PaymentService {
           total_paid: totalPaid,
           remaining_amount: remainingAmount,
           due_date: dueDate,
+          is_due: isDue,
           status: status,
           payment_date: lastPayment ? lastPayment.payment_date : null,
           payment_method: lastPayment ? lastPayment.payment_method : null,
@@ -292,18 +292,24 @@ export class PaymentService {
       throw new PaymentError('No se pueden registrar pagos de una inscripción dada de baja.', 400);
     }
 
-    const course = existingEnrollment.section?.course;
-    const month = ACADEMIC_MONTHS.find(m => matchesMonth(installment_month, m));
-    const baseAmount = getMonthlyFee(course, getAcademicYearNumber(existingEnrollment.section?.academic_year), month?.monthNum);
+    // Solo se cobran los meses del ciclo lectivo (Marzo a Diciembre). Se aceptan cuotas adelantadas.
+    const month = ACADEMIC_MONTHS.find(m => matchesMonth(String(installment_month).trim(), m));
+    if (!month) {
+      throw new PaymentError(`"${installment_month}" no es un mes de cuota válido. Las cuotas van de Marzo a Diciembre.`, 400);
+    }
 
+    const course = existingEnrollment.section?.course;
+    const baseAmount = getMonthlyFee(course, getAcademicYearNumber(existingEnrollment.section?.academic_year), month.monthNum);
+
+    // Pagos previos de ese mes, sin importar cómo se haya escrito el nombre (ej. "March" = "Marzo")
     const previousPayments: any[] = existingEnrollment.payments?.filter(
-      (p: any) => p.installment_month?.toLowerCase() === installment_month.toLowerCase()
+      (p: any) => matchesMonth(p.installment_month, month)
     ) || [];
     const alreadyPaid = previousPayments.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
     const remainingBefore = Math.max(0, baseAmount - alreadyPaid);
 
     if (remainingBefore <= 0) {
-      throw new PaymentError(`La cuota de ${installment_month} ya se encuentra totalmente saldada.`, 400);
+      throw new PaymentError(`La cuota de ${month.name} ya se encuentra totalmente saldada.`, 400);
     }
 
     if (payAmount > remainingBefore) {
@@ -321,7 +327,7 @@ export class PaymentService {
       surcharge: 0,
       discount: 0,
       status: newStatus,
-      installment_month,
+      installment_month: month.name, // siempre se guarda en español
       payment_method: payment_method || 'Efectivo'
     });
 

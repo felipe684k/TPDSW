@@ -11,6 +11,7 @@ export const INSTALLMENT_STATUS = {
   PAID: 'Pagado',
   PARTIAL: 'Parcial',
   PENDING: 'Pendiente',
+  UPCOMING: 'A vencer', // todavía no venció: se puede pagar por adelantado y no cuenta como deuda
 } as const;
 
 export const PAYMENT_METHOD = {

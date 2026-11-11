@@ -304,6 +304,11 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
                               <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                               Parcial
                             </span>
+                          ) : inst.status === 'A vencer' ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-[11px] font-bold bg-slate-50 text-slate-600 border-slate-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                              A vencer
+                            </span>
                           ) : (
                             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-[11px] font-bold bg-amber-50 text-amber-700 border-amber-200">
                               <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>

@@ -21,6 +21,7 @@ interface PaymentModalProps {
 
 const isPaidStatus = (s?: string) => s === 'Pagado' || s === 'Paid';
 const isPartialStatus = (s?: string) => s === 'Parcial' || s === 'Partial';
+const isUpcomingStatus = (s?: string) => s === 'A vencer';
 
 const formatPaymentMethod = (m?: string) => {
   if (!m || m === 'Cash' || m === 'Efectivo') return 'Efectivo';
@@ -274,7 +275,9 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
     ? installments.filter(inst => inst.id_enrollment === selectedEnrollmentId)
     : installments
 
+  // La deuda solo cuenta cuotas vencidas: las "A vencer" se pueden adelantar pero no se deben todavía
   const visibleDebt = visibleInstallments
+    .filter(c => c.is_due !== false)
     .reduce((acc, c) => acc + (c.remaining_amount !== undefined ? c.remaining_amount : (isPaidStatus(c.status) ? 0 : c.amount)), 0)
 
   if (!isOpen) return null;
@@ -417,6 +420,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                 {visibleInstallments.map((installment) => {
                   const isPaid = isPaidStatus(installment.status);
                   const isPartial = isPartialStatus(installment.status);
+                  const isUpcoming = isUpcomingStatus(installment.status);
                   const remAmount = installment.remaining_amount !== undefined 
                     ? installment.remaining_amount 
                     : (isPaid ? 0 : installment.amount);
@@ -447,11 +451,13 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                           isPaid 
                             ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' 
-                            : isPartial 
-                            ? 'bg-blue-100 text-blue-700 border border-blue-300' 
+                            : isPartial
+                            ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                            : isUpcoming
+                            ? 'bg-slate-100 text-slate-600 border border-slate-300'
                             : 'bg-amber-100 text-amber-700 border border-amber-300'
                         }`}>
-                          {isPaid ? 'Saldado' : isPartial ? 'Pago Parcial' : 'Pendiente'}
+                          {isPaid ? 'Saldado' : isPartial ? 'Pago Parcial' : isUpcoming ? 'A vencer' : 'Pendiente'}
                         </span>
                       </div>
                       

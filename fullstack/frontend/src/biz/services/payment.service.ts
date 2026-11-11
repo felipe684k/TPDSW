@@ -24,7 +24,8 @@ export interface Installment {
   total_paid: number;
   remaining_amount: number;
   due_date: string;
-  status: 'Pagado' | 'Parcial' | 'Pendiente' | 'Paid' | 'Partial' | 'Pending' | string;
+  is_due?: boolean; // false = todavía no venció (se puede pagar por adelantado y no es deuda)
+  status: 'Pagado' | 'Parcial' | 'Pendiente' | 'A vencer' | 'Paid' | 'Partial' | 'Pending' | string;
   payment_date: string | null;
   payment_method?: string;
   payments?: SubPayment[];
