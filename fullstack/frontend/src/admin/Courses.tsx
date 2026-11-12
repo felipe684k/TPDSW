@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { courseService, type Course } from '../biz/services/course.service'
-import { levelService, type Level } from '../biz/services/level.service'
+import { levelService, sortLevelsByProgression, type Level } from '../biz/services/level.service'
 import { tuitionFeeService } from '../biz/services/tuitionFee.service'
 import Modal from '../shared/components/Modal'
 import FormInput from '../shared/components/FormInput'
@@ -186,25 +186,7 @@ export default function Courses() {
           <div className="text-slate-500 text-sm">No hay cursos registrados.</div>
         ) : (
           (() => {
-            // Sort levels by next_level_code
-            const isNext = new Set(levels.map(l => l.next_level_code).filter(Boolean));
-            let current = levels.find(l => !isNext.has(l?.level_code));
-            if (!current) current = levels[0]; 
-            
-            const sortedLevels = [];
-            while (current) {
-              sortedLevels.push(current);
-              const nextId: number | undefined | null = current.next_level_code;
-              const nextCurrent: Level | undefined = levels.find(l => l?.level_code === nextId);
-              if (!nextCurrent || sortedLevels.some(l => l?.level_code === nextCurrent.level_code)) break;
-              current = nextCurrent;
-            }
-            
-            const sortedIds = new Set(sortedLevels.map(l => l?.level_code));
-            const disconnected = levels.filter(l => !sortedIds.has(l?.level_code));
-            const allSortedLevels = [...sortedLevels, ...disconnected];
-
-            return allSortedLevels.map(level => {
+            return sortLevelsByProgression(levels).map(level => {
               const levelCourses = courses.filter(c => c.level_code === level?.level_code);
               if (levelCourses.length === 0) return null;
 

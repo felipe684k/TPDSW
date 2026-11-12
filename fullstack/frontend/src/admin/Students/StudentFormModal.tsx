@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from '../../shared/components/Modal';
 import FormInput from '../../shared/components/FormInput';
 import FormSelect from '../../shared/components/FormSelect';
 import { todayISO } from '../../biz/date';
+import { levelService, sortLevelsByProgression, type Level } from '../../biz/services/level.service';
 
 interface Props {
   isOpen: boolean;
@@ -16,6 +17,32 @@ interface Props {
 
 export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, onChange, errorMessage, editingId }: Props) {
   const today = todayISO();
+
+  // Los niveles se leen de la base (no se escriben a mano), así el código guardado siempre es el real
+  const [levels, setLevels] = useState<Level[]>([]);
+  const [levelsStatus, setLevelsStatus] = useState<'loading' | 'ok' | 'error'>('loading');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    levelService.getLevels()
+      .then(data => {
+        if (cancelled) return;
+        setLevels(sortLevelsByProgression(data));
+        setLevelsStatus('ok');
+      })
+      .catch(() => {
+        if (!cancelled) setLevelsStatus('error');
+      });
+    return () => { cancelled = true; };
+  }, [isOpen]);
+
+  const levelOptions = levelsStatus === 'loading'
+    ? [{ value: formData.level_code ?? '', label: 'Cargando niveles...' }]
+    : [
+        { value: '', label: 'Sin nivel asignado' },
+        ...levels.map(l => ({ value: String(l.level_code), label: l.name }))
+      ];
 
   return (
     <Modal
@@ -96,16 +123,14 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
           <FormSelect
             label={editingId ? "Nivel Actual" : "Nivel de Ingreso"}
             name="level_code" value={formData.level_code} onChange={onChange}
-            options={[
-              { value: "", label: "Sin nivel asignado" },
-              { value: "1", label: "A1 - Principiante" },
-              { value: "2", label: "A2 - Elemental" },
-              { value: "3", label: "B1 - Intermedio" },
-              { value: "4", label: "B2 - Intermedio Alto" },
-              { value: "5", label: "C1 - Avanzado" },
-              { value: "6", label: "C2 - Maestría" }
-            ]}
+            disabled={levelsStatus === 'loading'}
+            options={levelOptions}
           />
+          {levelsStatus === 'error' && (
+            <p role="alert" className="text-[11px] text-rose-600">
+              No se pudieron cargar los niveles. Cerrá y volvé a abrir el formulario para reintentar.
+            </p>
+          )}
         </div>
       </form>
     </Modal>
