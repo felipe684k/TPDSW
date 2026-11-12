@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { Section, Schedule, SectionSchedule, UserSection, Course, Classroom, AcademicYear, User, Level } from '../../models/index.js';
+import { Section, Schedule, SectionSchedule, UserSection, Course, Classroom, AcademicYear, User, Level, Enrollment } from '../../models/index.js';
 import { sequelize } from '../../config/database.js';
 import { DAY_LABELS } from '../../constants.js';
 
@@ -10,6 +10,7 @@ export interface ScheduleItemDto {
 }
 
 export interface CreateSectionDto {
+  name: string;
   id_course: number;
   id_classroom: number;
   id_academic_year: number;
@@ -28,6 +29,22 @@ export class SectionError extends Error {
 }
 
 export class SectionService {
+  // Prevent duplicate section names within the same course and academic year
+  private async assertNameAvailable(name: any, id_course: number, id_academic_year: number) {
+    const cleanName = String(name ?? '').trim();
+    if (!cleanName) {
+      throw new SectionError('El nombre de la comisión es obligatorio', 400);
+    }
+
+    const duplicate = await Section.findOne({
+      where: { name: cleanName, id_course, id_academic_year }
+    });
+    if (duplicate) {
+      throw new SectionError(`Ya existe una comisión con el nombre "${cleanName}"`, 409);
+    }
+    return cleanName;
+  }
+
   async findAll(filters: { id_academic_year?: any } = {}) {
     const where: any = {};
     if (filters.id_academic_year) {
@@ -59,9 +76,10 @@ export class SectionService {
   }
 
   async create(data: CreateSectionDto) {
-    const { id_course, id_classroom, id_academic_year, schedules, id_professor } = data;
+    const { name, id_course, id_classroom, id_academic_year, schedules, id_professor } = data;
+    const sectionName = await this.assertNameAvailable(name, id_course, id_academic_year);
 
-    // Validar horarios (inicio anterior a fin)
+    // Validate schedules (start time before end time)
     if (schedules && schedules.length > 0) {
       for (const reqSchedule of schedules) {
         if (reqSchedule.start_time >= reqSchedule.end_time) {
@@ -116,14 +134,56 @@ export class SectionService {
         }
       }
 
-      // Generar nombre automático
-      const previousSections = await Section.count({ where: { id_course, id_academic_year }, transaction: t });
-      const courseData: any = await Course.findByPk(id_course, { transaction: t });
-      const generatedName = `Comisión ${previousSections + 1} - ${courseData?.course_name || ''}`;
+      // Check professor schedule overlap in the same academic year
+      if (id_professor && schedules && schedules.length > 0) {
+        const profOverlaps: string[] = [];
 
-      // Crear la comisión
+        for (const reqSchedule of schedules) {
+          const overlappingProf = await Section.findAll({
+            where: { id_academic_year },
+            include: [
+              {
+                model: User,
+                as: 'professors',
+                where: { id: id_professor }
+              },
+              {
+                model: Schedule,
+                as: 'schedules',
+                where: {
+                  day: reqSchedule.day,
+                  [Op.or]: [
+                    {
+                      start_time: { [Op.lt]: reqSchedule.end_time },
+                      end_time: { [Op.gt]: reqSchedule.start_time }
+                    }
+                  ]
+                }
+              }
+            ],
+            transaction: t
+          });
+
+          if (overlappingProf.length > 0) {
+            for (const overlapSection of overlappingProf) {
+              const block = (overlapSection as any).schedules[0];
+              const dayName = DAY_LABELS[reqSchedule.day] || reqSchedule.day;
+              profOverlaps.push(`El ${dayName} de ${block.start_time.slice(0, 5)} a ${block.end_time.slice(0, 5)} (en "${(overlapSection as any).name}")`);
+            }
+          }
+        }
+
+        if (profOverlaps.length > 0) {
+          throw new SectionError(
+            `El profesor ya dicta otra comisión en los siguientes horarios:\n- ${profOverlaps.join('\n- ')}`,
+            409
+          );
+        }
+      }
+
+      // Create section
       const newSection: any = await Section.create(
-        { name: generatedName, id_course, id_classroom, id_academic_year },
+        { name: sectionName, id_course, id_classroom, id_academic_year },
         { transaction: t }
       );
 
@@ -163,6 +223,12 @@ export class SectionService {
       const section = await Section.findByPk(id, { transaction: t });
       if (!section) {
         throw new SectionError('Comisión no encontrada', 404);
+      }
+
+      // Prevent deleting a section that has enrollments
+      const enrolledCount = await Enrollment.count({ where: { id_section: id }, transaction: t });
+      if (enrolledCount > 0) {
+        throw new SectionError('No se puede eliminar la comisión porque tiene alumnos inscriptos', 409);
       }
 
       await SectionSchedule.destroy({ where: { id_section: id }, transaction: t });

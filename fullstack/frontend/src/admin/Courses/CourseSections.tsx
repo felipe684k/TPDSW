@@ -31,11 +31,12 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
   const [toast, setToast] = useState<{text: string, type: 'success' | 'danger'} | null>(null)
   
   const [formData, setFormData] = useState<{
+    name: string,
     id_classroom: string,
     id_professor: string,
     schedules: {day: 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY', start_time: string, end_time: string}[]
   }>({
-    id_classroom: '', id_professor: '', schedules: [{day: 'MONDAY', start_time: '08:00', end_time: '10:00'}]
+    name: '', id_classroom: '', id_professor: '', schedules: [{day: 'MONDAY', start_time: '08:00', end_time: '10:00'}]
   })
 
   const fetchData = async () => {
@@ -113,6 +114,7 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
 
     try {
       await sectionService.createSection({
+        name: formData.name,
         id_course: courseId,
         id_academic_year: Number(selectedAcademicYearId),
         id_classroom: Number(formData.id_classroom),
@@ -125,7 +127,7 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
       setModalOpen(false)
       fetchSections(Number(selectedAcademicYearId))
       setFormData({
-        id_classroom: '', id_professor: '', schedules: [{day: 'MONDAY', start_time: '08:00', end_time: '10:00'}]
+        name: '', id_classroom: '', id_professor: '', schedules: [{day: 'MONDAY', start_time: '08:00', end_time: '10:00'}]
       })
     } catch (error) {
       console.error(error)
@@ -144,6 +146,9 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
       if (selectedAcademicYearId) fetchSections(selectedAcademicYearId as number)
     } catch (error) {
       console.error(error)
+      const msg = error instanceof Error ? error.message : "Error al eliminar la comisión"
+      setToast({ text: msg, type: 'danger' })
+      setTimeout(() => setToast(null), 4000)
     }
   }
 
@@ -254,6 +259,18 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
             </div>
             
             <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-5">
+              <div>
+                <label className="text-xs font-semibold text-slate-500 block mb-1">Nombre *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="ej. Comisión 1 - Kids 1"
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  className="w-full border border-slate-300 bg-slate-50 text-slate-700 rounded p-2.5 text-xs outline-none focus:border-indigo-500"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-slate-500 block mb-1">Aula *</label>

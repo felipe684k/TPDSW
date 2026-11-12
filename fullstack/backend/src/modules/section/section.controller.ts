@@ -34,8 +34,9 @@ export const getSectionById = async (req: Request, res: Response, next: NextFunc
 
 export const createSection = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id_course, id_classroom, id_academic_year, schedules, id_professor } = req.body;
+    const { name, id_course, id_classroom, id_academic_year, schedules, id_professor } = req.body;
     const newSection = await sectionService.create({
+      name,
       id_course,
       id_classroom,
       id_academic_year,

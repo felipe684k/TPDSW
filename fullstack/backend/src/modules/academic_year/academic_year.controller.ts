@@ -81,6 +81,10 @@ export const deleteAcademicYear = async (req: Request, res: Response, next: Next
     res.json({ success: true, message: 'Ciclo lectivo eliminado exitosamente' });
   } catch (error) {
     if (isDatabaseConnectionError(error)) return next(error);
+    if (error instanceof AcademicYearError) {
+      res.status(error.statusCode).json({ success: false, message: error.message });
+      return;
+    }
     console.error('Error deleting academic year:', error);
     res.status(500).json({ success: false, message: 'Error al eliminar el ciclo lectivo' });
   }
