@@ -9,8 +9,7 @@ export const User = sequelize.define('User', {
   },
   dni: {
     type: DataTypes.STRING(50),
-    allowNull: false,
-    unique: true
+    allowNull: false
   },
   first_name: {
     type: DataTypes.STRING(75),
@@ -30,13 +29,11 @@ export const User = sequelize.define('User', {
   },
   email: {
     type: DataTypes.STRING(150),
-    allowNull: true,
-    unique: true
+    allowNull: true
   },
   username: {
     type: DataTypes.STRING(150),
-    allowNull: false,
-    unique: true
+    allowNull: false
   },
   password: {
     type: DataTypes.STRING(255),
@@ -54,6 +51,15 @@ export const User = sequelize.define('User', {
 }, {
   tableName: 'user',
   timestamps: false,
+  // DNI, email y username no se pueden repetir. Los índices únicos se declaran acá con un nombre fijo
+  // (y no con "unique: true" en cada columna) porque sequelize.sync({ alter: true }) no reconoce los
+  // índices sin nombre y crea una copia nueva en cada arranque (dni_2, dni_3...) hasta llegar al límite
+  // de 64 índices de MySQL. Con nombre fijo, ve que ya existen y no los duplica.
+  indexes: [
+    { name: 'user_dni_unique', unique: true, fields: ['dni'] },
+    { name: 'user_email_unique', unique: true, fields: ['email'] },
+    { name: 'user_username_unique', unique: true, fields: ['username'] }
+  ],
   // Por defecto nunca se lee el password (tampoco en los include de otras consultas)
   defaultScope: {
     attributes: { exclude: ['password'] }
