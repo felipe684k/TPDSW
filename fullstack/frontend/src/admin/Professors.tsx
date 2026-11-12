@@ -63,7 +63,7 @@ export default function Professors() {
             last_name: data.last_name || '',
             phone: data.phone || '',
             birth_date: data.birth_date ? data.birth_date.split('T')[0] : '',
-            email: data.email ? data.email.split('_deleted_')[0] : ''
+            email: data.email || ''
           }));
         }
       }).catch(console.error);

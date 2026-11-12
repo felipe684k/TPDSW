@@ -1,6 +1,16 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 
+/**
+ * Al dar de baja un usuario, a su DNI, email y username se les agrega "_deleted_<timestamp>" en la base
+ * para liberar los índices únicos (así se puede registrar otra persona con esos datos).
+ * Ese sufijo es solo interno: al leer el valor se devuelve limpio, para que en los listados históricos
+ * (inscripciones, pagos) se vea el DNI real. Las búsquedas en la base no se ven afectadas.
+ */
+export function stripDeletedSuffix(value: string | null | undefined): string | null | undefined {
+  return typeof value === 'string' ? value.replace(/_deleted_\d+$/, '') : value;
+}
+
 export const User = sequelize.define('User', {
   id: {
     type: DataTypes.INTEGER,
@@ -9,7 +19,8 @@ export const User = sequelize.define('User', {
   },
   dni: {
     type: DataTypes.STRING(50),
-    allowNull: false
+    allowNull: false,
+    get() { return stripDeletedSuffix(this.getDataValue('dni')); }
   },
   first_name: {
     type: DataTypes.STRING(75),
@@ -29,11 +40,13 @@ export const User = sequelize.define('User', {
   },
   email: {
     type: DataTypes.STRING(150),
-    allowNull: true
+    allowNull: true,
+    get() { return stripDeletedSuffix(this.getDataValue('email')); }
   },
   username: {
     type: DataTypes.STRING(150),
-    allowNull: false
+    allowNull: false,
+    get() { return stripDeletedSuffix(this.getDataValue('username')); }
   },
   password: {
     type: DataTypes.STRING(255),

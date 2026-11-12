@@ -66,7 +66,7 @@ export default function Students() {
             first_name: data.first_name || '',
             last_name: data.last_name || '',
             phone: data.phone || '',
-            email: data.email ? data.email.split('_deleted_')[0] : '',
+            email: data.email || '',
             birth_date: data.birth_date ? data.birth_date.split('T')[0] : '',
             level_code: data.level_code ? String(data.level_code) : prev.level_code
           }));
