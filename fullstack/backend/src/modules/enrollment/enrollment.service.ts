@@ -122,7 +122,16 @@ export class EnrollmentService {
     id_section: any;
     status: any;
   }) {
-    const existingEnrollment = await Enrollment.findOne({ where: { id_enrollment: id } });
+    const existingEnrollment: any = await Enrollment.findOne({
+      where: { id_enrollment: id },
+      include: [
+        {
+          model: Section,
+          as: 'section',
+          include: [{ model: Course, as: 'course' }]
+        }
+      ]
+    });
     if (!existingEnrollment) {
       return null;
     }
@@ -135,6 +144,22 @@ export class EnrollmentService {
       id_section: data.id_section,
       status: data.status,
     }, { where: { id_enrollment: id } });
+
+    // Update student level if final grade meets the passing threshold
+    const grade = data.final_grade !== undefined && data.final_grade !== null && data.final_grade !== ''
+      ? Number(data.final_grade)
+      : null;
+    const courseLevelCode = existingEnrollment.section?.course?.level_code;
+
+    if (grade !== null && !isNaN(grade) && grade >= 7 && courseLevelCode) {
+      const today = new Date().toISOString().split('T')[0];
+      await UserLevel.destroy({ where: { id_user: existingEnrollment.id_user } });
+      await UserLevel.create({
+        id_user: existingEnrollment.id_user,
+        level_code: Number(courseLevelCode),
+        start_date: today
+      });
+    }
 
     return existingEnrollment;
   }
