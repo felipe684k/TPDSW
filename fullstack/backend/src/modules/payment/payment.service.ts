@@ -538,19 +538,30 @@ export class PaymentService {
         }
       }
 
-      if (unpaidInstallments.length > 0) {
-        debtorsMap.set(userObj.id, {
-          id: userObj.id,
-          fullName: `${userObj.last_name}, ${userObj.first_name}`,
-          dni: userObj.dni,
-          course: enroll.section?.name || 'Curso General',
-          academic_year: ay?.name || 'General',
-          unpaidInstallments: unpaidInstallments.length,
-          totalDebt
-        });
-      }
+      if (unpaidInstallments.length === 0) continue;
+
+      // Un alumno puede deber en varias inscripciones (dos cursos, o un ciclo anterior y el actual):
+      // se acumula todo en una sola fila en lugar de quedarse con la última inscripción.
+      const debtor = debtorsMap.get(userObj.id) ?? {
+        id: userObj.id,
+        fullName: `${userObj.last_name}, ${userObj.first_name}`,
+        dni: userObj.dni,
+        courses: new Set<string>(),
+        academicYears: new Set<string>(),
+        unpaidInstallments: 0,
+        totalDebt: 0
+      };
+      debtor.courses.add(enroll.section?.name || 'Curso General');
+      debtor.academicYears.add(ay?.name || 'General');
+      debtor.unpaidInstallments += unpaidInstallments.length;
+      debtor.totalDebt += totalDebt;
+      debtorsMap.set(userObj.id, debtor);
     }
 
-    return Array.from(debtorsMap.values());
+    return Array.from(debtorsMap.values()).map(({ courses, academicYears, ...debtor }) => ({
+      ...debtor,
+      course: [...courses].join(', '),
+      academic_year: [...academicYears].join(', ')
+    }));
   }
 }
