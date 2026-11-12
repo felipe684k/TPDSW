@@ -60,7 +60,16 @@ Section.hasMany(Enrollment, { foreignKey: 'id_section', as: 'enrollments' });
 Payment.belongsTo(Enrollment, { foreignKey: 'id_enrollment', as: 'enrollment' });
 Enrollment.hasMany(Payment, { foreignKey: 'id_enrollment', as: 'payments' });
 
+// Orden para obtener el nivel actual de un alumno: el primero de la lista 'levels'.
+// Se guarda el historial de niveles; el actual es el de fecha más reciente y, si hay dos
+// del mismo día, el más avanzado (los niveles se crean en orden, A1 < A2 < ... < C2).
+const CURRENT_LEVEL_ORDER: any[] = [
+  [{ model: Level, as: 'levels' }, UserLevel, 'start_date', 'DESC'],
+  [{ model: Level, as: 'levels' }, 'level_code', 'DESC']
+];
+
 export {
+  CURRENT_LEVEL_ORDER,
   sequelize,
   User,
   Level,

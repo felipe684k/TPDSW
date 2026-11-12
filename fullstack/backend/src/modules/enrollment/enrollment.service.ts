@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
-import { Enrollment, User, Section, Course, Level, UserLevel, Classroom } from '../../models/index.js';
+import { Enrollment, User, Section, Course, Level, UserLevel, Classroom, CURRENT_LEVEL_ORDER } from '../../models/index.js';
+import { todayLocalDate } from '../../utils/date.js';
 
 export class EnrollmentService {
   async findAll() {
@@ -25,7 +26,7 @@ export class EnrollmentService {
 
     const userWithLevels: any = await User.findByPk(id_user, {
       include: [{ model: Level, as: 'levels' }],
-      order: [[{ model: Level, as: 'levels' }, UserLevel, 'start_date', 'DESC']]
+      order: CURRENT_LEVEL_ORDER
     });
 
     const currentLevel = userWithLevels?.levels?.length > 0 ? userWithLevels.levels[0] : null;
@@ -151,13 +152,12 @@ export class EnrollmentService {
       : null;
     const courseLevelCode = existingEnrollment.section?.course?.level_code;
 
+    // Se agrega el nivel aprobado al historial del alumno sin borrar los anteriores.
+    // Si ya lo tenía (por ejemplo, se volvió a cargar la nota), se deja la fecha original.
     if (grade !== null && !isNaN(grade) && grade >= 7 && courseLevelCode) {
-      const today = new Date().toISOString().split('T')[0];
-      await UserLevel.destroy({ where: { id_user: existingEnrollment.id_user } });
-      await UserLevel.create({
-        id_user: existingEnrollment.id_user,
-        level_code: Number(courseLevelCode),
-        start_date: today
+      await UserLevel.findOrCreate({
+        where: { id_user: existingEnrollment.id_user, level_code: Number(courseLevelCode) },
+        defaults: { start_date: todayLocalDate() }
       });
     }
 

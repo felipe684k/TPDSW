@@ -1,8 +1,9 @@
 import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import { User } from '../../models/user.js';
-import { sequelize, Level, UserLevel, Enrollment } from '../../models/index.js';
+import { sequelize, Level, UserLevel, Enrollment, CURRENT_LEVEL_ORDER } from '../../models/index.js';
 import { ENROLLMENT_STATUS } from '../../constants.js';
+import { todayLocalDate } from '../../utils/date.js';
 
 export class UserError extends Error {
   statusCode: number;
@@ -109,7 +110,7 @@ export class UserService {
             SELECT level_code 
             FROM user_level 
             WHERE user_level.id_user = User.id 
-            ORDER BY start_date DESC 
+            ORDER BY start_date DESC, level_code DESC
             LIMIT 1
           ) = ${sequelize.escape(level as string)}`)
         ]
@@ -122,9 +123,7 @@ export class UserService {
         model: Level,
         as: 'levels',
       }],
-      order: [
-        [{ model: Level, as: 'levels' }, UserLevel, 'start_date', 'DESC']
-      ]
+      order: CURRENT_LEVEL_ORDER
     });
 
     return users.map(u => {
@@ -144,7 +143,8 @@ export class UserService {
     // 1. Search active student
     let student: any = await User.findOne({
       where: { dni, role: 'STUDENT', active: true },
-      include: [{ model: Level, as: 'levels' }]
+      include: [{ model: Level, as: 'levels' }],
+      order: CURRENT_LEVEL_ORDER
     });
 
     if (student) {
@@ -164,7 +164,8 @@ export class UserService {
         role: 'STUDENT',
         active: false
       },
-      include: [{ model: Level, as: 'levels' }]
+      include: [{ model: Level, as: 'levels' }],
+      order: CURRENT_LEVEL_ORDER
     });
 
     if (student) {
@@ -272,7 +273,7 @@ export class UserService {
       if (level_code !== undefined) {
         await UserLevel.destroy({ where: { id_user: inactiveUser.id } });
         if (level_code !== '' && level_code !== null) {
-          const actualDate = new Date().toISOString().split('T')[0];
+          const actualDate = todayLocalDate();
           await UserLevel.create({ id_user: inactiveUser.id, level_code: Number(level_code), start_date: actualDate });
         }
       }
@@ -294,7 +295,7 @@ export class UserService {
     });
 
     if (level_code) {
-      const actualDate = new Date().toISOString().split('T')[0];
+      const actualDate = todayLocalDate();
       await UserLevel.create({ id_user: newUser.dataValues.id, level_code: Number(level_code), start_date: actualDate });
     }
 
@@ -331,7 +332,7 @@ export class UserService {
     if (level_code !== undefined) {
       await UserLevel.destroy({ where: { id_user: id } });
       if (level_code !== '' && level_code !== null) {
-        const actualDate = new Date().toISOString().split('T')[0];
+        const actualDate = todayLocalDate();
         await UserLevel.create({ id_user: Number(id), level_code: Number(level_code), start_date: actualDate });
       }
     }
