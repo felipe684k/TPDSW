@@ -1,6 +1,8 @@
 import { Op } from 'sequelize';
 import { ENROLLMENT_STATUS, INSTALLMENT_STATUS } from '../../constants.js';
 import { Payment, Enrollment, User, Section, Course, TuitionFee, AcademicYear, Classroom, Schedule } from '../../models/index.js';
+import { todayLocalDate, toArgentinaDateString, currentArgentinaYearMonth } from '../../utils/date.js';
+import { formatMoney } from '../../utils/money.js';
 
 export const ACADEMIC_MONTHS = [
   { name: 'Marzo', enName: 'March', monthNum: 3 },
@@ -23,23 +25,38 @@ export const matchesMonth = (value: string | undefined, m: { name: string; enNam
 
 const DEFAULT_MONTHLY_FEE = 12000;
 
-// Fecha local en formato AAAA-MM-DD (sin pasar por UTC)
+// Las cuotas vencen el día 10 de cada mes
+export const INSTALLMENT_DUE_DAY = 10;
+
+// Fecha de vencimiento de la cuota de un mes, en formato AAAA-MM-DD
+export const getInstallmentDueDate = (year: number, monthNum: number): string =>
+  `${year}-${String(monthNum).padStart(2, '0')}-${String(INSTALLMENT_DUE_DAY).padStart(2, '0')}`;
+
+/**
+ * Una cuota está vencida (es deuda) recién al día siguiente de su vencimiento.
+ * Hasta el día 10 inclusive figura "A vencer": se puede pagar, pero todavía no se debe.
+ */
+export const isInstallmentDue = (year: number, monthNum: number, today: string = todayLocalDate()): boolean =>
+  today > getInstallmentDueDate(year, monthNum);
+
+// Fecha en formato AAAA-MM-DD según la hora argentina (sin pasar por UTC)
 const toLocalDateString = (value: any): string => {
   if (!value) return '';
-  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+  // Una fecha sin hora (DATEONLY) ya está en el formato correcto
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   const d = new Date(value);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return isNaN(d.getTime()) ? '' : toArgentinaDateString(d);
 };
 
 // Año calendario del ciclo lectivo (por su fecha de inicio, o por el número en el nombre)
 export const getAcademicYearNumber = (ay: any): number => {
   if (ay?.start_date) return parseInt(toLocalDateString(ay.start_date).slice(0, 4), 10);
   const fromName = ay?.name?.match(/\d{4}/);
-  return fromName ? parseInt(fromName[0], 10) : new Date().getFullYear();
+  return fromName ? parseInt(fromName[0], 10) : currentArgentinaYearMonth().year;
 };
 
 /**
- * Valor de la cuota de un mes: la tarifa vigente al vencimiento (día 10 de ese mes).
+ * Valor de la cuota de un mes: la tarifa vigente al vencimiento (día INSTALLMENT_DUE_DAY de ese mes).
  * Si la tarifa del curso se cargó después de ese vencimiento, se usa la primera tarifa.
  * Sin mes (por ejemplo, un mes desconocido) se usa la tarifa más reciente.
  */
@@ -55,7 +72,7 @@ export const getMonthlyFee = (course: any, year?: number, monthNum?: number): nu
 
   let chosen = fees[fees.length - 1];
   if (year && monthNum) {
-    const dueDate = `${year}-${String(monthNum).padStart(2, '0')}-10`;
+    const dueDate = getInstallmentDueDate(year, monthNum);
     chosen = fees[0];
     for (const fee of fees) {
       if (toLocalDateString(fee.start_date) <= dueDate) chosen = fee;
@@ -169,9 +186,7 @@ export class PaymentService {
       };
     }
 
-    const now = new Date();
-    const currentMonthNum = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
+    const today = todayLocalDate();
 
     const installmentResults: any[] = [];
 
@@ -181,8 +196,6 @@ export class PaymentService {
       const ayName = ay?.name || 'Ciclo Lectivo';
       const ayYear = getAcademicYearNumber(ay);
 
-      const isPastYear = ayYear < currentYear;
-      const isFutureYear = ayYear > currentYear;
       const isDropped = enroll.status === ENROLLMENT_STATUS.DROPPED;
 
       const registeredPayments: any[] = enroll.payments || [];
@@ -198,9 +211,9 @@ export class PaymentService {
         const monthPayments = registeredPayments.filter(p => matchesMonth(p.installment_month, m));
         const totalPaid = monthPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
         const remainingAmount = Math.max(0, baseAmount - totalPaid);
-        const dueDate = `10/${m.monthNum.toString().padStart(2, '0')}/${ayYear}`;
-        // Vencida: ciclo pasado, o mes actual / anterior del ciclo en curso (mismo criterio que deudores)
-        const isDue = isPastYear || (!isFutureYear && m.monthNum <= currentMonthNum);
+        const dueDate = `${String(INSTALLMENT_DUE_DAY).padStart(2, '0')}/${m.monthNum.toString().padStart(2, '0')}/${ayYear}`;
+        // Vencida: ya pasó el día de vencimiento (mismo criterio que deudores)
+        const isDue = isInstallmentDue(ayYear, m.monthNum, today);
 
         let status: string = isDue ? INSTALLMENT_STATUS.PENDING : INSTALLMENT_STATUS.UPCOMING;
         if (totalPaid >= baseAmount) {
@@ -313,10 +326,10 @@ export class PaymentService {
     }
 
     if (payAmount > remainingBefore) {
-      throw new PaymentError(`El monto a pagar ($${payAmount}) supera el saldo pendiente de la cuota ($${remainingBefore}).`, 400);
+      throw new PaymentError(`El monto a pagar (${formatMoney(payAmount)}) supera el saldo pendiente de la cuota (${formatMoney(remainingBefore)}).`, 400);
     }
 
-    const actualDate = payment_date || new Date().toISOString().split('T')[0];
+    const actualDate = payment_date || todayLocalDate();
     const newTotalPaid = alreadyPaid + payAmount;
     const newStatus = newTotalPaid >= baseAmount ? 'Pagado' : 'Parcial';
 
@@ -333,7 +346,7 @@ export class PaymentService {
 
     const message = newStatus === 'Pagado'
       ? 'Cuota saldada exitosamente'
-      : `Pago parcial de $${payAmount} registrado. Saldo pendiente: $${baseAmount - newTotalPaid}`;
+      : `Pago parcial de ${formatMoney(payAmount)} registrado. Saldo pendiente: ${formatMoney(baseAmount - newTotalPaid)}`;
 
     return {
       payment: newPayment,
@@ -380,9 +393,7 @@ export class PaymentService {
     });
 
     const debtorsMap = new Map();
-    const now = new Date();
-    const currentMonthNum = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
+    const today = todayLocalDate();
 
     for (const enroll of enrollments) {
       const userObj = enroll.user;
@@ -391,14 +402,8 @@ export class PaymentService {
       const course = enroll.section?.course;
       const ay = enroll.section?.academic_year;
       const ayYear = getAcademicYearNumber(ay);
-      const isPastYear = ayYear < currentYear;
-      const isFutureYear = ayYear > currentYear;
 
-      const dueMonths = isPastYear
-        ? ACADEMIC_MONTHS
-        : isFutureYear
-        ? []
-        : ACADEMIC_MONTHS.filter(m => m.monthNum <= currentMonthNum);
+      const dueMonths = ACADEMIC_MONTHS.filter(m => isInstallmentDue(ayYear, m.monthNum, today));
 
       const payments: any[] = enroll.payments || [];
       const unpaidInstallments: string[] = [];
