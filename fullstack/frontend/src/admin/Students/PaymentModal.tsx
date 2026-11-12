@@ -22,6 +22,8 @@ interface PaymentModalProps {
 const isPaidStatus = (s?: string) => s === 'Pagado' || s === 'Paid';
 const isPartialStatus = (s?: string) => s === 'Parcial' || s === 'Partial';
 const isUpcomingStatus = (s?: string) => s === 'A vencer';
+// La matrícula se muestra como un ítem más del estado de cuenta, pero sin el prefijo "Cuota"
+const isRegistration = (name?: string) => name === 'Matrícula';
 
 const formatPaymentMethod = (m?: string) => {
   if (!m || m === 'Cash' || m === 'Efectivo') return 'Efectivo';
@@ -515,7 +517,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
             <form onSubmit={handleProcessPayment} className="p-5 space-y-4">
               <div className="bg-slate-50 border border-slate-200/60 rounded-lg p-3 text-center mb-2">
                 <span className="block text-xs text-slate-500 uppercase tracking-wider">
-                  Cuota de {paymentModal.installment_month} {paymentModal.year || ''}
+                  {isRegistration(paymentModal.installment_month) ? '' : 'Cuota de '}{paymentModal.installment_month} {paymentModal.year || ''}
                 </span>
                 <span className="text-xs font-bold text-indigo-700 block mt-0.5">
                   {paymentModal.course_name ? `${paymentModal.course_name} · ${paymentModal.section}` : paymentModal.section}
@@ -645,7 +647,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                 <div className="flex justify-between">
                   <span className="text-slate-500">Concepto:</span>
                   <span className="font-medium text-slate-700">
-                    Cuota {receiptModal.installment_month} {receiptModal.year || ''} {receiptModal.academic_year_name ? `(${receiptModal.academic_year_name})` : ''}
+                    {isRegistration(receiptModal.installment_month) ? '' : 'Cuota '}{receiptModal.installment_month} {receiptModal.year || ''} {receiptModal.academic_year_name ? `(${receiptModal.academic_year_name})` : ''}
                   </span>
                 </div>
               </div>

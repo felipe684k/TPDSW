@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { ENROLLMENT_STATUS, INSTALLMENT_STATUS } from '../../constants.js';
+import { ENROLLMENT_STATUS, INSTALLMENT_STATUS, REGISTRATION_INSTALLMENT } from '../../constants.js';
 import { Payment, Enrollment, User, Section, Course, TuitionFee, AcademicYear, Classroom, Schedule } from '../../models/index.js';
 import { todayLocalDate, toArgentinaDateString, currentArgentinaYearMonth } from '../../utils/date.js';
 import { formatMoney } from '../../utils/money.js';
@@ -23,21 +23,71 @@ export const matchesMonth = (value: string | undefined, m: { name: string; enNam
   return lower === m.name.toLowerCase() || lower === m.enName.toLowerCase();
 };
 
+// true si el texto se refiere a la matrícula ("Matrícula", "matricula", etc.), sin importar tildes ni mayúsculas
+export const isRegistrationInstallment = (value: string | undefined): boolean => {
+  if (!value) return false;
+  const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+  return normalize(value) === normalize(REGISTRATION_INSTALLMENT);
+};
+
+// Valor de la matrícula del curso (0 si el curso no cobra matrícula)
+export const getRegistrationFee = (course: any): number => Math.max(0, Number(course?.registration_fee) || 0);
+
+// Suma de lo pagado en una lista de pagos
+const sumPaid = (payments: any[]): number => payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+// Estado de una cuota según lo pagado
+const getInstallmentStatus = (baseAmount: number, totalPaid: number, isDue: boolean): string => {
+  if (totalPaid >= baseAmount) return INSTALLMENT_STATUS.PAID;
+  if (totalPaid > 0) return INSTALLMENT_STATUS.PARTIAL;
+  return isDue ? INSTALLMENT_STATUS.PENDING : INSTALLMENT_STATUS.UPCOMING;
+};
+
+// "AAAA-MM-DD" -> "DD/MM/AAAA"
+const toDisplayDate = (isoDate: string): string => {
+  const [y, m, d] = isoDate.split('-');
+  return y && m && d ? `${d}/${m}/${y}` : isoDate;
+};
+
 const DEFAULT_MONTHLY_FEE = 12000;
 
 // Las cuotas vencen el día 10 de cada mes
 export const INSTALLMENT_DUE_DAY = 10;
 
-// Fecha de vencimiento de la cuota de un mes, en formato AAAA-MM-DD
-export const getInstallmentDueDate = (year: number, monthNum: number): string =>
-  `${year}-${String(monthNum).padStart(2, '0')}-${String(INSTALLMENT_DUE_DAY).padStart(2, '0')}`;
+/**
+ * Fecha de vencimiento de la cuota de un mes, en formato AAAA-MM-DD.
+ * Si el alumno se inscribió después del día 10 de ese mes, la cuota vence el día de la inscripción
+ * (no puede estar vencida antes de que el alumno se inscriba).
+ */
+export const getInstallmentDueDate = (year: number, monthNum: number, enrollmentDate?: string): string => {
+  const regularDueDate = `${year}-${String(monthNum).padStart(2, '0')}-${String(INSTALLMENT_DUE_DAY).padStart(2, '0')}`;
+  return enrollmentDate && enrollmentDate > regularDueDate ? enrollmentDate : regularDueDate;
+};
 
 /**
  * Una cuota está vencida (es deuda) recién al día siguiente de su vencimiento.
  * Hasta el día 10 inclusive figura "A vencer": se puede pagar, pero todavía no se debe.
  */
-export const isInstallmentDue = (year: number, monthNum: number, today: string = todayLocalDate()): boolean =>
-  today > getInstallmentDueDate(year, monthNum);
+export const isInstallmentDue = (
+  year: number,
+  monthNum: number,
+  today: string = todayLocalDate(),
+  enrollmentDate?: string
+): boolean => today > getInstallmentDueDate(year, monthNum, enrollmentDate);
+
+/**
+ * Primer mes que se le cobra a una inscripción: el mes en que se inscribió.
+ * Si se inscribió antes de que empiece el ciclo, se cobra desde Marzo; si se inscribió en un año
+ * posterior al del ciclo, no corresponde ninguna cuota (devuelve 13).
+ */
+export const getFirstBillableMonth = (ayYear: number, enrollmentDate?: string): number => {
+  const firstMonth = ACADEMIC_MONTHS[0]!.monthNum;
+  if (!enrollmentDate) return firstMonth;
+  const [enrollYear, enrollMonth] = enrollmentDate.split('-').map(Number) as [number, number];
+  if (enrollYear < ayYear) return firstMonth;
+  if (enrollYear > ayYear) return 13;
+  return Math.max(firstMonth, enrollMonth);
+};
 
 // Fecha en formato AAAA-MM-DD según la hora argentina (sin pasar por UTC)
 const toLocalDateString = (value: any): string => {
@@ -197,35 +247,25 @@ export class PaymentService {
       const ayYear = getAcademicYearNumber(ay);
 
       const isDropped = enroll.status === ENROLLMENT_STATUS.DROPPED;
+      const enrollmentDate = toLocalDateString(enroll.enrollment_date);
+      const firstBillableMonth = getFirstBillableMonth(ayYear, enrollmentDate);
 
       const registeredPayments: any[] = enroll.payments || [];
-      const hasPayments = (m: typeof ACADEMIC_MONTHS[number]) =>
-        registeredPayments.some(p => matchesMonth(p.installment_month, m));
 
-      // Se muestran todas las cuotas del ciclo (también las que todavía no vencieron, para poder adelantarlas).
-      // Una inscripción dada de baja ya no genera cuotas a cobrar: solo se muestran los meses que se pagaron.
-      const monthsToShow = isDropped ? ACADEMIC_MONTHS.filter(hasPayments) : ACADEMIC_MONTHS;
-
-      monthsToShow.forEach((m) => {
-        const baseAmount = getMonthlyFee(course, ayYear, m.monthNum);
-        const monthPayments = registeredPayments.filter(p => matchesMonth(p.installment_month, m));
-        const totalPaid = monthPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-        const remainingAmount = Math.max(0, baseAmount - totalPaid);
-        const dueDate = `${String(INSTALLMENT_DUE_DAY).padStart(2, '0')}/${m.monthNum.toString().padStart(2, '0')}/${ayYear}`;
-        // Vencida: ya pasó el día de vencimiento (mismo criterio que deudores)
-        const isDue = isInstallmentDue(ayYear, m.monthNum, today);
-
-        let status: string = isDue ? INSTALLMENT_STATUS.PENDING : INSTALLMENT_STATUS.UPCOMING;
-        if (totalPaid >= baseAmount) {
-          status = INSTALLMENT_STATUS.PAID;
-        } else if (totalPaid > 0) {
-          status = INSTALLMENT_STATUS.PARTIAL;
-        }
-
-        const lastPayment = monthPayments.length > 0 ? monthPayments[monthPayments.length - 1] : null;
+      // Arma un ítem del estado de cuenta (matrícula o cuota mensual) con lo pagado hasta ahora
+      const addInstallment = (item: {
+        key: string;
+        name: string;
+        baseAmount: number;
+        dueDate: string;
+        isDue: boolean;
+        payments: any[];
+      }) => {
+        const totalPaid = sumPaid(item.payments);
+        const lastPayment = item.payments.length > 0 ? item.payments[item.payments.length - 1] : null;
 
         installmentResults.push({
-          id: lastPayment ? lastPayment.id_payment : `pending_${enroll.id_enrollment}_${m.monthNum}`,
+          id: lastPayment ? lastPayment.id_payment : `pending_${enroll.id_enrollment}_${item.key}`,
           id_enrollment: enroll.id_enrollment,
           id_course: course?.id_course,
           course_name: course?.course_name || 'Curso',
@@ -233,22 +273,58 @@ export class PaymentService {
           id_academic_year: ay?.id_academic_year,
           academic_year_name: ayName,
           year: ayYear,
-          installment_month: m.name,
-          amount: baseAmount,
+          installment_month: item.name,
+          amount: item.baseAmount,
           total_paid: totalPaid,
-          remaining_amount: remainingAmount,
-          due_date: dueDate,
-          is_due: isDue,
-          status: status,
+          remaining_amount: Math.max(0, item.baseAmount - totalPaid),
+          due_date: item.dueDate,
+          is_due: item.isDue,
+          status: getInstallmentStatus(item.baseAmount, totalPaid, item.isDue),
           payment_date: lastPayment ? lastPayment.payment_date : null,
           payment_method: lastPayment ? lastPayment.payment_method : null,
-          payments: monthPayments.map(p => ({
+          payments: item.payments.map(p => ({
             id: p.id_payment,
             amount: Number(p.amount),
             payment_date: p.payment_date,
             payment_method: p.payment_method,
             status: p.status
           }))
+        });
+      };
+
+      // 1. Matrícula: se debe desde el día de la inscripción.
+      // Una inscripción dada de baja solo la muestra si se había pagado algo.
+      const registrationFee = getRegistrationFee(course);
+      const registrationPayments = registeredPayments.filter(p => isRegistrationInstallment(p.installment_month));
+      if (registrationFee > 0 && (!isDropped || registrationPayments.length > 0)) {
+        addInstallment({
+          key: 'registration',
+          name: REGISTRATION_INSTALLMENT,
+          baseAmount: registrationFee,
+          dueDate: enrollmentDate ? toDisplayDate(enrollmentDate) : '-',
+          isDue: true,
+          payments: registrationPayments
+        });
+      }
+
+      // 2. Cuotas mensuales: desde el mes de inscripción hasta Diciembre (también las que todavía no vencieron,
+      // para poder adelantarlas). Una inscripción dada de baja ya no genera cuotas a cobrar.
+      // Siempre se muestran los meses que tienen pagos registrados.
+      const hasPayments = (m: typeof ACADEMIC_MONTHS[number]) =>
+        registeredPayments.some(p => matchesMonth(p.installment_month, m));
+      const monthsToShow = ACADEMIC_MONTHS.filter(m =>
+        hasPayments(m) || (!isDropped && m.monthNum >= firstBillableMonth)
+      );
+
+      monthsToShow.forEach((m) => {
+        addInstallment({
+          key: String(m.monthNum),
+          name: m.name,
+          baseAmount: getMonthlyFee(course, ayYear, m.monthNum),
+          dueDate: toDisplayDate(getInstallmentDueDate(ayYear, m.monthNum, enrollmentDate)),
+          // Vencida: ya pasó el día de vencimiento (mismo criterio que deudores)
+          isDue: isInstallmentDue(ayYear, m.monthNum, today, enrollmentDate),
+          payments: registeredPayments.filter(p => matchesMonth(p.installment_month, m))
         });
       });
     }
@@ -305,28 +381,57 @@ export class PaymentService {
       throw new PaymentError('No se pueden registrar pagos de una inscripción dada de baja.', 400);
     }
 
-    // Solo se cobran los meses del ciclo lectivo (Marzo a Diciembre). Se aceptan cuotas adelantadas.
-    const month = ACADEMIC_MONTHS.find(m => matchesMonth(String(installment_month).trim(), m));
-    if (!month) {
-      throw new PaymentError(`"${installment_month}" no es un mes de cuota válido. Las cuotas van de Marzo a Diciembre.`, 400);
+    const course = existingEnrollment.section?.course;
+    const enrollmentPayments: any[] = existingEnrollment.payments || [];
+
+    // Qué se está pagando: la matrícula o una cuota mensual. Se define el nombre con que se guarda,
+    // el monto total a cobrar y los pagos previos de ese mismo concepto.
+    let installmentName: string;
+    let installmentLabel: string;
+    let baseAmount: number;
+    let previousPayments: any[];
+
+    if (isRegistrationInstallment(String(installment_month))) {
+      baseAmount = getRegistrationFee(course);
+      if (baseAmount <= 0) {
+        throw new PaymentError('El curso de esta inscripción no cobra matrícula.', 400);
+      }
+      installmentName = REGISTRATION_INSTALLMENT;
+      installmentLabel = 'La matrícula';
+      previousPayments = enrollmentPayments.filter(p => isRegistrationInstallment(p.installment_month));
+    } else {
+      // Solo se cobran los meses del ciclo lectivo (Marzo a Diciembre). Se aceptan cuotas adelantadas.
+      const month = ACADEMIC_MONTHS.find(m => matchesMonth(String(installment_month).trim(), m));
+      if (!month) {
+        throw new PaymentError(`"${installment_month}" no es un mes de cuota válido. Las cuotas van de Marzo a Diciembre.`, 400);
+      }
+      const ayYear = getAcademicYearNumber(existingEnrollment.section?.academic_year);
+      const firstBillableMonth = getFirstBillableMonth(ayYear, toLocalDateString(existingEnrollment.enrollment_date));
+      if (month.monthNum < firstBillableMonth) {
+        const firstName = ACADEMIC_MONTHS.find(m => m.monthNum === firstBillableMonth)?.name;
+        throw new PaymentError(
+          firstName
+            ? `El alumno se inscribió en ${firstName}: no se cobran cuotas anteriores a ese mes.`
+            : 'Esta inscripción no tiene cuotas mensuales a cobrar en este ciclo lectivo.',
+          400
+        );
+      }
+      baseAmount = getMonthlyFee(course, ayYear, month.monthNum);
+      installmentName = month.name; // siempre se guarda en español
+      installmentLabel = `La cuota de ${month.name}`;
+      // Pagos previos de ese mes, sin importar cómo se haya escrito el nombre (ej. "March" = "Marzo")
+      previousPayments = enrollmentPayments.filter(p => matchesMonth(p.installment_month, month));
     }
 
-    const course = existingEnrollment.section?.course;
-    const baseAmount = getMonthlyFee(course, getAcademicYearNumber(existingEnrollment.section?.academic_year), month.monthNum);
-
-    // Pagos previos de ese mes, sin importar cómo se haya escrito el nombre (ej. "March" = "Marzo")
-    const previousPayments: any[] = existingEnrollment.payments?.filter(
-      (p: any) => matchesMonth(p.installment_month, month)
-    ) || [];
-    const alreadyPaid = previousPayments.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+    const alreadyPaid = sumPaid(previousPayments);
     const remainingBefore = Math.max(0, baseAmount - alreadyPaid);
 
     if (remainingBefore <= 0) {
-      throw new PaymentError(`La cuota de ${month.name} ya se encuentra totalmente saldada.`, 400);
+      throw new PaymentError(`${installmentLabel} ya se encuentra totalmente saldada.`, 400);
     }
 
     if (payAmount > remainingBefore) {
-      throw new PaymentError(`El monto a pagar (${formatMoney(payAmount)}) supera el saldo pendiente de la cuota (${formatMoney(remainingBefore)}).`, 400);
+      throw new PaymentError(`El monto a pagar (${formatMoney(payAmount)}) supera el saldo pendiente (${formatMoney(remainingBefore)}).`, 400);
     }
 
     const actualDate = payment_date || todayLocalDate();
@@ -340,12 +445,12 @@ export class PaymentService {
       surcharge: 0,
       discount: 0,
       status: newStatus,
-      installment_month: month.name, // siempre se guarda en español
+      installment_month: installmentName,
       payment_method: payment_method || 'Efectivo'
     });
 
     const message = newStatus === 'Pagado'
-      ? 'Cuota saldada exitosamente'
+      ? (installmentName === REGISTRATION_INSTALLMENT ? 'Matrícula saldada exitosamente' : 'Cuota saldada exitosamente')
       : `Pago parcial de ${formatMoney(payAmount)} registrado. Saldo pendiente: ${formatMoney(baseAmount - newTotalPaid)}`;
 
     return {
@@ -403,15 +508,28 @@ export class PaymentService {
       const ay = enroll.section?.academic_year;
       const ayYear = getAcademicYearNumber(ay);
 
-      const dueMonths = ACADEMIC_MONTHS.filter(m => isInstallmentDue(ayYear, m.monthNum, today));
+      const enrollmentDate = toLocalDateString(enroll.enrollment_date);
+      const firstBillableMonth = getFirstBillableMonth(ayYear, enrollmentDate);
+      const dueMonths = ACADEMIC_MONTHS.filter(m =>
+        m.monthNum >= firstBillableMonth && isInstallmentDue(ayYear, m.monthNum, today, enrollmentDate)
+      );
 
       const payments: any[] = enroll.payments || [];
       const unpaidInstallments: string[] = [];
       let totalDebt = 0;
 
+      // La matrícula se debe desde la inscripción
+      const registrationRemaining = Math.max(
+        0,
+        getRegistrationFee(course) - sumPaid(payments.filter(p => isRegistrationInstallment(p.installment_month)))
+      );
+      if (registrationRemaining > 0) {
+        unpaidInstallments.push(REGISTRATION_INSTALLMENT);
+        totalDebt += registrationRemaining;
+      }
+
       for (const m of dueMonths) {
-        const monthPayments = payments.filter(p => matchesMonth(p.installment_month, m));
-        const totalPaid = monthPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        const totalPaid = sumPaid(payments.filter(p => matchesMonth(p.installment_month, m)));
         const remaining = Math.max(0, getMonthlyFee(course, ayYear, m.monthNum) - totalPaid);
 
         if (remaining > 0) {

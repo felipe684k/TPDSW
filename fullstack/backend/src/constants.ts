@@ -14,6 +14,9 @@ export const INSTALLMENT_STATUS = {
   UPCOMING: 'A vencer', // todavía no venció: se puede pagar por adelantado y no cuenta como deuda
 } as const;
 
+// Nombre con el que se guarda y se muestra el pago de la matrícula (en lugar de un mes)
+export const REGISTRATION_INSTALLMENT = 'Matrícula';
+
 export const PAYMENT_METHOD = {
   CASH: 'Efectivo',
   TRANSFER: 'Transferencia Bancaria',

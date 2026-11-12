@@ -24,12 +24,6 @@ const DAY_LABELS: Record<string, string> = {
   SATURDAY: 'Sáb'
 }
 
-const PAYMENT_METHODS = [
-  { id: 'Efectivo', label: 'Efectivo', icon: '💵' },
-  { id: 'Transferencia Bancaria', label: 'Transferencia', icon: '🏦' },
-  { id: 'Tarjeta de Crédito', label: 'Tarjeta', icon: '💳' }
-]
-
 export default function EnrollModal({ isOpen, onClose, studentId, student, onSuccess }: Props) {
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
   const [sections, setSections] = useState<Section[]>([])
@@ -38,7 +32,6 @@ export default function EnrollModal({ isOpen, onClose, studentId, student, onSuc
   const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<number | ''>('')
   const [selectedCourseId, setSelectedCourseId] = useState<number | ''>('')
   const [selectedSectionId, setSelectedSectionId] = useState<number | ''>('')
-  const [paymentMethod, setPaymentMethod] = useState<string>('Efectivo')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -48,7 +41,6 @@ export default function EnrollModal({ isOpen, onClose, studentId, student, onSuc
       setSelectedAcademicYearId('')
       setSelectedCourseId('')
       setSelectedSectionId('')
-      setPaymentMethod('Efectivo')
     }
   }, [isOpen])
 
@@ -138,7 +130,7 @@ export default function EnrollModal({ isOpen, onClose, studentId, student, onSuc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedSectionId || !paymentMethod || !studentId) return
+    if (!selectedSectionId || !studentId) return
     try {
       setLoading(true)
 
@@ -183,7 +175,7 @@ export default function EnrollModal({ isOpen, onClose, studentId, student, onSuc
             <button
               type="submit" form="enrollForm"
               className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!selectedSectionId || !paymentMethod || !allowedLevel || loading}
+              disabled={!selectedSectionId || !allowedLevel || loading}
             >
               {loading ? 'Procesando...' : 'Confirmar Inscripción'}
             </button>
@@ -293,7 +285,7 @@ export default function EnrollModal({ isOpen, onClose, studentId, student, onSuc
               </div>
             )}
 
-            {/* Estado 3: Selección interactiva de Comisión y Método de Pago */}
+            {/* Estado 3: Selección interactiva de Comisión */}
             {hasAvailableCourses && (
               <>
                 <div>
@@ -369,37 +361,10 @@ export default function EnrollModal({ isOpen, onClose, studentId, student, onSuc
                   )}
                 </div>
 
-                {/* Método de pago en píldoras interactivas */}
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-500 block mb-1.5">
-                    Método de Pago (Matrícula) *
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {PAYMENT_METHODS.map(pm => {
-                      const active = paymentMethod === pm.id
-                      return (
-                        <button
-                          key={pm.id}
-                          type="button"
-                          onClick={() => setPaymentMethod(pm.id)}
-                          className={`py-2 px-3 rounded-lg border text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                            active
-                              ? 'border-indigo-600 bg-indigo-50 text-indigo-700 font-semibold shadow-2xs'
-                              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                          }`}
-                        >
-                          <span>{pm.icon}</span>
-                          <span>{pm.label}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
                 {/* Resumen de cargo por matrícula */}
                 <div className="bg-indigo-50/70 border border-indigo-100 px-3.5 py-2.5 rounded-xl flex items-center justify-between text-xs">
                   <span className="text-indigo-800">
-                    Deuda automática por matrícula al confirmar:
+                    Se agregará al estado de cuenta una deuda por matrícula de:
                   </span>
                   <span className="font-bold text-indigo-900 text-sm">
                     {selectedCourse
