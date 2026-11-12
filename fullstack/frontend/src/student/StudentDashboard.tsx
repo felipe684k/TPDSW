@@ -2,6 +2,7 @@ import ConnectionBanner from '../shared/ConnectionBanner';
 import { useState, useEffect } from 'react';
 import { theme } from '../shared/theme';
 import { paymentService, type Installment } from '../biz/services/payment.service';
+import { formatMoney } from '../biz/money';
 
 interface StudentDashboardProps {
   userData: any;
@@ -78,14 +79,6 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
     };
     const translated = map[monthName?.toLowerCase()] || monthName;
     return year ? `${translated} ${year}` : translated;
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS',
-      maximumFractionDigits: 0
-    }).format(amount);
   };
 
   const normalizeEnrollmentStatus = (s?: string) => {
@@ -293,7 +286,7 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
                           )}
                         </td>
                         <td className="p-3 text-sm font-mono text-slate-600 font-medium">
-                          {formatCurrency(Number(inst.amount))}
+                          {formatMoney(inst.amount)}
                         </td>
                         <td className="p-3 text-sm text-slate-500">
                           {inst.due_date || '-'}

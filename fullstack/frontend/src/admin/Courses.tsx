@@ -7,6 +7,8 @@ import FormInput from '../shared/components/FormInput'
 import FormSelect from '../shared/components/FormSelect'
 import CourseSections from './Courses/CourseSections'
 import { theme } from '../shared/theme'
+import { formatDateAR } from '../biz/date'
+import { formatMoney } from '../biz/money'
 
 export default function Courses() {
   const [modalOpen, setModalOpen] = useState(false)
@@ -26,12 +28,6 @@ export default function Courses() {
   
   const [toast, setToast] = useState<{text: string, type: 'success' | 'danger'} | null>(null)
 
-  const formatDate = (isoString: string) => {
-    if (!isoString) return '';
-    const date = new Date(isoString);
-    if (isNaN(date.getTime())) return isoString; 
-    return date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
-  }
 
   const [formData, setFormData] = useState({
     course_name: '',
@@ -251,7 +247,7 @@ export default function Courses() {
                               <div className="text-center">
                                 <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block mb-1">Matrícula</span>
                                 <span className="text-sm font-bold text-slate-700 font-mono">
-                                  ${Number(course.registration_fee).toLocaleString('en-US')}
+                                  {formatMoney(Number(course.registration_fee))}
                                 </span>
                               </div>
                               <div className="h-10 w-px bg-slate-200"></div>
@@ -260,7 +256,7 @@ export default function Courses() {
                                 {activeFee ? (
                                   <div>
                                     <span className="text-sm font-bold text-emerald-600 font-mono">
-                                      ${Number(activeFee.monthly_cost).toLocaleString('en-US')}
+                                      {formatMoney(Number(activeFee.monthly_cost))}
                                     </span>
                                     <div className="flex items-center justify-center gap-1.5 mt-1">
                                       <div 
@@ -490,8 +486,8 @@ export default function Courses() {
                 .map((fee, idx) => (
                   <div key={idx} className="flex justify-between items-center p-3 rounded-lg border border-slate-200 bg-slate-50">
                     <div>
-                      <p className="text-sm font-bold text-emerald-400">${Number(fee.monthly_cost).toLocaleString('en-US')}</p>
-                      <p className="text-xs text-slate-500">Desde: {formatDate(fee.start_date)}</p>
+                      <p className="text-sm font-bold text-emerald-400">{formatMoney(Number(fee.monthly_cost))}</p>
+                      <p className="text-xs text-slate-500">Desde: {formatDateAR(fee.start_date)}</p>
                     </div>
                     {idx === 0 && <span className="text-[10px] font-medium bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">Activa</span>}
                   </div>

@@ -3,14 +3,14 @@ import { useState, useEffect } from 'react'
 import { API_BASE_URL } from '../../biz/config'
 import { paymentService, type Installment } from '../../biz/services/payment.service'
 import { academicYearService, type AcademicYear } from '../../biz/services/academicYear.service'
+import { formatDateAR, todayISO } from '../../biz/date'
+import { formatMoney } from '../../biz/money'
 
 interface Student {
   id: number
   fullName: string
   dni: string
   course?: string
-  tuitionAmount?: number
-  admissionMonthIndex?: number
 }
 
 interface PaymentModalProps {
@@ -45,6 +45,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
   const [paymentMethod, setPaymentMethod] = useState('Efectivo')
   const [payAmount, setPayAmount] = useState<number | ''>('')
   const [loading, setLoading] = useState<boolean>(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -88,31 +89,28 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
       const res = await fetch(`${API_BASE_URL}/users?role=STUDENT`)
       if (res.ok) {
         const json = await res.json()
-        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+        if (json.data && Array.isArray(json.data)) {
           const mapped: Student[] = json.data.map((u: any) => ({
             id: u.id,
             fullName: `${u.last_name || ''}, ${u.first_name || ''}`.trim(),
             dni: u.dni || '',
-            course: u.current_level && u.current_level !== 'No Level Assigned' ? u.current_level : 'Curso General',
-            tuitionAmount: 12000,
-            admissionMonthIndex: 0
+            course: u.current_level && u.current_level !== 'No Level Assigned' ? u.current_level : 'Curso General'
           }))
           setStudentsList(mapped)
           return
         }
       }
     } catch (e) {
-      console.warn('Error loading students from backend, using fallback:', e)
+      console.warn('Error loading students from backend:', e)
     }
 
-    setStudentsList([
-      { id: 1, fullName: 'González, Lucía', dni: '40.123.456', course: 'Kids 1 - A', tuitionAmount: 12000, admissionMonthIndex: 0 } as any,
-      { id: 2, fullName: 'Ramírez, Tomás', dni: '38.901.234', course: 'Teens 3 - Noche', tuitionAmount: 14500, admissionMonthIndex: 5 } as any
-    ])
+    // Sin datos del backend no se muestra ningún alumno (nunca datos inventados)
+    setStudentsList([])
   }
 
   const loadAccountStatus = async (id: number, academicYearId?: number | '') => {
     setLoading(true)
+    setLoadError(null)
     try {
       const ayParam = academicYearId !== undefined 
         ? (academicYearId === '' ? undefined : Number(academicYearId)) 
@@ -140,49 +138,13 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
       console.warn('Error loading installments from backend:', e)
     }
 
-    const student = studentsList.find(a => a.id === id)
-    if (student) {
-      setHasEnrollment(true)
-      const academicMonths = [
-        { name: 'Marzo', monthNum: 3 },
-        { name: 'Abril', monthNum: 4 },
-        { name: 'Mayo', monthNum: 5 },
-        { name: 'Junio', monthNum: 6 },
-        { name: 'Julio', monthNum: 7 },
-        { name: 'Agosto', monthNum: 8 },
-        { name: 'Septiembre', monthNum: 9 },
-        { name: 'Octubre', monthNum: 10 },
-        { name: 'Noviembre', monthNum: 11 },
-        { name: 'Diciembre', monthNum: 12 }
-      ]
-
-      const now = new Date()
-      const currentMonthNum = now.getMonth() + 1
-      const currentYear = now.getFullYear()
-
-      const monthsToDate = academicMonths.filter(m => m.monthNum <= currentMonthNum)
-
-      const mockInstallments: Installment[] = monthsToDate.map((m, idx) => {
-        const base = student.tuitionAmount || 12000
-        const isPaid = idx === 0
-        return {
-          id: idx + 1,
-          id_enrollment: id,
-          section: student.course || 'Comisión',
-          course_name: student.course || 'Curso General',
-          installment_month: m.name,
-          amount: base,
-          total_paid: isPaid ? base : 0,
-          remaining_amount: isPaid ? 0 : base,
-          due_date: `10/${m.monthNum.toString().padStart(2, '0')}/${currentYear}`,
-          status: isPaid ? 'Pagado' : 'Pendiente',
-          payment_date: isPaid ? `05/${m.monthNum.toString().padStart(2, '0')}/${currentYear}` : null,
-          payment_method: isPaid ? 'Efectivo' : undefined,
-          year: currentYear
-        }
-      })
-      setInstallments(mockInstallments)
-    }
+    // Si el backend falla no se inventan cuotas: se avisa el error y no se muestra nada
+    setLoadError('No se pudo cargar el estado de cuenta. Verificá la conexión e intentá de nuevo.')
+    setEnrollmentsList([])
+    setSelectedEnrollmentId('')
+    setEnrollmentId(null)
+    setInstallments([])
+    setHasEnrollment(false)
     setLoading(false)
   }
 
@@ -232,7 +194,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
 
     const remaining = paymentModal.remaining_amount !== undefined ? paymentModal.remaining_amount : paymentModal.amount
     if (numAmount > remaining) {
-      alert(`El monto ingresado ($${numAmount}) supera el saldo pendiente de la cuota ($${remaining}).`)
+      alert(`El monto ingresado (${formatMoney(numAmount)}) supera el saldo pendiente de la cuota (${formatMoney(remaining)}).`)
       return
     }
 
@@ -243,7 +205,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
       return
     }
 
-    const todayDate = new Date().toISOString().split('T')[0]
+    const todayDate = todayISO()
 
     const payload = {
       id_enrollment: targetEnrollmentId,
@@ -373,8 +335,25 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
           )}
         </div>
 
+      {/* Error al cargar el estado de cuenta */}
+      {selectedStudent && loadError && !loading && (
+        <div role="alert" className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl text-xs flex items-start justify-between gap-3 mb-5">
+          <div className="flex items-start gap-3">
+            <span className="text-lg">⚠️</span>
+            <strong className="font-bold">{loadError}</strong>
+          </div>
+          <button
+            type="button"
+            onClick={() => loadAccountStatus(selectedStudent, selectedAcademicYearId)}
+            className="shrink-0 bg-white border border-rose-200 text-rose-700 hover:bg-rose-100 px-3 py-1.5 rounded-lg font-semibold cursor-pointer"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {/* Warning if no enrollment */}
-      {selectedStudent && !hasEnrollment && !loading && (
+      {selectedStudent && !hasEnrollment && !loading && !loadError && (
         <div className="bg-amber-50 border border-amber-300 text-amber-900 p-4 rounded-xl text-xs flex items-start gap-3 mb-5">
           <span className="text-lg">⚠️</span>
           <div>
@@ -405,7 +384,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
             <div className="text-right">
               <span className="text-xs text-slate-500 block">Deuda Pendiente</span>
               <span className="text-lg font-bold text-rose-500">
-                ${visibleDebt.toLocaleString('es-AR')}
+                {formatMoney(visibleDebt)}
               </span>
             </div>
           </div>
@@ -464,16 +443,16 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                       <div className="grid grid-cols-3 gap-2 text-[10px] bg-slate-50/50 p-2 rounded border border-slate-200/60">
                         <div>
                           <span className="text-slate-500 block">Cuota Base</span>
-                          <span className="font-semibold text-slate-700">${installment.amount.toLocaleString('es-AR')}</span>
+                          <span className="font-semibold text-slate-700">{formatMoney(installment.amount)}</span>
                         </div>
                         <div>
                           <span className="text-slate-500 block">Abonado</span>
-                          <span className="font-semibold text-emerald-600">${(installment.total_paid || (isPaid ? installment.amount : 0)).toLocaleString('es-AR')}</span>
+                          <span className="font-semibold text-emerald-600">{formatMoney((installment.total_paid || (isPaid ? installment.amount : 0)))}</span>
                         </div>
                         <div>
                           <span className="text-slate-500 block">Restante</span>
                           <span className={`font-semibold ${remAmount > 0 ? 'text-rose-500' : 'text-slate-500'}`}>
-                            ${remAmount.toLocaleString('es-AR')}
+                            {formatMoney(remAmount)}
                           </span>
                         </div>
                       </div>
@@ -483,8 +462,8 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                           <span className="font-semibold text-slate-600 block">Pagos realizados ({installment.payments.length}):</span>
                           {installment.payments.map((p, pIdx) => (
                             <div key={p.id || pIdx} className="flex justify-between items-center text-[10px]">
-                              <span className="text-slate-500">{p.payment_date || 'Fecha N/D'}</span>
-                              <span className="font-medium text-emerald-700">+${Number(p.amount).toLocaleString('es-AR')}</span>
+                              <span className="text-slate-500">{formatDateAR(p.payment_date) || 'Fecha N/D'}</span>
+                              <span className="font-medium text-emerald-700">+{formatMoney(Number(p.amount))}</span>
                             </div>
                           ))}
                         </div>
@@ -493,7 +472,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                       <div className="flex justify-between items-end pt-2 border-t border-slate-200/60 gap-2">
                         <div>
                           <span className="block text-[10px] text-slate-500">Saldo a Cobrar</span>
-                          <span className="text-base font-bold text-slate-800">${remAmount.toLocaleString('es-AR')}</span>
+                          <span className="text-base font-bold text-slate-800">{formatMoney(remAmount)}</span>
                         </div>
                         
                         <div className="flex items-center gap-1.5">
@@ -544,15 +523,15 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                 <div className="grid grid-cols-3 gap-1 mt-2 text-xs">
                   <div>
                     <span className="text-slate-400 block text-[10px]">Total</span>
-                    <span className="font-semibold text-slate-700">${paymentModal.amount.toLocaleString('es-AR')}</span>
+                    <span className="font-semibold text-slate-700">{formatMoney(paymentModal.amount)}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[10px]">Abonado</span>
-                    <span className="font-semibold text-emerald-600">${(paymentModal.total_paid || 0).toLocaleString('es-AR')}</span>
+                    <span className="font-semibold text-emerald-600">{formatMoney((paymentModal.total_paid || 0))}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[10px]">Pendiente</span>
-                    <span className="font-bold text-rose-500">${(paymentModal.remaining_amount ?? paymentModal.amount).toLocaleString('es-AR')}</span>
+                    <span className="font-bold text-rose-500">{formatMoney((paymentModal.remaining_amount ?? paymentModal.amount))}</span>
                   </div>
                 </div>
               </div>
@@ -580,7 +559,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                   placeholder="Ej: 5000"
                 />
                 <p className="text-[10px] text-slate-500">
-                  Podés cobrar una fracción de la cuota o el total pendiente (${(paymentModal.remaining_amount ?? paymentModal.amount).toLocaleString('es-AR')}).
+                  Podés cobrar una fracción de la cuota o el total pendiente ({formatMoney((paymentModal.remaining_amount ?? paymentModal.amount))}).
                 </p>
               </div>
 
@@ -607,7 +586,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                   type="submit"
                   className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold shadow-sm transition-colors cursor-pointer"
                 >
-                  Confirmar Cobro {payAmount ? `($${Number(payAmount).toLocaleString('es-AR')})` : ''}
+                  Confirmar Cobro {payAmount ? `(${formatMoney(Number(payAmount))})` : ''}
                 </button>
               </div>
             </form>
@@ -645,7 +624,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                 </div>
                 <div className="text-right">
                   <span className="text-slate-500 text-[10px] uppercase block font-semibold">Fecha de Emisión</span>
-                  <span className="font-semibold text-slate-600">{receiptModal.payment_date || new Date().toLocaleDateString('es-AR')}</span>
+                  <span className="font-semibold text-slate-600">{formatDateAR(receiptModal.payment_date || new Date())}</span>
                 </div>
               </div>
 
@@ -675,20 +654,20 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
               <div className="space-y-2 pt-1">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Cuota Base:</span>
-                  <span className="text-slate-600">${receiptModal.amount.toLocaleString('es-AR')}</span>
+                  <span className="text-slate-600">{formatMoney(receiptModal.amount)}</span>
                 </div>
 
                 <div className="flex justify-between">
                   <span className="text-slate-500">Total Abonado a la Fecha:</span>
                   <span className="font-semibold text-emerald-600">
-                    ${(receiptModal.total_paid || (isPaidStatus(receiptModal.status) ? receiptModal.amount : 0)).toLocaleString('es-AR')}
+                    {formatMoney((receiptModal.total_paid || (isPaidStatus(receiptModal.status) ? receiptModal.amount : 0)))}
                   </span>
                 </div>
 
                 <div className="flex justify-between">
                   <span className="text-slate-500">Saldo Restante:</span>
                   <span className="font-semibold text-rose-500">
-                    ${(receiptModal.remaining_amount !== undefined ? receiptModal.remaining_amount : (isPaidStatus(receiptModal.status) ? 0 : receiptModal.amount)).toLocaleString('es-AR')}
+                    {formatMoney((receiptModal.remaining_amount !== undefined ? receiptModal.remaining_amount : (isPaidStatus(receiptModal.status) ? 0 : receiptModal.amount)))}
                   </span>
                 </div>
 
@@ -698,9 +677,9 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
                     {receiptModal.payments.map((p, idx) => (
                       <div key={p.id || idx} className="flex justify-between text-[11px] bg-slate-50 p-1.5 rounded">
                         <span className="text-slate-600">
-                          Entrega #{idx + 1} ({p.payment_date || 'Fecha'} - {formatPaymentMethod(p.payment_method)}):
+                          Entrega #{idx + 1} ({formatDateAR(p.payment_date) || 'Fecha'} - {formatPaymentMethod(p.payment_method)}):
                         </span>
-                        <span className="font-semibold text-emerald-600">+${Number(p.amount).toLocaleString('es-AR')}</span>
+                        <span className="font-semibold text-emerald-600">+{formatMoney(Number(p.amount))}</span>
                       </div>
                     ))}
                   </div>

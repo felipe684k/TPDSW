@@ -5,6 +5,7 @@ import { enrollmentService } from '../../biz/services/enrollment.service'
 import { levelService, type Level } from '../../biz/services/level.service'
 import type { Student } from '../../biz/services/student.service'
 import Modal from '../../shared/components/Modal'
+import { formatMoney } from '../../biz/money';
 
 interface Props {
   isOpen: boolean;
@@ -268,7 +269,7 @@ export default function EnrollModal({ isOpen, onClose, studentId, student, onSuc
                     <option value="">-- Seleccionar Curso --</option>
                     {availableCourses.map(c => (
                       <option key={c?.id_course} value={c?.id_course}>
-                        {c?.course_name} — Matrícula: ${Number(c?.registration_fee || 0).toLocaleString()}
+                        {c?.course_name} — Matrícula: {formatMoney(Number(c?.registration_fee || 0))}
                       </option>
                     ))}
                   </select>
@@ -402,7 +403,7 @@ export default function EnrollModal({ isOpen, onClose, studentId, student, onSuc
                   </span>
                   <span className="font-bold text-indigo-900 text-sm">
                     {selectedCourse
-                      ? `$${Number(selectedCourse.registration_fee || 0).toLocaleString()}`
+                      ? formatMoney(selectedCourse.registration_fee)
                       : '—'}
                   </span>
                 </div>
