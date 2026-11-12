@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { enrollmentService, type Enrollment } from '../biz/services/enrollment.service';
 import DataTable from '../shared/components/DataTable';
 import Modal from '../shared/components/Modal';
+import { formatDateAR } from '../biz/date';
 
 const normalizeStatus = (s?: string) => {
   if (!s || s === 'Active' || s === 'Activo') return 'Activo';
@@ -114,7 +115,7 @@ export default function Enrollments() {
     },
     {
       header: 'Fecha',
-      render: (e: Enrollment) => <span className="text-slate-500">{new Date(e.enrollment_date).toLocaleDateString('es-AR')}</span>,
+      render: (e: Enrollment) => <span className="text-slate-500">{formatDateAR(e.enrollment_date)}</span>,
     },
     {
       header: 'Asistencia',

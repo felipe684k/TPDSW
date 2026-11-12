@@ -5,6 +5,7 @@ import { paymentService } from '../biz/services/payment.service'
 import { enrollmentService } from '../biz/services/enrollment.service'
 import { API_BASE_URL } from '../biz/config'
 import { theme } from '../shared/theme'
+import { formatDateAR } from '../biz/date'
 
 interface DashboardProps {
   setActiveTab: (tab: import('../shared/Sidebar.const').SidebarTab) => void
@@ -121,7 +122,7 @@ export default function Dashboard({ setActiveTab }: DashboardProps) {
                           <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>{e.section?.course?.level?.name || '-'}
                         </span>
                       </td>
-                      <td className="p-3 text-xs text-slate-500">{new Date(e.enrollment_date).toLocaleDateString('es-AR')}</td>
+                      <td className="p-3 text-xs text-slate-500">{formatDateAR(e.enrollment_date)}</td>
                       <td className="p-3 text-xs">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold ${
                           statusLabel === 'Activo' ? 'bg-emerald-50 text-emerald-700' :

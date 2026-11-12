@@ -2,6 +2,7 @@ import React from 'react';
 import Modal from '../../shared/components/Modal';
 import FormInput from '../../shared/components/FormInput';
 import FormSelect from '../../shared/components/FormSelect';
+import { todayISO } from '../../biz/date';
 
 interface Props {
   isOpen: boolean;
@@ -14,7 +15,7 @@ interface Props {
 }
 
 export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, onChange, errorMessage, editingId }: Props) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayISO();
 
   return (
     <Modal

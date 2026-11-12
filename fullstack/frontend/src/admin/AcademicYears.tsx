@@ -3,6 +3,7 @@ import { academicYearService, type AcademicYear } from '../biz/services/academic
 import Modal from '../shared/components/Modal'
 import FormInput from '../shared/components/FormInput'
 import { theme } from '../shared/theme'
+import { formatDateAR } from '../biz/date'
 
 export default function AcademicYears() {
   const [modalOpen, setModalOpen] = useState(false)
@@ -100,7 +101,7 @@ export default function AcademicYears() {
             <div key={ay.id_academic_year} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between gap-6 hover:shadow-md transition-shadow">
               <div>
                 <h3 className="text-lg font-bold text-slate-800">{ay.name}</h3>
-                <p className="text-xs text-slate-500 mt-1">Desde {ay.start_date} hasta {ay.end_date}</p>
+                <p className="text-xs text-slate-500 mt-1">Desde {formatDateAR(ay.start_date)} hasta {formatDateAR(ay.end_date)}</p>
               </div>
               <button onClick={() => handleEdit(ay)} className="text-indigo-400 hover:text-indigo-300 font-semibold text-sm cursor-pointer">
                 Editar

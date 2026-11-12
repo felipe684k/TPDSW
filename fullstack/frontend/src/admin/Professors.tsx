@@ -4,6 +4,7 @@ import DataTable from '../shared/components/DataTable'
 import Modal from '../shared/components/Modal'
 import FormInput from '../shared/components/FormInput'
 import { theme } from '../shared/theme'
+import { todayISO } from '../biz/date'
 
 export default function Professors() {
   const [modalOpen, setModalOpen] = useState(false)
@@ -16,7 +17,7 @@ export default function Professors() {
   
   const [editingId, setEditingId] = useState<number | null>(null)
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayISO()
 
   const [formData, setFormData] = useState({
     last_name: '',
