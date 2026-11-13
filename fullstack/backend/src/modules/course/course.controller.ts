@@ -90,6 +90,10 @@ export const deleteCourse = async (req: Request, res: Response, next: NextFuncti
     res.status(200).json({ status: 'ok', message: 'Curso desactivado exitosamente' });
   } catch (error: any) {
     if (isDatabaseConnectionError(error)) return next(error);
+    if (error instanceof CourseError) {
+      res.status(error.statusCode).json({ status: 'error', message: error.message });
+      return;
+    }
     console.error('Error deactivating course:', error);
     res.status(500).json({ status: 'db_error', message: 'Error interno al desactivar el curso' });
   }

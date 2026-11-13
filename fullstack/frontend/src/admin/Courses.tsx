@@ -137,6 +137,11 @@ export default function Courses() {
       setCourseToDelete(null)
     } catch (error) {
       console.error(error)
+      setDeleteModalOpen(false)
+      setCourseToDelete(null)
+      const msg = error instanceof Error ? error.message : 'Error al desactivar el curso'
+      setToast({ text: msg, type: 'danger' })
+      setTimeout(() => setToast(null), 4000)
     }
   }
 

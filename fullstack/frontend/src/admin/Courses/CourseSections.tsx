@@ -3,6 +3,7 @@ import { sectionService, type Section, type Classroom } from '../../biz/services
 import { classroomService } from '../../biz/services/classroom.service'
 import { academicYearService, type AcademicYear } from '../../biz/services/academicYear.service'
 import { professorService, type Professor as User } from '../../biz/services/professor.service'
+import Modal from '../../shared/components/Modal'
 
 const DAY_LABELS: Record<string, string> = {
   MONDAY: 'Lunes',
@@ -20,6 +21,8 @@ interface CourseSectionsProps {
 export default function CourseSections({ courseId }: CourseSectionsProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [sectionToDelete, setSectionToDelete] = useState<Section | null>(null)
   
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
   const [sections, setSections] = useState<Section[]>([])
@@ -207,15 +210,25 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('¿Estás seguro que deseas eliminar esta comisión?')) return;
+  const promptDelete = (section: Section) => {
+    setSectionToDelete(section)
+    setDeleteModalOpen(true)
+    setToast(null)
+  }
+
+  const executeDelete = async () => {
+    if (!sectionToDelete?.id_section) return
     try {
-      await sectionService.deleteSection(id)
+      await sectionService.deleteSection(sectionToDelete.id_section)
+      setDeleteModalOpen(false)
+      setSectionToDelete(null)
       setToast({ text: "Comisión eliminada", type: 'success' })
       setTimeout(() => setToast(null), 3000)
       if (selectedAcademicYearId) fetchSections(selectedAcademicYearId as number)
     } catch (error) {
       console.error(error)
+      setDeleteModalOpen(false)
+      setSectionToDelete(null)
       const msg = error instanceof Error ? error.message : "Error al eliminar la comisión"
       setToast({ text: msg, type: 'danger' })
       setTimeout(() => setToast(null), 4000)
@@ -307,12 +320,55 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
               </div>
               <div className="mt-3 pt-2 border-t border-slate-300 flex justify-end gap-3">
                 <button onClick={() => handleOpenEdit(section)} className="text-indigo-600 hover:text-indigo-800 font-semibold text-[10px] cursor-pointer">Editar</button>
-                <button onClick={() => handleDelete(section.id_section!)} className="text-rose-500 hover:text-rose-400 font-semibold text-[10px] cursor-pointer">Desactivar</button>
+                <button onClick={() => promptDelete(section)} className="text-rose-500 hover:text-rose-400 font-semibold text-[10px] cursor-pointer">Eliminar</button>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false)
+          setSectionToDelete(null)
+        }}
+        isDanger={true}
+        maxWidth="max-w-sm"
+        footer={
+          <div className="flex gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteModalOpen(false)
+                setSectionToDelete(null)
+              }}
+              className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={executeDelete}
+              className="flex-1 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded text-xs font-medium transition-colors cursor-pointer"
+            >
+              Eliminar
+            </button>
+          </div>
+        }
+      >
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl mx-auto mb-3">
+            ⚠️
+          </div>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">
+            ¿Eliminar {sectionToDelete?.name || 'Comisión'}?
+          </h3>
+          <p className="text-xs text-slate-500 mb-2">
+            Solo se puede eliminar una comisión si no tiene alumnos inscriptos.
+          </p>
+        </div>
+      </Modal>
 
       {/* Create / Edit Modal */}
       {modalOpen && (

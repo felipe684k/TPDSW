@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { Course, Level, TuitionFee } from '../../models/index.js';
+import { Course, Level, TuitionFee, Section } from '../../models/index.js';
 
 export class CourseError extends Error {
   statusCode: number;
@@ -114,6 +114,12 @@ export class CourseService {
     const existingCourse = await Course.findOne({ where: { id_course: id } });
     if (!existingCourse) {
       return null;
+    }
+
+    // Prevent deactivating a course that has associated sections
+    const sectionsCount = await Section.count({ where: { id_course: id } });
+    if (sectionsCount > 0) {
+      throw new CourseError('No se puede desactivar el curso porque tiene comisiones asociadas', 409);
     }
 
     // Logical delete

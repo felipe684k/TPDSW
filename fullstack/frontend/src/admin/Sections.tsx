@@ -36,6 +36,8 @@ export default function Sections() {
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [sectionToDelete, setSectionToDelete] = useState<Section | null>(null)
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'danger' } | null>(null)
 
   const [formData, setFormData] = useState<{
@@ -274,15 +276,26 @@ export default function Sections() {
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('¿Estás seguro que deseas eliminar esta comisión?')) return
+  const promptDelete = (section: Section) => {
+    setSectionToDelete(section)
+    setDeleteModalOpen(true)
+    setToast(null)
+  }
+
+  const executeDelete = async () => {
+    if (!sectionToDelete?.id_section) return
+    const id = sectionToDelete.id_section
     try {
       await sectionService.deleteSection(id)
+      setDeleteModalOpen(false)
+      setSectionToDelete(null)
       setToast({ text: 'Comisión eliminada exitosamente', type: 'success' })
       setTimeout(() => setToast(null), 3000)
       if (expandedSection === id) setExpandedSection(null)
       fetchSections(selectedLevel, selectedCourse, selectedAcademicYear)
     } catch (error) {
+      setDeleteModalOpen(false)
+      setSectionToDelete(null)
       const msg = error instanceof Error ? error.message : 'Error al eliminar la comisión'
       setToast({ text: msg, type: 'danger' })
       setTimeout(() => setToast(null), 4000)
@@ -552,7 +565,7 @@ export default function Sections() {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleDelete(section.id_section!)
+                        promptDelete(section)
                       }}
                       className="text-xs font-semibold text-rose-500 hover:text-rose-700 px-2.5 py-1 rounded hover:bg-rose-50 transition-colors cursor-pointer"
                     >
@@ -895,6 +908,49 @@ export default function Sections() {
             </div>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false)
+          setSectionToDelete(null)
+        }}
+        isDanger={true}
+        maxWidth="max-w-sm"
+        footer={
+          <div className="flex gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteModalOpen(false)
+                setSectionToDelete(null)
+              }}
+              className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={executeDelete}
+              className="flex-1 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded text-xs font-medium transition-colors cursor-pointer"
+            >
+              Eliminar
+            </button>
+          </div>
+        }
+      >
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl mx-auto mb-3">
+            ⚠️
+          </div>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">
+            ¿Eliminar {sectionToDelete?.name || 'Comisión'}?
+          </h3>
+          <p className="text-xs text-slate-500 mb-2">
+            Solo se puede eliminar una comisión si no tiene alumnos inscriptos.
+          </p>
+        </div>
       </Modal>
     </div>
   )

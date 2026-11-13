@@ -7,7 +7,6 @@ export const SIDEBAR_TABS = {
   SECTIONS: 'Comisiones',
   CLASSROOMS: 'Aulas',
   ACADEMIC_YEARS: 'Ciclos Lectivos',
-  LEVELS: 'Niveles',
 } as const;
 
 export type SidebarTab = typeof SIDEBAR_TABS[keyof typeof SIDEBAR_TABS];

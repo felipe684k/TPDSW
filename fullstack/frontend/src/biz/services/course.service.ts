@@ -79,7 +79,10 @@ export const courseService = {
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
       });
-      if (!response.ok) throw new Error('Error al desactivar el curso');
+      if (!response.ok) {
+        const errorJson = await response.json().catch(() => null);
+        throw new Error(errorJson?.message || 'Error al desactivar el curso');
+      }
     } catch (error) {
       console.error(error);
       throw error;
