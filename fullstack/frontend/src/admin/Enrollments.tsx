@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { enrollmentService, type Enrollment } from '../biz/services/enrollment.service';
 import { sectionService, type Section } from '../biz/services/section.service';
+import { studentService } from '../biz/services/student.service';
 import DataTable from '../shared/components/DataTable';
 import Modal from '../shared/components/Modal';
 import { formatDateAR } from '../biz/date';
@@ -16,6 +17,7 @@ export default function Enrollments() {
   const [sections, setSections] = useState<Section[]>([]);
   const [selectedSection, setSelectedSection] = useState<string>('all');
   const [expandedEnrollmentId, setExpandedEnrollmentId] = useState<number | null>(null);
+  const [studentDetails, setStudentDetails] = useState<Record<number, any>>({});
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [enrollmentToDelete, setEnrollmentToDelete] = useState<number | null>(null);
@@ -27,11 +29,6 @@ export default function Enrollments() {
     final_grade: '',
     attendance_percentage: ''
   });
-
-  useEffect(() => {
-    fetchSections();
-    fetchEnrollments('all');
-  }, []);
 
   const fetchSections = async () => {
     try {
@@ -52,6 +49,11 @@ export default function Enrollments() {
       console.error('Failed to fetch enrollments:', error);
     }
   };
+
+  useEffect(() => {
+    fetchSections();
+    fetchEnrollments('all');
+  }, []);
 
   const handleSectionFilterChange = (value: string) => {
     setSelectedSection(value);
@@ -102,6 +104,12 @@ export default function Enrollments() {
 
       await enrollmentService.updateEnrollment(editingId, dataToSave);
       fetchEnrollments(selectedSection);
+      const editedEnrollment = enrollments.find((enr) => enr.id_enrollment === editingId);
+      if (editedEnrollment?.id_user) {
+        studentService.getStudentById(editedEnrollment.id_user)
+          .then((detail) => setStudentDetails((prev) => ({ ...prev, [editedEnrollment.id_user]: detail })))
+          .catch(console.error);
+      }
       setUpdateModalOpen(false);
     } catch (error) {
       console.error('Error updating enrollment:', error);
@@ -139,7 +147,7 @@ export default function Enrollments() {
     {
       header: 'Nivel',
       render: (e: Enrollment) => (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold bg-indigo-50 text-indigo-600 border border-indigo-200">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600 border border-indigo-200">
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
           {e.section?.course?.level?.name || '-'}
         </span>
@@ -171,7 +179,7 @@ export default function Enrollments() {
         const statusLabel = normalizeStatus(e.status);
         return (
           <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold ${
+            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
               statusLabel === 'Activo'
                 ? 'bg-emerald-50 text-emerald-700'
                 : statusLabel === 'Pendiente'
@@ -200,7 +208,7 @@ export default function Enrollments() {
           <button
             type="button"
             onClick={() => handleEdit(e)}
-            className="text-indigo-600 hover:text-indigo-800 font-semibold text-2xs cursor-pointer"
+            className="text-indigo-600 hover:text-indigo-800 font-semibold text-xs cursor-pointer"
           >
             Editar
           </button>
@@ -208,7 +216,7 @@ export default function Enrollments() {
           <button
             type="button"
             onClick={() => confirmDelete(e.id_enrollment)}
-            className="text-rose-500 hover:text-rose-700 font-semibold text-2xs cursor-pointer"
+            className="text-rose-500 hover:text-rose-700 font-semibold text-xs cursor-pointer"
           >
             Desactivar
           </button>
@@ -217,8 +225,24 @@ export default function Enrollments() {
     },
   ];
 
+  const handleToggleStudentDetail = async (enrollment: Enrollment) => {
+    if (expandedEnrollmentId === enrollment.id_enrollment) {
+      setExpandedEnrollmentId(null);
+      return;
+    }
+    setExpandedEnrollmentId(enrollment.id_enrollment);
+    if (enrollment.id_user) {
+      try {
+        const detail = await studentService.getStudentById(enrollment.id_user);
+        setStudentDetails((prev) => ({ ...prev, [enrollment.id_user]: detail }));
+      } catch (error) {
+        console.error('Error fetching student detail:', error);
+      }
+    }
+  };
+
   const renderStudentDetailPanel = (enrollment: Enrollment) => {
-    const student = enrollment.user;
+    const student = studentDetails[enrollment.id_user] || enrollment.user;
     const studentEnrollments = student?.enrollments || [];
 
     return (
@@ -293,7 +317,7 @@ export default function Enrollments() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
-                    {studentEnrollments.map((item) => {
+                    {studentEnrollments.map((item: any) => {
                       const st = normalizeStatus(item.status);
                       return (
                         <tr
@@ -417,9 +441,7 @@ export default function Enrollments() {
             ? 'No hay alumnos inscriptos en la comisión seleccionada.'
             : 'No hay inscripciones registradas.'
         }
-        onRowClick={(e) =>
-          setExpandedEnrollmentId(expandedEnrollmentId === e.id_enrollment ? null : e.id_enrollment)
-        }
+        onRowClick={(e) => handleToggleStudentDetail(e)}
         isRowExpanded={(e) => expandedEnrollmentId === e.id_enrollment}
         renderExpandedRow={renderStudentDetailPanel}
       />

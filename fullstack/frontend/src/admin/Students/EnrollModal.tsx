@@ -34,15 +34,17 @@ export default function EnrollModal({ isOpen, onClose, studentId, student, onSuc
   const [selectedSectionId, setSelectedSectionId] = useState<number | ''>('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchInitialData()
-    } else {
-      setSelectedAcademicYearId('')
-      setSelectedCourseId('')
-      setSelectedSectionId('')
+  const fetchSections = async (id_academic_year: number) => {
+    setLoading(true)
+    try {
+      const data = await sectionService.getSections(id_academic_year)
+      setSections(data)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
     }
-  }, [isOpen])
+  }
 
   const fetchInitialData = async () => {
     try {
@@ -61,17 +63,15 @@ export default function EnrollModal({ isOpen, onClose, studentId, student, onSuc
     }
   }
 
-  const fetchSections = async (id_academic_year: number) => {
-    setLoading(true)
-    try {
-      const data = await sectionService.getSections(id_academic_year)
-      setSections(data)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    if (isOpen) {
+      fetchInitialData()
+    } else {
+      setSelectedAcademicYearId('')
+      setSelectedCourseId('')
+      setSelectedSectionId('')
     }
-  }
+  }, [isOpen])
 
   const handleAcademicYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = Number(e.target.value)
@@ -311,6 +311,9 @@ export default function EnrollModal({ isOpen, onClose, studentId, student, onSuc
                         const prof = s.professors && s.professors.length > 0
                           ? `${s.professors[0].first_name} ${s.professors[0].last_name}`
                           : 'Sin profesor asignado'
+                        const capacity = Number(s.classroom?.capacity) || 0
+                        const enrolledCount = s.enrolled_count ?? 0
+                        const availableSpots = s.available_spots ?? Math.max(0, capacity - enrolledCount)
                         return (
                           <button
                             key={s.id_section}
@@ -336,6 +339,25 @@ export default function EnrollModal({ isOpen, onClose, studentId, student, onSuc
                               }`}>
                                 {isSelected && <span className="text-[9px] leading-none">✓</span>}
                               </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-2 pt-0.5">
+                              <span
+                                className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
+                                  availableSpots === 0
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                    : availableSpots <= 3
+                                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                }`}
+                              >
+                                Cupo: {availableSpots} {availableSpots === 1 ? 'vacante' : 'vacantes'}
+                              </span>
+                              {capacity > 0 && (
+                                <span className="text-[10px] text-slate-400">
+                                  ({enrolledCount}/{capacity})
+                                </span>
+                              )}
                             </div>
 
                             {s.schedules && s.schedules.length > 0 && (

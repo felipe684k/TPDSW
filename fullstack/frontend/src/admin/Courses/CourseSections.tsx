@@ -152,6 +152,29 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
       return
     }
 
+    for (let i = 0; i < formData.schedules.length; i++) {
+      const a = formData.schedules[i]
+      if (a.start_time >= a.end_time) {
+        setToast({
+          text: `Horario inválido el día ${DAY_LABELS[a.day] || a.day}: la hora de fin debe ser posterior a la de inicio.`,
+          type: 'danger'
+        })
+        setTimeout(() => setToast(null), 4000)
+        return
+      }
+      for (let j = i + 1; j < formData.schedules.length; j++) {
+        const b = formData.schedules[j]
+        if (a.day === b.day && a.start_time < b.end_time && a.end_time > b.start_time) {
+          setToast({
+            text: `Los horarios cargados se superponen entre sí el día ${DAY_LABELS[a.day] || a.day} (${a.start_time.slice(0, 5)}–${a.end_time.slice(0, 5)} y ${b.start_time.slice(0, 5)}–${b.end_time.slice(0, 5)}).`,
+            type: 'danger'
+          })
+          setTimeout(() => setToast(null), 4000)
+          return
+        }
+      }
+    }
+
     try {
       const payload = {
         name: formData.name,
@@ -313,7 +336,7 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-slate-500 block mb-1">Aula *</label>
                   <select required value={formData.id_classroom} onChange={e => setFormData({...formData, id_classroom: e.target.value})} className="w-full border border-slate-300 bg-slate-50 text-slate-700 rounded p-2.5 text-xs outline-none focus:border-indigo-500">
@@ -333,14 +356,14 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
               <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-xs font-semibold text-slate-600">Horarios</span>
-                  <button type="button" onClick={handleAddSchedule} className="text-[10px] cursor-pointer bg-indigo-500/20 text-indigo-400 px-2 py-1 rounded hover:bg-indigo-500/30 transition-colors">
+                  <button type="button" onClick={handleAddSchedule} className="text-[10px] cursor-pointer bg-indigo-500/20 text-indigo-600 font-semibold px-2 py-1 rounded hover:bg-indigo-500/30 transition-colors">
                     + Agregar Día
                   </button>
                 </div>
                 
                 <div className="space-y-3">
                   {formData.schedules.map((h, i) => (
-                    <div key={i} className="flex items-center gap-2">
+                    <div key={i} className="flex flex-wrap items-center gap-2">
                       <select value={h.day} onChange={e => handleScheduleChange(i, 'day', e.target.value)} className="flex-1 border border-slate-300 bg-white text-slate-700 rounded p-2 text-xs outline-none">
                         <option value="MONDAY">Lunes</option>
                         <option value="TUESDAY">Martes</option>

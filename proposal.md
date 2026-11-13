@@ -13,7 +13,7 @@
 
 ## Tema
 ### Sistema de Gestión - Instituto de Inglés.
-El sistema a desarrollar es una plataforma de gestión para un instituto dedicado exclusivamente al dictado de cursos de idioma inglés. Su objetivo principal es digitalizar y centralizar los procesos administrativos básicos que actualmente se realizan de forma manual. Esto permitirá optimizar la gestión de la oferta académica, la organización de comisiones y la inscripción de alumnos. El sistema será de uso exclusivamente interno, permitiendo el acceso únicamente al personal del instituto (Administrador/Secretaría y Profesores).
+El sistema a desarrollar es una plataforma de gestión para un instituto dedicado exclusivamente al dictado de cursos de idioma inglés. Su objetivo principal es digitalizar y centralizar los procesos administrativos básicos que actualmente se realizan de forma manual. Esto permitirá optimizar la gestión de la oferta académica, la organización de comisiones y la inscripción de alumnos. El sistema cuenta con acceso diferenciado para el personal administrativo del instituto (Administrador/Secretaría) y un portal de autogestión para los Alumnos (consulta de cursadas y estado de cuenta), restringiendo el inicio de sesión para el rol de Profesores.
 
 ### Modelo
 ![E01-R03_ ART-MD-Modelo de Dominio2](https://github.com/user-attachments/assets/041ac472-1303-449d-965a-80f2a0fe476b)

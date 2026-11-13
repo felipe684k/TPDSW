@@ -19,10 +19,6 @@ export default function Classrooms() {
   const [errorMsg, setErrorMsg] = useState('')
   const [toast, setToast] = useState<{text: string, type: 'success' | 'danger'} | null>(null)
 
-  useEffect(() => {
-    fetchClassrooms()
-  }, [])
-
   const fetchClassrooms = async () => {
     setIsLoading(true)
     try {
@@ -35,6 +31,10 @@ export default function Classrooms() {
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchClassrooms()
+  }, [])
 
   const handleOpenModal = (classroom?: Classroom) => {
     if (classroom) {
@@ -156,8 +156,8 @@ export default function Classrooms() {
       {toast && (
         <div className={`fixed bottom-6 right-6 z-50 bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
           toast.type === 'success' 
-            ? 'border-emerald-500/50 text-emerald-400 shadow-emerald-900/20' 
-            : 'border-rose-500/50 text-rose-400 shadow-rose-900/20'
+            ? 'border-emerald-500/50 text-emerald-600 shadow-emerald-900/20' 
+            : 'border-rose-500/50 text-rose-600 shadow-rose-900/20'
         }`}>
           <span className="text-lg">{toast.type === 'success' ? '✅' : '🗑️'}</span>
           <span className="font-medium text-sm tracking-wide">{toast.text}</span>
@@ -165,7 +165,7 @@ export default function Classrooms() {
       )}
 
       {errorMsg && (
-        <div className="bg-rose-950/50 border border-rose-800/80 rounded-lg p-3 text-xs text-rose-400">
+        <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 text-xs text-rose-700">
           {errorMsg}
         </div>
       )}

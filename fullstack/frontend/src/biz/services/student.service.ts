@@ -30,6 +30,13 @@ export const studentService = {
     }
   },
 
+  getStudentById: async (id: number): Promise<any> => {
+    const response = await fetch(`${API_URL}/${id}`);
+    if (!response.ok) throw new Error('Error al obtener el detalle del alumno');
+    const json = await response.json();
+    return json.data;
+  },
+
   checkDni: async (dni: string): Promise<any> => {
     try {
       const response = await fetch(`${API_URL}/check-dni/${dni}`);

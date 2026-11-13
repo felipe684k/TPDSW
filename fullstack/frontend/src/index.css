@@ -1,1 +1,5 @@
 @import "tailwindcss";  /*Importa Tailwind CSS*/
+
+@theme {
+  --text-2xs: 0.6875rem;
+}

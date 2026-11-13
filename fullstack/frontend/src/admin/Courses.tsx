@@ -179,8 +179,8 @@ export default function Courses() {
       {toast && (
         <div className={`fixed bottom-6 right-6 z-50 bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
           toast.type === 'success' 
-            ? 'border-emerald-500/50 text-emerald-400 shadow-emerald-900/20' 
-            : 'border-rose-500/50 text-rose-400 shadow-rose-900/20'
+            ? 'border-emerald-500/50 text-emerald-600 shadow-emerald-900/20' 
+            : 'border-rose-500/50 text-rose-600 shadow-rose-900/20'
         }`}>
           <span className="text-lg">{toast.type === 'success' ? '✅' : '🗑️'}</span>
           <span className="font-medium text-sm tracking-wide">{toast.text}</span>
@@ -284,7 +284,7 @@ export default function Courses() {
                             </div>
 
                             {/* Center: Carga Horaria & Costos (Matrícula y Cuota Mensual) */}
-                            <div className="flex flex-row items-center gap-4 sm:gap-6 bg-slate-50 px-5 py-3 rounded-xl border border-slate-200">
+                            <div className="flex flex-row flex-wrap justify-center items-center gap-4 sm:gap-6 bg-slate-50 px-5 py-3 rounded-xl border border-slate-200">
                               {/* Carga Horaria */}
                               <div className="text-center">
                                 <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block mb-1">Carga Horaria</span>
@@ -638,10 +638,10 @@ export default function Courses() {
                 .map((fee, idx) => (
                   <div key={idx} className="flex justify-between items-center p-3 rounded-lg border border-slate-200 bg-slate-50">
                     <div>
-                      <p className="text-sm font-bold text-emerald-400">{formatMoney(Number(fee.monthly_cost))}</p>
+                      <p className="text-sm font-bold text-emerald-600">{formatMoney(Number(fee.monthly_cost))}</p>
                       <p className="text-xs text-slate-500">Desde: {formatDateAR(fee.start_date)}</p>
                     </div>
-                    {idx === 0 && <span className="text-[10px] font-medium bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">Activa</span>}
+                    {idx === 0 && <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 rounded">Activa</span>}
                   </div>
                 ))}
             </div>

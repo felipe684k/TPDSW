@@ -76,8 +76,27 @@ async function seedDefaultLevels() {
 // (por ejemplo, el backend arrancó antes que el gestor), reintenta cada 5 segundos.
 const DB_RETRY_MS = 5000;
 
+async function cleanupLegacyIndexes(): Promise<void> {
+  try {
+    const keepUserIndexes = new Set(['PRIMARY', 'user_dni_unique', 'user_email_unique', 'user_username_unique']);
+    const [rows]: any = await sequelize.query('SHOW INDEX FROM `user`');
+    const toDrop = new Set<string>();
+    for (const row of rows || []) {
+      if (row.Key_name && !keepUserIndexes.has(row.Key_name)) {
+        toDrop.add(row.Key_name);
+      }
+    }
+    for (const indexName of toDrop) {
+      await sequelize.query(`ALTER TABLE \`user\` DROP INDEX \`${indexName}\``);
+    }
+  } catch {
+    // La tabla todavía no existe o ya está limpia
+  }
+}
+
 async function initDatabase(attempt = 1): Promise<void> {
   try {
+    await cleanupLegacyIndexes();
     await sequelize.sync({ alter: true });
     console.log('✅ Database tables synchronized');
     await seedDefaultUsers();

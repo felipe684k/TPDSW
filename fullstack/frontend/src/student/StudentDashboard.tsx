@@ -264,7 +264,7 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
                 <p className="text-xs text-slate-400 mt-1">No registras deudas ni cuotas asignadas para este ciclo lectivo.</p>
               </div>
             ) : (
-              <div className="overflow-hidden border border-slate-200 rounded-xl bg-white shadow-sm">
+              <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-sm">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200">

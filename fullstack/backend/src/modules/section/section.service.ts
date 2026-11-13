@@ -62,6 +62,35 @@ export class SectionService {
     };
   }
 
+  private validateSchedulesList(schedules?: ScheduleItemDto[]) {
+    if (!schedules || schedules.length === 0) return;
+
+    for (const reqSchedule of schedules) {
+      if (reqSchedule.start_time >= reqSchedule.end_time) {
+        const dayName = DAY_LABELS[reqSchedule.day] || reqSchedule.day;
+        throw new SectionError(
+          `Horario inválido el día ${dayName}: la hora de fin debe ser posterior a la hora de inicio.`,
+          400
+        );
+      }
+    }
+
+    // Validar que los bloques horarios de la misma comisión no se repitan ni se solapen entre sí
+    for (let i = 0; i < schedules.length; i++) {
+      for (let j = i + 1; j < schedules.length; j++) {
+        const a = schedules[i]!;
+        const b = schedules[j]!;
+        if (a.day === b.day && a.start_time < b.end_time && a.end_time > b.start_time) {
+          const dayName = DAY_LABELS[a.day] || a.day;
+          throw new SectionError(
+            `Los horarios cargados para la comisión se superponen entre sí el día ${dayName} (${a.start_time.slice(0, 5)}–${a.end_time.slice(0, 5)} y ${b.start_time.slice(0, 5)}–${b.end_time.slice(0, 5)}).`,
+            409
+          );
+        }
+      }
+    }
+  }
+
   async findAll(filters: { id_academic_year?: any; level?: any; id_course?: any } = {}) {
     const where: any = {};
 
@@ -144,18 +173,7 @@ export class SectionService {
     const { name, id_course, id_classroom, id_academic_year, schedules, id_professor } = data;
     const sectionName = await this.assertNameAvailable(name, id_course, id_academic_year);
 
-    // Validate schedules (start time before end time)
-    if (schedules && schedules.length > 0) {
-      for (const reqSchedule of schedules) {
-        if (reqSchedule.start_time >= reqSchedule.end_time) {
-          const dayName = DAY_LABELS[reqSchedule.day] || reqSchedule.day;
-          throw new SectionError(
-            `Horario inválido el día ${dayName}: la hora de fin debe ser posterior a la hora de inicio.`,
-            400
-          );
-        }
-      }
-    }
+    this.validateSchedulesList(schedules);
 
     const t = await sequelize.transaction();
     try {
@@ -312,18 +330,7 @@ export class SectionService {
       ? await this.assertNameAvailable(data.name, targetCourseId, targetAcademicYearId, id)
       : existingSection.name;
 
-    // Validate schedules (start time before end time)
-    if (targetSchedules && targetSchedules.length > 0) {
-      for (const reqSchedule of targetSchedules) {
-        if (reqSchedule.start_time >= reqSchedule.end_time) {
-          const dayName = DAY_LABELS[reqSchedule.day] || reqSchedule.day;
-          throw new SectionError(
-            `Horario inválido el día ${dayName}: la hora de fin debe ser posterior a la hora de inicio.`,
-            400
-          );
-        }
-      }
-    }
+    this.validateSchedulesList(targetSchedules);
 
     const t = await sequelize.transaction();
     try {

@@ -1,7 +1,28 @@
-# TP DSW
+# TP DSW — Sistema de Gestión para Instituto de Inglés
 tags: #dsw #tp
 
-Status: draft
+- 📄 **[Propuesta del TP](./proposal.md)**
+- 📚 **[Documentación e Instrucciones de Instalación y Ejecución](./docs/README.md)**
+
+## Ejecución Rápida
+
+1. **Backend** (`http://localhost:3000`):
+   ```bash
+   cd fullstack/backend
+   npm install
+   npm run dev
+   ```
+2. **Frontend** (`http://localhost:5173`):
+   ```bash
+   cd fullstack/frontend
+   npm install
+   npm run dev
+   ```
+3. **Credenciales Demo:**
+   - **Administrador:** `admin` / `12345`
+   - **Alumno:** `user` / `12345`
+
+---
 
 ## 1. Objetivo
 

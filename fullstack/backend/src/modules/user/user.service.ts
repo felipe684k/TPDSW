@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import { User } from '../../models/user.js';
-import { sequelize, Level, UserLevel, Enrollment, CURRENT_LEVEL_ORDER } from '../../models/index.js';
+import { sequelize, Level, UserLevel, Enrollment, Section, Course, AcademicYear, CURRENT_LEVEL_ORDER } from '../../models/index.js';
 import { ENROLLMENT_STATUS } from '../../constants.js';
 import { todayLocalDate } from '../../utils/date.js';
 
@@ -186,15 +186,39 @@ export class UserService {
       throw new UserError('Por favor ingresa usuario y contraseña', 400);
     }
 
-    const foundUser: any = await User.scope('withPassword').findOne({
+    const cleanInput = username.trim();
+
+    let foundUser: any = await User.scope('withPassword').findOne({
       where: {
-        username: username,
+        [Op.or]: [
+          { username: cleanInput },
+          { dni: cleanInput },
+          { email: cleanInput }
+        ],
         active: true
       }
     });
 
+    // Si no se encontró por username/DNI/email exacto, verificamos si coincide con el nombre de un profesor activo
+    if (!foundUser) {
+      foundUser = await User.scope('withPassword').findOne({
+        where: {
+          role: 'PROFESSOR',
+          active: true,
+          [Op.and]: [
+            sequelize.where(sequelize.fn('LOWER', sequelize.col('first_name')), cleanInput.toLowerCase())
+          ]
+        }
+      });
+    }
+
     if (!foundUser) {
       throw new UserError('Usuario o contraseña incorrectos', 401);
+    }
+
+    // Si el usuario es profesor, bloqueamos el ingreso con mensaje explícito de su rol
+    if (foundUser.role === 'PROFESSOR') {
+      throw new UserError('No podés ingresar al sistema porque sos profesor. El acceso está habilitado únicamente para Administración y Alumnos.', 403);
     }
 
     const isPasswordValid = await bcrypt.compare(password, foundUser.password).catch(() => false);
@@ -215,19 +239,54 @@ export class UserService {
   }
 
   async findById(id: number | string) {
-    const foundUser = await User.findOne({
+    const foundUser: any = await User.findOne({
       where: {
         id: id,
-        role: 'STUDENT',
-        active: true
-      }
+        role: 'STUDENT'
+      },
+      include: [
+        { model: Level, as: 'levels' },
+        {
+          model: Enrollment,
+          as: 'enrollments',
+          include: [
+            {
+              model: Section,
+              as: 'section',
+              include: [
+                {
+                  model: Course,
+                  as: 'course',
+                  include: [{ model: Level, as: 'level' }]
+                },
+                { model: AcademicYear, as: 'academic_year' }
+              ]
+            }
+          ]
+        }
+      ]
     });
 
     if (!foundUser) {
-      throw new UserError('No se encontró un alumno activo con ID: ' + id, 404);
+      throw new UserError('No se encontró un alumno con ID: ' + id, 404);
     }
 
-    return foundUser;
+    const plain = typeof foundUser.toJSON === 'function' ? foundUser.toJSON() : foundUser;
+    if (Array.isArray(plain.levels) && plain.levels.length > 0) {
+      const sortedLevels = [...plain.levels].sort((a: any, b: any) => {
+        const dateA = a.UserLevel?.start_date ? new Date(a.UserLevel.start_date).getTime() : 0;
+        const dateB = b.UserLevel?.start_date ? new Date(b.UserLevel.start_date).getTime() : 0;
+        if (dateB !== dateA) return dateB - dateA;
+        return Number(b.level_code) - Number(a.level_code);
+      });
+      plain.current_level = sortedLevels[0];
+      plain.level_code = String(sortedLevels[0].level_code);
+    } else {
+      plain.current_level = null;
+      plain.level_code = '';
+    }
+
+    return plain;
   }
 
   async create(data: CreateUserDto) {

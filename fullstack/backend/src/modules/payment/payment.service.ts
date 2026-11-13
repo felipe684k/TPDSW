@@ -548,20 +548,23 @@ export class PaymentService {
         dni: userObj.dni,
         courses: new Set<string>(),
         academicYears: new Set<string>(),
+        unpaidMonths: new Set<string>(),
         unpaidInstallments: 0,
         totalDebt: 0
       };
       debtor.courses.add(enroll.section?.name || 'Curso General');
       debtor.academicYears.add(ay?.name || 'General');
+      unpaidInstallments.forEach((m) => debtor.unpaidMonths.add(m));
       debtor.unpaidInstallments += unpaidInstallments.length;
       debtor.totalDebt += totalDebt;
       debtorsMap.set(userObj.id, debtor);
     }
 
-    return Array.from(debtorsMap.values()).map(({ courses, academicYears, ...debtor }) => ({
+    return Array.from(debtorsMap.values()).map(({ courses, academicYears, unpaidMonths, ...debtor }) => ({
       ...debtor,
       course: [...courses].join(', '),
-      academic_year: [...academicYears].join(', ')
+      academic_year: [...academicYears].join(', '),
+      unpaid_months: [...unpaidMonths].join(', ')
     }));
   }
 }

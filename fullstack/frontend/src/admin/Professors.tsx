@@ -28,10 +28,6 @@ export default function Professors() {
     email: ''
   })
 
-  useEffect(() => {
-    fetchProfessors()
-  }, [])
-
   const fetchProfessors = async () => {
     try {
       const data = await professorService.getProfessors()
@@ -40,6 +36,10 @@ export default function Professors() {
       console.error('Failed to fetch professors', error)
     }
   }
+
+  useEffect(() => {
+    fetchProfessors()
+  }, [])
 
   const filteredProfessors = professors.filter(professor => {
     if (!professor.active) return false;
@@ -153,9 +153,9 @@ export default function Professors() {
       header: 'Acciones',
       render: (p: Professor) => (
         <div className="flex gap-2">
-          <button onClick={() => handleEdit(p)} className="text-indigo-400 hover:text-indigo-300 font-semibold text-2xs cursor-pointer">Editar</button>
-          <span className="text-slate-600">|</span>
-          <button onClick={() => confirmDelete(p.id!)} className="text-rose-500 hover:text-rose-400 font-semibold text-2xs cursor-pointer">Desactivar</button>
+          <button onClick={() => handleEdit(p)} className="text-indigo-600 hover:text-indigo-800 font-semibold text-xs cursor-pointer">Editar</button>
+          <span className="text-slate-300">|</span>
+          <button onClick={() => confirmDelete(p.id!)} className="text-rose-500 hover:text-rose-700 font-semibold text-xs cursor-pointer">Desactivar</button>
         </div>
       ),
     },
@@ -181,8 +181,8 @@ export default function Professors() {
       {toast && (
         <div className={`fixed bottom-6 right-6 z-50 bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
           toast.type === 'success' 
-            ? 'border-emerald-500/50 text-emerald-400 shadow-emerald-900/20' 
-            : 'border-rose-500/50 text-rose-400 shadow-rose-900/20'
+            ? 'border-emerald-500/50 text-emerald-600 shadow-emerald-900/20' 
+            : 'border-rose-500/50 text-rose-600 shadow-rose-900/20'
         }`}>
           <span className="text-lg">{toast.type === 'success' ? '✅' : '🗑️'}</span>
           <span className="font-medium text-sm tracking-wide">{toast.text}</span>
@@ -236,7 +236,7 @@ export default function Professors() {
         <form id="professorForm" onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-3">
             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">Datos Personales</div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormInput 
                 label="Apellido *"
                 type="text" required name="last_name" value={formData.last_name} onChange={handleInputChange} placeholder="Pérez" 
@@ -246,7 +246,7 @@ export default function Professors() {
                 type="text" required name="first_name" value={formData.first_name} onChange={handleInputChange} placeholder="Juan" 
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormInput 
                 label="DNI *"
                 type="text" required maxLength={8} name="dni" value={formData.dni} onChange={handleInputChange} placeholder="30123456" 
@@ -261,7 +261,7 @@ export default function Professors() {
 
           <div className="space-y-3">
             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">Contacto</div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormInput 
                 label="Teléfono"
                 type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="2219998877" 

@@ -35,7 +35,7 @@ export default function DataTable<T>({
       <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white">
         <div className="text-xs font-semibold text-slate-700">{title}</div>
         {totalCount !== undefined && (
-          <span className="text-2xs text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded font-mono">
+          <span className="text-xs text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded font-mono">
             Total: {totalCount}
           </span>
         )}

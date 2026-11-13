@@ -198,8 +198,48 @@ export default function Sections() {
     setFormData({ ...formData, schedules: updated })
   }
 
+  const handleToggleSectionDetail = async (sectionId: number) => {
+    if (expandedSection === sectionId) {
+      setExpandedSection(null)
+      return
+    }
+    setExpandedSection(sectionId)
+    try {
+      const detail = await sectionService.getSectionById(sectionId)
+      setSections((prev) =>
+        prev.map((sec) => (sec.id_section === sectionId ? detail : sec))
+      )
+    } catch (error) {
+      console.error('Error fetching section detail:', error)
+    }
+  }
+
   const handleSubmitCreate = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    for (let i = 0; i < formData.schedules.length; i++) {
+      const a = formData.schedules[i]
+      if (a.start_time >= a.end_time) {
+        setToast({
+          text: `Horario inválido el día ${DAY_LABELS[a.day] || a.day}: la hora de fin debe ser posterior a la de inicio.`,
+          type: 'danger',
+        })
+        setTimeout(() => setToast(null), 4000)
+        return
+      }
+      for (let j = i + 1; j < formData.schedules.length; j++) {
+        const b = formData.schedules[j]
+        if (a.day === b.day && a.start_time < b.end_time && a.end_time > b.start_time) {
+          setToast({
+            text: `Los horarios cargados se superponen entre sí el día ${DAY_LABELS[a.day] || a.day} (${a.start_time.slice(0, 5)}–${a.end_time.slice(0, 5)} y ${b.start_time.slice(0, 5)}–${b.end_time.slice(0, 5)}).`,
+            type: 'danger',
+          })
+          setTimeout(() => setToast(null), 4000)
+          return
+        }
+      }
+    }
+
     try {
       const payload = {
         name: formData.name,
@@ -399,11 +439,11 @@ export default function Sections() {
                 <div
                   role="button"
                   tabIndex={0}
-                  onClick={() => setExpandedSection(isExpanded ? null : section.id_section!)}
+                  onClick={() => handleToggleSectionDetail(section.id_section!)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
-                      setExpandedSection(isExpanded ? null : section.id_section!)
+                      handleToggleSectionDetail(section.id_section!)
                     }
                   }}
                   className="w-full p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer text-left focus:outline-none"
@@ -813,7 +853,7 @@ export default function Sections() {
 
             <div className="space-y-3">
               {formData.schedules.map((h, i) => (
-                <div key={i} className="flex items-center gap-2">
+                <div key={i} className="flex flex-wrap items-center gap-2">
                   <select
                     value={h.day}
                     onChange={(e) => handleScheduleChange(i, 'day', e.target.value)}

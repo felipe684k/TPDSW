@@ -49,19 +49,45 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
   const [loading, setLoading] = useState<boolean>(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchStudents()
-      fetchAcademicYears()
+  const loadAccountStatus = async (id: number, academicYearId?: number | '') => {
+    setLoading(true)
+    setLoadError(null)
+    try {
+      const ayParam = academicYearId !== undefined 
+        ? (academicYearId === '' ? undefined : Number(academicYearId)) 
+        : (selectedAcademicYearId === '' ? undefined : Number(selectedAcademicYearId))
+      const data = await paymentService.getStudentAccountStatus(id, ayParam)
+      const enrolls = data.enrollments || []
+      setEnrollmentsList(enrolls)
+      if (enrolls.length > 0) {
+        setHasEnrollment(true)
+        setSelectedEnrollmentId(prev => {
+          const exists = enrolls.some((e: any) => e.id_enrollment === prev)
+          return exists ? prev : enrolls[0].id_enrollment
+        })
+        setEnrollmentId(enrolls[0].id_enrollment)
+        setInstallments(data.installments || [])
+      } else {
+        setHasEnrollment(false)
+        setSelectedEnrollmentId('')
+        setEnrollmentId(null)
+        setInstallments([])
+      }
+      setLoading(false)
+      return
+    } catch (e) {
+      console.warn('Error loading installments from backend:', e)
     }
-  }, [isOpen])
 
-  useEffect(() => {
-    if (isOpen && studentId) {
-      setSelectedStudent(studentId)
-      loadAccountStatus(studentId, selectedAcademicYearId)
-    }
-  }, [isOpen, studentId])
+    // Si el backend falla no se inventan cuotas: se avisa el error y no se muestra nada
+    setLoadError('No se pudo cargar el estado de cuenta. Verificá la conexión e intentá de nuevo.')
+    setEnrollmentsList([])
+    setSelectedEnrollmentId('')
+    setEnrollmentId(null)
+    setInstallments([])
+    setHasEnrollment(false)
+    setLoading(false)
+  }
 
   const fetchAcademicYears = async () => {
     try {
@@ -110,45 +136,19 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
     setStudentsList([])
   }
 
-  const loadAccountStatus = async (id: number, academicYearId?: number | '') => {
-    setLoading(true)
-    setLoadError(null)
-    try {
-      const ayParam = academicYearId !== undefined 
-        ? (academicYearId === '' ? undefined : Number(academicYearId)) 
-        : (selectedAcademicYearId === '' ? undefined : Number(selectedAcademicYearId))
-      const data = await paymentService.getStudentAccountStatus(id, ayParam)
-      const enrolls = data.enrollments || []
-      setEnrollmentsList(enrolls)
-      if (enrolls.length > 0) {
-        setHasEnrollment(true)
-        setSelectedEnrollmentId(prev => {
-          const exists = enrolls.some((e: any) => e.id_enrollment === prev)
-          return exists ? prev : enrolls[0].id_enrollment
-        })
-        setEnrollmentId(enrolls[0].id_enrollment)
-        setInstallments(data.installments || [])
-      } else {
-        setHasEnrollment(false)
-        setSelectedEnrollmentId('')
-        setEnrollmentId(null)
-        setInstallments([])
-      }
-      setLoading(false)
-      return
-    } catch (e) {
-      console.warn('Error loading installments from backend:', e)
+  useEffect(() => {
+    if (isOpen) {
+      fetchStudents()
+      fetchAcademicYears()
     }
+  }, [isOpen])
 
-    // Si el backend falla no se inventan cuotas: se avisa el error y no se muestra nada
-    setLoadError('No se pudo cargar el estado de cuenta. Verificá la conexión e intentá de nuevo.')
-    setEnrollmentsList([])
-    setSelectedEnrollmentId('')
-    setEnrollmentId(null)
-    setInstallments([])
-    setHasEnrollment(false)
-    setLoading(false)
-  }
+  useEffect(() => {
+    if (isOpen && studentId) {
+      setSelectedStudent(studentId)
+      loadAccountStatus(studentId, selectedAcademicYearId)
+    }
+  }, [isOpen, studentId])
 
   const handleAcademicYearChange = (id: number | '') => {
     setSelectedAcademicYearId(id)
@@ -247,7 +247,7 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-40 flex justify-end">
+    <div className="fixed inset-0 bg-black/60 z-50 flex justify-end">
       <div className="bg-white w-full max-w-3xl h-full shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-right duration-300">
         
         <div className="flex justify-between items-center mb-5">

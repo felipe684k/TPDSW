@@ -78,6 +78,15 @@ export const sectionService = {
     return json.data || [];
   },
 
+  getSectionById: async (id: number): Promise<Section> => {
+    const res = await fetch(`${API_URL}/${id}`);
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || 'Error al obtener el detalle de la comisión');
+    }
+    return json.data;
+  },
+
   createSection: async (sectionData: any): Promise<Section> => {
     const res = await fetch(API_URL, {
       method: 'POST',

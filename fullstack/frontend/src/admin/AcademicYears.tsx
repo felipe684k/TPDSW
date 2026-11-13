@@ -23,9 +23,10 @@ export default function AcademicYears() {
   const fetchAcademicYears = async () => {
     try {
       const data = await academicYearService.getAcademicYears()
-      setAcademicYears(data)
+      setAcademicYears(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error(error)
+      setAcademicYears([])
     } finally {
       setLoading(false)
     }
@@ -109,7 +110,7 @@ export default function AcademicYears() {
 
       {toast && (
         <div className={`fixed bottom-6 right-6 z-50 bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
-          toast.type === 'success' ? 'border-emerald-500/50 text-emerald-400' : 'border-rose-500/50 text-rose-400'
+          toast.type === 'success' ? 'border-emerald-500/50 text-emerald-600' : 'border-rose-500/50 text-rose-600'
         }`}>
           <span className="text-lg">{toast.type === 'success' ? '✅' : '⚠️'}</span>
           <span className="font-medium text-sm">{toast.text}</span>

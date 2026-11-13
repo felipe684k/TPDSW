@@ -56,6 +56,7 @@ export interface Debtor {
   dni: string;
   course: string;
   academic_year?: string;
+  unpaid_months?: string;
   unpaidInstallments: number;
   totalDebt: number;
 }

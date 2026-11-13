@@ -10,8 +10,11 @@ export interface AcademicYear {
 export const academicYearService = {
   getAcademicYears: async (): Promise<AcademicYear[]> => {
     const res = await fetch(`${API_BASE_URL}/academic-years`);
-    const json = await res.json();
-    return json.data;
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(json.message || 'Error al obtener los ciclos lectivos');
+    }
+    return Array.isArray(json.data) ? json.data : [];
   },
 
   createAcademicYear: async (academicYear: AcademicYear): Promise<AcademicYear> => {

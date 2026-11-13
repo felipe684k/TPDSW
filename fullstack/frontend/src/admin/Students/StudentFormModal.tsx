@@ -40,7 +40,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
   const levelOptions = levelsStatus === 'loading'
     ? [{ value: formData.level_code ?? '', label: 'Cargando niveles...' }]
     : [
-        { value: '', label: 'Sin nivel asignado' },
+        { value: '', label: 'Sin nivel previo aprobado (inicia en A1)' },
         ...levels.map(l => ({ value: String(l.level_code), label: l.name }))
       ];
 
@@ -74,7 +74,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
           )}
           
           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">Datos Personales</div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormInput
               label="Apellido *"
               name="last_name" value={formData.last_name} onChange={onChange}
@@ -87,7 +87,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormInput
               label="DNI *"
               name="dni" value={formData.dni} onChange={onChange}
@@ -104,7 +104,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
 
         <div className="space-y-3">
           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">Contacto</div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormInput
               label="Teléfono *"
               name="phone" value={formData.phone} onChange={onChange}
@@ -121,7 +121,7 @@ export default function StudentFormModal({ isOpen, onClose, onSubmit, formData, 
         <div className="space-y-3">
           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">Académico</div>
           <FormSelect
-            label={editingId ? "Nivel Actual" : "Nivel de Ingreso"}
+            label="Último Nivel Aprobado"
             name="level_code" value={formData.level_code} onChange={onChange}
             disabled={levelsStatus === 'loading'}
             options={levelOptions}
