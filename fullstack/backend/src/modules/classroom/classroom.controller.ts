@@ -53,3 +53,24 @@ export const updateClassroom = async (req: Request, res: Response, next: NextFun
         res.status(500).json({ success: false, message: 'Error al actualizar el aula' });
     }
 };
+
+export const deleteClassroom = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const classroom = await classroomService.delete(Number(id));
+        if (!classroom) {
+            res.status(404).json({ success: false, message: 'Aula no encontrada' });
+            return;
+        }
+
+        res.json({ success: true, message: 'Aula eliminada exitosamente' });
+    } catch (error) {
+        if (isDatabaseConnectionError(error)) return next(error);
+        if (error instanceof ClassroomError) {
+            res.status(error.statusCode).json({ success: false, message: error.message });
+            return;
+        }
+        console.error('Error deleting classroom:', error);
+        res.status(500).json({ success: false, message: 'Error al eliminar el aula' });
+    }
+};

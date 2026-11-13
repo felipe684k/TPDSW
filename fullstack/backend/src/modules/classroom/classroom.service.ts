@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { Classroom } from '../../models/index.js';
+import { Classroom, Section } from '../../models/index.js';
 
 export class ClassroomError extends Error {
     statusCode: number;
@@ -41,5 +41,22 @@ export class ClassroomService {
             data = { ...data, name: await this.assertNameAvailable(data.name, id) };
         }
         return await classroom.update(data);
+    }
+    async delete(id: number) {
+        const classroom = await Classroom.findByPk(id);
+        if (!classroom) {
+            return null;
+        }
+
+        const sectionsCount = await Section.count({ where: { id_classroom: id } });
+        if (sectionsCount > 0) {
+            throw new ClassroomError(
+                'No se puede eliminar el aula porque tiene comisiones asignadas',
+                409
+            );
+        }
+
+        await classroom.destroy();
+        return classroom;
     }
 }

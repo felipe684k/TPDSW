@@ -40,5 +40,15 @@ export const classroomService = {
     }
     const json = await response.json();
     return json.data;
+  },
+
+  deleteClassroom: async (id: number): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/classrooms/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorJson = await response.json().catch(() => null);
+      throw new Error(errorJson?.message || 'Error al eliminar el aula');
+    }
   }
 };

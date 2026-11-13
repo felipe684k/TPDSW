@@ -9,6 +9,8 @@ export default function Classrooms() {
   const [classrooms, setClassrooms] = useState<Classroom[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [classroomToDelete, setClassroomToDelete] = useState<Classroom | null>(null)
   
   const [name, setName] = useState('')
   const [capacity, setCapacity] = useState<number | ''>('')
@@ -46,6 +48,33 @@ export default function Classrooms() {
     }
     setModalOpen(true)
     setToast(null)
+  }
+
+  const promptDelete = (classroom: Classroom) => {
+    setClassroomToDelete(classroom)
+    setDeleteModalOpen(true)
+    setToast(null)
+  }
+
+  const executeDelete = async () => {
+    if (!classroomToDelete?.id) return
+    setIsLoading(true)
+    try {
+      await classroomService.deleteClassroom(classroomToDelete.id)
+      setDeleteModalOpen(false)
+      setClassroomToDelete(null)
+      setToast({ text: 'Aula eliminada exitosamente', type: 'success' })
+      setTimeout(() => setToast(null), 3000)
+      fetchClassrooms()
+    } catch (error) {
+      setDeleteModalOpen(false)
+      setClassroomToDelete(null)
+      const msg = error instanceof Error ? error.message : 'Error al eliminar el aula'
+      setToast({ text: msg, type: 'danger' })
+      setTimeout(() => setToast(null), 4000)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,12 +117,23 @@ export default function Classrooms() {
       header: 'Acciones',
       align: 'right' as const,
       render: (c: Classroom) => (
-        <button 
-          onClick={() => handleOpenModal(c)}
-          className="text-slate-500 hover:text-indigo-400 transition-colors"
-        >
-          ✎ Editar
-        </button>
+        <div className="flex items-center justify-end gap-3">
+          <button 
+            type="button"
+            onClick={() => handleOpenModal(c)}
+            className="text-slate-600 hover:text-indigo-600 font-semibold text-xs transition-colors cursor-pointer"
+          >
+            ✎ Editar
+          </button>
+          <span className="text-slate-300">|</span>
+          <button 
+            type="button"
+            onClick={() => promptDelete(c)}
+            className="text-rose-500 hover:text-rose-700 font-semibold text-xs transition-colors cursor-pointer"
+          >
+            🗑 Eliminar
+          </button>
+        </div>
       ),
     },
   ]
@@ -174,6 +214,44 @@ export default function Classrooms() {
             onChange={(e) => setCapacity(e.target.value ? Number(e.target.value) : '')}
           />
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => { setDeleteModalOpen(false); setClassroomToDelete(null); }}
+        isDanger={true}
+        maxWidth="max-w-sm"
+        footer={
+          <div className="flex gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => { setDeleteModalOpen(false); setClassroomToDelete(null); }}
+              className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={executeDelete}
+              className="flex-1 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {isLoading ? 'Eliminando...' : 'Eliminar'}
+            </button>
+          </div>
+        }
+      >
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl mx-auto mb-3">
+            ⚠️
+          </div>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">
+            ¿Eliminar {classroomToDelete?.name || 'Aula'}?
+          </h3>
+          <p className="text-xs text-slate-500 mb-2">
+            Solo se puede eliminar si no tiene ninguna comisión asignada.
+          </p>
+        </div>
       </Modal>
     </div>
   )
