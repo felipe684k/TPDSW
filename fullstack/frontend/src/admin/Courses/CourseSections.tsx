@@ -19,6 +19,7 @@ interface CourseSectionsProps {
 
 export default function CourseSections({ courseId }: CourseSectionsProps) {
   const [modalOpen, setModalOpen] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
   
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
   const [sections, setSections] = useState<Section[]>([])
@@ -103,6 +104,45 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
     setFormData({ ...formData, schedules: newSchedules as any })
   }
 
+  const handleOpenCreate = () => {
+    if (!selectedAcademicYearId) {
+      setToast({ text: 'Debe seleccionar un ciclo lectivo', type: 'danger' })
+      return
+    }
+    setEditingId(null)
+    setFormData({
+      name: '',
+      id_classroom: '',
+      id_professor: '',
+      schedules: [{ day: 'MONDAY', start_time: '08:00', end_time: '10:00' }]
+    })
+    setModalOpen(true)
+  }
+
+  const handleOpenEdit = (section: Section) => {
+    setEditingId(section.id_section || null)
+    const professorId =
+      section.professors && section.professors.length > 0 && section.professors[0].id
+        ? String(section.professors[0].id)
+        : ''
+    const schedules =
+      section.schedules && section.schedules.length > 0
+        ? section.schedules.map((s) => ({
+            day: s.day,
+            start_time: s.start_time.slice(0, 5),
+            end_time: s.end_time.slice(0, 5)
+          }))
+        : [{ day: 'MONDAY' as const, start_time: '08:00', end_time: '10:00' }]
+
+    setFormData({
+      name: section.name || '',
+      id_classroom: String(section.id_classroom),
+      id_professor: professorId,
+      schedules
+    })
+    setModalOpen(true)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -113,25 +153,32 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
     }
 
     try {
-      await sectionService.createSection({
+      const payload = {
         name: formData.name,
         id_course: courseId,
         id_academic_year: Number(selectedAcademicYearId),
         id_classroom: Number(formData.id_classroom),
         id_professor: Number(formData.id_professor),
         schedules: formData.schedules
-      })
+      }
+
+      if (editingId) {
+        await sectionService.updateSection(editingId, payload)
+      } else {
+        await sectionService.createSection(payload)
+      }
       
-      setToast({ text: "Comisión registrada exitosamente", type: 'success' })
+      setToast({ text: editingId ? "Comisión actualizada exitosamente" : "Comisión registrada exitosamente", type: 'success' })
       setTimeout(() => setToast(null), 3000)
       setModalOpen(false)
+      setEditingId(null)
       fetchSections(Number(selectedAcademicYearId))
       setFormData({
         name: '', id_classroom: '', id_professor: '', schedules: [{day: 'MONDAY', start_time: '08:00', end_time: '10:00'}]
       })
     } catch (error) {
       console.error(error)
-      const msg = error instanceof Error ? error.message : "Error al registrar la comisión"
+      const msg = error instanceof Error ? error.message : (editingId ? "Error al actualizar la comisión" : "Error al registrar la comisión")
       setToast({ text: msg, type: 'danger' })
       setTimeout(() => setToast(null), 4000)
     }
@@ -168,10 +215,7 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
             ))}
           </select>
           <button 
-            onClick={() => {
-              if(!selectedAcademicYearId) { setToast({text:'Debe seleccionar un ciclo lectivo', type:'danger'}); return; }
-              setModalOpen(true)
-            }} 
+            onClick={handleOpenCreate} 
             className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-all"
           >
             ➕ Añadir Comisión
@@ -199,10 +243,7 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
           <p className="text-[11px] text-slate-400 max-w-sm">Creá una comisión para asignar profesores, aulas, días y horarios de cursada.</p>
           <button 
             type="button"
-            onClick={() => {
-              if(!selectedAcademicYearId) { setToast({text:'Debe seleccionar un ciclo lectivo', type:'danger'}); return; }
-              setModalOpen(true);
-            }} 
+            onClick={handleOpenCreate} 
             className="cursor-pointer mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-sm transition-all"
           >
             ➕ Crear primera comisión
@@ -241,7 +282,8 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
                   </div>
                 </div>
               </div>
-              <div className="mt-3 pt-2 border-t border-slate-300 flex justify-end">
+              <div className="mt-3 pt-2 border-t border-slate-300 flex justify-end gap-3">
+                <button onClick={() => handleOpenEdit(section)} className="text-indigo-600 hover:text-indigo-800 font-semibold text-[10px] cursor-pointer">Editar</button>
                 <button onClick={() => handleDelete(section.id_section!)} className="text-rose-500 hover:text-rose-400 font-semibold text-[10px] cursor-pointer">Desactivar</button>
               </div>
             </div>
@@ -249,13 +291,13 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
         </div>
       )}
 
-      {/* Create Modal */}
+      {/* Create / Edit Modal */}
       {modalOpen && (
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-start justify-center p-6 overflow-y-auto z-50">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col overflow-hidden my-auto border border-slate-200">
             <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-              <h3 className="text-sm font-bold text-slate-800">Nueva Comisión</h3>
-              <button onClick={() => setModalOpen(false)} className="text-slate-500 hover:text-slate-600 cursor-pointer">✕</button>
+              <h3 className="text-sm font-bold text-slate-800">{editingId ? 'Editar Comisión' : 'Nueva Comisión'}</h3>
+              <button onClick={() => { setModalOpen(false); setEditingId(null); }} className="text-slate-500 hover:text-slate-600 cursor-pointer">✕</button>
             </div>
             
             <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-5">
@@ -322,8 +364,8 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
               </div>
 
               <div className="flex gap-2 pt-2 border-t border-slate-200">
-                <button type="button" onClick={() => setModalOpen(false)} className="flex-1 px-3 py-2 border border-slate-300 bg-transparent hover:bg-slate-100 text-slate-700 rounded text-xs font-medium cursor-pointer">Cancelar</button>
-                <button type="submit" className="flex-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium cursor-pointer">Validar y Guardar</button>
+                <button type="button" onClick={() => { setModalOpen(false); setEditingId(null); }} className="flex-1 px-3 py-2 border border-slate-300 bg-transparent hover:bg-slate-100 text-slate-700 rounded text-xs font-medium cursor-pointer">Cancelar</button>
+                <button type="submit" className="flex-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium cursor-pointer">{editingId ? 'Guardar Cambios' : 'Validar y Guardar'}</button>
               </div>
             </form>
           </div>

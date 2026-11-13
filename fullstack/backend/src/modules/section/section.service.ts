@@ -30,15 +30,18 @@ export class SectionError extends Error {
 
 export class SectionService {
   // Prevent duplicate section names within the same course and academic year
-  private async assertNameAvailable(name: any, id_course: number, id_academic_year: number) {
+  private async assertNameAvailable(name: any, id_course: number, id_academic_year: number, excludeId?: number) {
     const cleanName = String(name ?? '').trim();
     if (!cleanName) {
       throw new SectionError('El nombre de la comisión es obligatorio', 400);
     }
 
-    const duplicate = await Section.findOne({
-      where: { name: cleanName, id_course, id_academic_year }
-    });
+    const where: any = { name: cleanName, id_course, id_academic_year };
+    if (excludeId !== undefined) {
+      where.id_section = { [Op.ne]: excludeId };
+    }
+
+    const duplicate = await Section.findOne({ where });
     if (duplicate) {
       throw new SectionError(`Ya existe una comisión con el nombre "${cleanName}"`, 409);
     }
@@ -273,6 +276,211 @@ export class SectionService {
 
       await t.commit();
       return newSection;
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
+  }
+
+  async update(id: number, data: Partial<CreateSectionDto>) {
+    const existingSection: any = await Section.findByPk(id, {
+      include: [
+        { model: Schedule, as: 'schedules' },
+        { model: User, as: 'professors' }
+      ]
+    });
+
+    if (!existingSection) {
+      return null;
+    }
+
+    const targetCourseId = data.id_course !== undefined ? Number(data.id_course) : Number(existingSection.id_course);
+    const targetAcademicYearId = data.id_academic_year !== undefined ? Number(data.id_academic_year) : Number(existingSection.id_academic_year);
+    const targetClassroomId = data.id_classroom !== undefined ? Number(data.id_classroom) : Number(existingSection.id_classroom);
+    const targetProfessorId = data.id_professor !== undefined
+      ? (data.id_professor ? Number(data.id_professor) : undefined)
+      : existingSection.professors?.[0]?.id;
+    const targetSchedules: ScheduleItemDto[] = data.schedules !== undefined
+      ? data.schedules
+      : (existingSection.schedules || []).map((s: any) => ({
+          day: s.day,
+          start_time: s.start_time,
+          end_time: s.end_time
+        }));
+
+    const sectionName = data.name !== undefined
+      ? await this.assertNameAvailable(data.name, targetCourseId, targetAcademicYearId, id)
+      : existingSection.name;
+
+    // Validate schedules (start time before end time)
+    if (targetSchedules && targetSchedules.length > 0) {
+      for (const reqSchedule of targetSchedules) {
+        if (reqSchedule.start_time >= reqSchedule.end_time) {
+          const dayName = DAY_LABELS[reqSchedule.day] || reqSchedule.day;
+          throw new SectionError(
+            `Horario inválido el día ${dayName}: la hora de fin debe ser posterior a la hora de inicio.`,
+            400
+          );
+        }
+      }
+    }
+
+    const t = await sequelize.transaction();
+    try {
+      const activeEnrollmentsCount = await Enrollment.count({
+        where: { id_section: id, status: { [Op.ne]: 'Dado de Baja' } },
+        transaction: t
+      });
+
+      if (activeEnrollmentsCount > 0 && targetCourseId !== Number(existingSection.id_course)) {
+        throw new SectionError(
+          'No se puede cambiar el curso de una comisión que ya tiene alumnos inscriptos.',
+          409
+        );
+      }
+
+      const targetClassroom: any = await Classroom.findByPk(targetClassroomId, { transaction: t });
+      if (!targetClassroom) {
+        throw new SectionError('El aula seleccionada no existe.', 404);
+      }
+
+      if (Number(targetClassroom.capacity) < activeEnrollmentsCount) {
+        throw new SectionError(
+          `El aula "${targetClassroom.name}" (capacidad ${targetClassroom.capacity}) no alcanza para los ${activeEnrollmentsCount} alumnos inscriptos actualmente en la comisión.`,
+          409
+        );
+      }
+
+      // Check classroom schedule overlap excluding current section
+      if (targetSchedules && targetSchedules.length > 0) {
+        const overlaps: string[] = [];
+
+        for (const reqSchedule of targetSchedules) {
+          const overlapping = await Section.findAll({
+            where: {
+              id_classroom: targetClassroomId,
+              id_academic_year: targetAcademicYearId,
+              id_section: { [Op.ne]: id }
+            },
+            include: [{
+              model: Schedule,
+              as: 'schedules',
+              where: {
+                day: reqSchedule.day,
+                [Op.or]: [
+                  {
+                    start_time: { [Op.lt]: reqSchedule.end_time },
+                    end_time: { [Op.gt]: reqSchedule.start_time }
+                  }
+                ]
+              }
+            }],
+            transaction: t
+          });
+
+          if (overlapping.length > 0) {
+            for (const overlapSection of overlapping) {
+              const block = (overlapSection as any).schedules[0];
+              const dayName = DAY_LABELS[reqSchedule.day] || reqSchedule.day;
+              overlaps.push(`El ${dayName} de ${block.start_time.slice(0, 5)} a ${block.end_time.slice(0, 5)} (ocupada por "${(overlapSection as any).name}")`);
+            }
+          }
+        }
+
+        if (overlaps.length > 0) {
+          throw new SectionError(
+            `El aula ya se encuentra ocupada en los siguientes horarios:\n- ${overlaps.join('\n- ')}`,
+            409
+          );
+        }
+      }
+
+      // Check professor schedule overlap excluding current section
+      if (targetProfessorId && targetSchedules && targetSchedules.length > 0) {
+        const profOverlaps: string[] = [];
+
+        for (const reqSchedule of targetSchedules) {
+          const overlappingProf = await Section.findAll({
+            where: {
+              id_academic_year: targetAcademicYearId,
+              id_section: { [Op.ne]: id }
+            },
+            include: [
+              {
+                model: User,
+                as: 'professors',
+                where: { id: targetProfessorId }
+              },
+              {
+                model: Schedule,
+                as: 'schedules',
+                where: {
+                  day: reqSchedule.day,
+                  [Op.or]: [
+                    {
+                      start_time: { [Op.lt]: reqSchedule.end_time },
+                      end_time: { [Op.gt]: reqSchedule.start_time }
+                    }
+                  ]
+                }
+              }
+            ],
+            transaction: t
+          });
+
+          if (overlappingProf.length > 0) {
+            for (const overlapSection of overlappingProf) {
+              const block = (overlapSection as any).schedules[0];
+              const dayName = DAY_LABELS[reqSchedule.day] || reqSchedule.day;
+              profOverlaps.push(`El ${dayName} de ${block.start_time.slice(0, 5)} a ${block.end_time.slice(0, 5)} (en "${(overlapSection as any).name}")`);
+            }
+          }
+        }
+
+        if (profOverlaps.length > 0) {
+          throw new SectionError(
+            `El profesor ya dicta otra comisión en los siguientes horarios:\n- ${profOverlaps.join('\n- ')}`,
+            409
+          );
+        }
+      }
+
+      await existingSection.update(
+        {
+          name: sectionName,
+          id_course: targetCourseId,
+          id_classroom: targetClassroomId,
+          id_academic_year: targetAcademicYearId
+        },
+        { transaction: t }
+      );
+
+      if (data.schedules !== undefined) {
+        await SectionSchedule.destroy({ where: { id_section: id }, transaction: t });
+        for (const h of targetSchedules) {
+          const [scheduleObj] = await Schedule.findOrCreate({
+            where: { day: h.day, start_time: h.start_time, end_time: h.end_time },
+            transaction: t
+          });
+          await SectionSchedule.create({
+            id_section: id,
+            id_schedule: (scheduleObj as any).id_schedule
+          }, { transaction: t });
+        }
+      }
+
+      if (data.id_professor !== undefined) {
+        await UserSection.destroy({ where: { id_section: id }, transaction: t });
+        if (targetProfessorId) {
+          await UserSection.create({
+            id_user: targetProfessorId,
+            id_section: id
+          }, { transaction: t });
+        }
+      }
+
+      await t.commit();
+      return await this.findById(id);
     } catch (error) {
       await t.rollback();
       throw error;

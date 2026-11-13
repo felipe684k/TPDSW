@@ -60,7 +60,31 @@ export const createSection = async (req: Request, res: Response, next: NextFunct
 };
 
 export const updateSection = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  res.status(501).json({ success: false, message: 'No implementado. Por favor eliminá y creá una nueva comisión.' });
+  try {
+    const { id } = req.params;
+    const { name, id_course, id_classroom, id_academic_year, schedules, id_professor } = req.body;
+    const updatedSection = await sectionService.update(Number(id), {
+      name,
+      id_course,
+      id_classroom,
+      id_academic_year,
+      schedules,
+      id_professor
+    });
+    if (!updatedSection) {
+      res.status(404).json({ success: false, message: 'Comisión no encontrada' });
+      return;
+    }
+    res.json({ success: true, data: updatedSection });
+  } catch (error: any) {
+    if (isDatabaseConnectionError(error)) return next(error);
+    if (error instanceof SectionError || error?.statusCode) {
+      res.status(error.statusCode || 400).json({ success: false, message: error.message });
+      return;
+    }
+    console.error('Error updating section:', error);
+    res.status(500).json({ success: false, message: 'Error al actualizar la comisión' });
+  }
 };
 
 export const deleteSection = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

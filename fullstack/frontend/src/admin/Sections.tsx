@@ -35,6 +35,7 @@ export default function Sections() {
   const [expandedSection, setExpandedSection] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'danger' } | null>(null)
 
   const [formData, setFormData] = useState<{
@@ -132,6 +133,7 @@ export default function Sections() {
     : courses.filter((c) => String(c.level_code) === selectedLevel)
 
   const handleOpenCreateModal = () => {
+    setEditingId(null)
     setFormData({
       name: '',
       id_course: selectedCourse !== 'all' ? selectedCourse : '',
@@ -144,6 +146,33 @@ export default function Sections() {
       id_classroom: '',
       id_professor: '',
       schedules: [{ day: 'MONDAY', start_time: '18:00', end_time: '20:00' }],
+    })
+    setModalOpen(true)
+    setToast(null)
+  }
+
+  const handleOpenEditModal = (section: Section) => {
+    setEditingId(section.id_section || null)
+    const professorId =
+      section.professors && section.professors.length > 0 && section.professors[0].id
+        ? String(section.professors[0].id)
+        : ''
+    const schedules =
+      section.schedules && section.schedules.length > 0
+        ? section.schedules.map((s) => ({
+            day: s.day as DayKey,
+            start_time: s.start_time.slice(0, 5),
+            end_time: s.end_time.slice(0, 5),
+          }))
+        : [{ day: 'MONDAY' as DayKey, start_time: '18:00', end_time: '20:00' }]
+
+    setFormData({
+      name: section.name || '',
+      id_course: String(section.id_course),
+      id_academic_year: String(section.id_academic_year),
+      id_classroom: String(section.id_classroom),
+      id_professor: professorId,
+      schedules,
     })
     setModalOpen(true)
     setToast(null)
@@ -172,20 +201,34 @@ export default function Sections() {
   const handleSubmitCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await sectionService.createSection({
+      const payload = {
         name: formData.name,
         id_course: Number(formData.id_course),
         id_academic_year: Number(formData.id_academic_year),
         id_classroom: Number(formData.id_classroom),
         id_professor: Number(formData.id_professor),
         schedules: formData.schedules,
-      })
+      }
+      if (editingId) {
+        await sectionService.updateSection(editingId, payload)
+      } else {
+        await sectionService.createSection(payload)
+      }
       setModalOpen(false)
-      setToast({ text: 'Comisión creada exitosamente', type: 'success' })
+      setEditingId(null)
+      setToast({
+        text: editingId ? 'Comisión actualizada exitosamente' : 'Comisión creada exitosamente',
+        type: 'success',
+      })
       setTimeout(() => setToast(null), 3000)
       fetchSections(selectedLevel, selectedCourse, selectedAcademicYear)
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Error al crear la comisión'
+      const msg =
+        error instanceof Error
+          ? error.message
+          : editingId
+            ? 'Error al actualizar la comisión'
+            : 'Error al crear la comisión'
       setToast({ text: msg, type: 'danger' })
       setTimeout(() => setToast(null), 4000)
     }
@@ -459,6 +502,16 @@ export default function Sections() {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation()
+                        handleOpenEditModal(section)
+                      }}
+                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-2.5 py-1 rounded hover:bg-indigo-50 transition-colors cursor-pointer"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
                         handleDelete(section.id_section!)
                       }}
                       className="text-xs font-semibold text-rose-500 hover:text-rose-700 px-2.5 py-1 rounded hover:bg-rose-50 transition-colors cursor-pointer"
@@ -630,17 +683,23 @@ export default function Sections() {
         )}
       </div>
 
-      {/* Create Section Modal */}
+      {/* Create / Edit Section Modal */}
       <Modal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="➕ Nueva Comisión"
+        onClose={() => {
+          setModalOpen(false)
+          setEditingId(null)
+        }}
+        title={editingId ? '✏️ Editar Comisión' : '➕ Nueva Comisión'}
         maxWidth="max-w-xl"
         footer={
           <>
             <button
               type="button"
-              onClick={() => setModalOpen(false)}
+              onClick={() => {
+                setModalOpen(false)
+                setEditingId(null)
+              }}
               className="cursor-pointer px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 rounded text-xs font-medium transition-colors"
             >
               Cancelar
@@ -650,7 +709,7 @@ export default function Sections() {
               form="createSectionForm"
               className="cursor-pointer px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium shadow-sm transition-all"
             >
-              Validar y Guardar
+              {editingId ? 'Guardar Cambios' : 'Validar y Guardar'}
             </button>
           </>
         }

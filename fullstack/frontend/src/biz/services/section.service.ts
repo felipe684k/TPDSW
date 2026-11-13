@@ -89,6 +89,17 @@ export const sectionService = {
     return json.data;
   },
 
+  updateSection: async (id: number, sectionData: any): Promise<Section> => {
+    const res = await fetch(`${API_URL}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sectionData)
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message || 'Error desconocido al actualizar la comisión');
+    return json.data;
+  },
+
   deleteSection: async (id: number): Promise<void> => {
     const res = await fetch(`${API_URL}/${id}`, {
       method: 'DELETE'
