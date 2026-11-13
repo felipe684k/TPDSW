@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { courseService, type Course } from '../biz/services/course.service'
 import { levelService, sortLevelsByProgression, type Level } from '../biz/services/level.service'
 import { tuitionFeeService } from '../biz/services/tuitionFee.service'
@@ -116,7 +117,8 @@ export default function Courses() {
       fetchCourses(selectedLevelFilter)
     } catch (error) {
       console.error('Error saving course', error)
-      alert(error instanceof Error ? error.message : 'Error al guardar el curso')
+      setToast({ text: error instanceof Error ? error.message : 'Error al guardar el curso', type: 'danger' })
+      setTimeout(() => setToast(null), 4000)
     }
   }
 
@@ -181,15 +183,16 @@ export default function Courses() {
         </button>
       </div>
 
-      {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
+      {toast && createPortal(
+        <div className={`fixed bottom-6 right-6 z-[200] bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
           toast.type === 'success' 
             ? 'border-emerald-500/50 text-emerald-600 shadow-emerald-900/20' 
             : 'border-rose-500/50 text-rose-600 shadow-rose-900/20'
         }`}>
           <span className="text-lg">{toast.type === 'success' ? '✅' : '🗑️'}</span>
           <span className="font-medium text-sm tracking-wide">{toast.text}</span>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Filter Bar */}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { sectionService, type Section, type Classroom } from '../biz/services/section.service'
 import { courseService, type Course } from '../biz/services/course.service'
 import { levelService, sortLevelsByProgression, type Level } from '../biz/services/level.service'
@@ -319,17 +320,18 @@ export default function Sections() {
         </button>
       </div>
 
-      {toast && (
+      {toast && createPortal(
         <div
-          className={`fixed bottom-6 right-6 z-50 bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 ${
+          className={`fixed bottom-6 right-6 z-[200] bg-white border px-5 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 ${
             toast.type === 'success'
-              ? 'border-emerald-500/50 text-emerald-500 shadow-emerald-900/20'
-              : 'border-rose-500/50 text-rose-500 shadow-rose-900/20'
+              ? 'border-emerald-500/50 text-emerald-600 shadow-emerald-900/20'
+              : 'border-rose-500/50 text-rose-600 shadow-rose-900/20'
           }`}
         >
           <span className="text-lg">{toast.type === 'success' ? '✅' : '❌'}</span>
           <span className="font-medium text-sm whitespace-pre-line">{toast.text}</span>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Filter Bar */}
