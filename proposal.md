@@ -25,17 +25,17 @@ El sistema a desarrollar es una plataforma de gestión para un instituto dedicad
 Regularidad:
 |Req|Detalle|
 |:-|:-|
-|CRUD simple|1. CRUD Nivel<br>2. CRUD Aula<br>3. CRUD Horario<br>4. CRUD Docente<br>5. CRUD Alumno|
-|CRUD dependiente|1. CRUD Comisión {depende de} CRUD Curso, CRUD Aula, CRUD Docente y CRUD Horario<br>2. CRUD Curso {depende de} CRUD Nivel<br>3. CRUD Inscripción {depende de} CRUD Alumno y CRUD Comisión|
+|CRUD simple|1. CRUD Aula<br>2. CRUD Ciclo Lectivo<br>3. CRUD Docente<br>4. CRUD Alumno|
+|CRUD dependiente|1. CRUD Comisión {depende de} CRUD Curso, CRUD Aula, CRUD Docente, CRUD Ciclo Lectivo y Horario<br>2. CRUD Curso {depende de} Nivel y Arancel (TuitionFee)<br>3. CRUD Inscripción {depende de} CRUD Alumno y CRUD Comisión|
 |Listado<br>+<br>detalle| 1. Listado de cursos filtrado por nivel muestra nombre del curso, carga horaria y costo => detalle del curso<br> 2. Listado de comisiones filtrado por nivel o curso muestra aula, horario, docente y cupo disponible => detalle de la comisión<br> 3. Listado de alumnos filtrado por comisión muestra nombre, DNI y fecha de inscripción => detalle del alumno|
-|CUU/Epic|1. CUU 1: Crear comisiones<br>2. CUU 2: Inscribir alumno a comisión<br>3. CUU 3: Asignar docente a una comisión|
+|CUU/Epic|1. CUU 1: Crear y editar comisiones (validando disponibilidad de aula y docente por horario)<br>2. CUU 2: Inscribir alumno a comisión (validando correlatividad de nivel, cupo y horarios)<br>3. CUU 3: Evaluar cursada y promover automáticamente de nivel al alumno<br>4. CUU 4: Registrar pagos de cuotas y reporte de alumnos con deuda|
 
 
 Adicionales para Aprobación
 |Req|Detalle|
 |:-|:-|
-|CRUD |1. CRUD Nivel<br>2. CRUD Aula<br>3. CRUD Horario<br>4. CRUD Docente<br>5. CRUD Alumno<br>6. CRUD Comisión<br>7. CRUD Curso<br>8. CRUD Inscripción|
-|CUU/Epic|1. CUU 1: Crear comisiones<br>2. CUU 2: Inscribir alumno a comisión<br>3. CUU 3: Asignar docente a una comisión<br>4. CUU 4: Generar reporte de alumnos<br>5. CUU 5: Asignar aulas a comisiones|
+|CRUD |1. CRUD Aula<br>2. CRUD Ciclo Lectivo<br>3. CRUD Docente<br>4. CRUD Alumno<br>5. CRUD Curso<br>6. CRUD Comisión<br>7. CRUD Inscripción|
+|CUU/Epic|1. CUU 1: Crear y editar comisiones<br>2. CUU 2: Inscribir alumno a comisión<br>3. CUU 3: Asignar docente y aula a una comisión sin solapamiento horario<br>4. CUU 4: Evaluar cursada y promover automáticamente de nivel al alumno<br>5. CUU 5: Registrar pagos de cuotas y generar reporte de alumnos deudores|
 
 
 ### Alcance Adicional Voluntario
