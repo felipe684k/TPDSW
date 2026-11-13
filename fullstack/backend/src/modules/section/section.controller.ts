@@ -6,11 +6,15 @@ const sectionService = new SectionService();
 
 export const getSections = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id_academic_year } = req.query;
-    const sections = await sectionService.findAll({ id_academic_year });
+    const { id_academic_year, level, id_course } = req.query;
+    const sections = await sectionService.findAll({ id_academic_year, level, id_course });
     res.json({ success: true, data: sections });
-  } catch (error) {
+  } catch (error: any) {
     if (isDatabaseConnectionError(error)) return next(error);
+    if (error instanceof SectionError || error?.statusCode) {
+      res.status(error.statusCode || 400).json({ success: false, message: error.message, data: [] });
+      return;
+    }
     console.error('Error fetching sections:', error);
     res.status(500).json({ success: false, message: 'Error al obtener las comisiones' });
   }

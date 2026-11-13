@@ -45,34 +45,96 @@ export class SectionService {
     return cleanName;
   }
 
-  async findAll(filters: { id_academic_year?: any } = {}) {
+  private formatSectionWithSpots(section: any) {
+    const plain = typeof section.toJSON === 'function' ? section.toJSON() : section;
+    const capacity = Number(plain.classroom?.capacity) || 0;
+    const enrollments = Array.isArray(plain.enrollments) ? plain.enrollments : [];
+    const activeEnrollments = enrollments.filter((e: any) => e.status !== 'Dado de Baja');
+    const enrolled_count = activeEnrollments.length;
+    const available_spots = Math.max(0, capacity - enrolled_count);
+    return {
+      ...plain,
+      enrolled_count,
+      available_spots
+    };
+  }
+
+  async findAll(filters: { id_academic_year?: any; level?: any; id_course?: any } = {}) {
     const where: any = {};
-    if (filters.id_academic_year) {
-      where.id_academic_year = filters.id_academic_year;
+
+    if (filters.id_academic_year !== undefined && filters.id_academic_year !== '' && filters.id_academic_year !== 'all') {
+      const yearId = Number(filters.id_academic_year);
+      if (!Number.isInteger(yearId) || yearId <= 0) {
+        throw new SectionError('El ciclo lectivo indicado para filtrar no es válido', 400);
+      }
+      where.id_academic_year = yearId;
     }
 
-    return await Section.findAll({
+    if (filters.id_course !== undefined && filters.id_course !== '' && filters.id_course !== 'all') {
+      const courseId = Number(filters.id_course);
+      if (!Number.isInteger(courseId) || courseId <= 0) {
+        throw new SectionError('El curso indicado para filtrar no es válido', 400);
+      }
+      where.id_course = courseId;
+    }
+
+    const courseWhere: any = {};
+    if (filters.level !== undefined && filters.level !== '' && filters.level !== 'all') {
+      const levelCode = Number(filters.level);
+      if (!Number.isInteger(levelCode) || levelCode <= 0) {
+        throw new SectionError('El nivel indicado para filtrar no es válido', 400);
+      }
+      courseWhere.level_code = levelCode;
+    }
+
+    const hasCourseFilter = Object.keys(courseWhere).length > 0;
+
+    const sections = await Section.findAll({
       where,
       include: [
-        { model: Course, as: 'course', include: [{ model: Level, as: 'level' }] },
+        {
+          model: Course,
+          as: 'course',
+          where: hasCourseFilter ? courseWhere : undefined,
+          required: hasCourseFilter,
+          include: [{ model: Level, as: 'level' }]
+        },
         { model: Classroom, as: 'classroom' },
         { model: AcademicYear, as: 'academic_year' },
         { model: Schedule, as: 'schedules' },
-        { model: User, as: 'professors', attributes: ['id', 'first_name', 'last_name', 'email'] }
+        { model: User, as: 'professors', attributes: ['id', 'first_name', 'last_name', 'email'] },
+        {
+          model: Enrollment,
+          as: 'enrollments',
+          include: [
+            { model: User, as: 'user', attributes: ['id', 'dni', 'first_name', 'last_name', 'email', 'phone'] }
+          ]
+        }
       ]
     });
+
+    return sections.map((s) => this.formatSectionWithSpots(s));
   }
 
   async findById(id: number) {
-    return await Section.findByPk(id, {
+    const section = await Section.findByPk(id, {
       include: [
         { model: Course, as: 'course', include: [{ model: Level, as: 'level' }] },
         { model: Classroom, as: 'classroom' },
         { model: AcademicYear, as: 'academic_year' },
         { model: Schedule, as: 'schedules' },
-        { model: User, as: 'professors', attributes: ['id', 'first_name', 'last_name', 'email'] }
+        { model: User, as: 'professors', attributes: ['id', 'first_name', 'last_name', 'email'] },
+        {
+          model: Enrollment,
+          as: 'enrollments',
+          include: [
+            { model: User, as: 'user', attributes: ['id', 'dni', 'first_name', 'last_name', 'email', 'phone'] }
+          ]
+        }
       ]
     });
+    if (!section) return null;
+    return this.formatSectionWithSpots(section);
   }
 
   async create(data: CreateSectionDto) {

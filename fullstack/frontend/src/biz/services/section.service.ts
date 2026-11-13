@@ -17,6 +17,22 @@ export interface Classroom {
   capacity: number;
 }
 
+export interface SectionEnrollment {
+  id_enrollment: number;
+  enrollment_date: string;
+  status: string;
+  final_grade?: number | null;
+  attendance_percentage?: number | null;
+  user?: {
+    id: number;
+    dni: string;
+    first_name: string;
+    last_name: string;
+    email?: string;
+    phone?: string;
+  };
+}
+
 export interface Section {
   id_section?: number;
   name?: string;
@@ -28,11 +44,35 @@ export interface Section {
   academic_year?: any;
   schedules?: Schedule[];
   professors?: User[];
+  enrolled_count?: number;
+  available_spots?: number;
+  enrollments?: SectionEnrollment[];
+}
+
+export interface SectionFilters {
+  id_academic_year?: number | string;
+  level?: number | string;
+  id_course?: number | string;
 }
 
 export const sectionService = {
-  getSections: async (id_academic_year?: number): Promise<Section[]> => {
-    const url = id_academic_year ? `${API_URL}?id_academic_year=${id_academic_year}` : API_URL;
+  getSections: async (params?: number | SectionFilters): Promise<Section[]> => {
+    const query = new URLSearchParams();
+    if (typeof params === 'number') {
+      query.set('id_academic_year', String(params));
+    } else if (params && typeof params === 'object') {
+      if (params.id_academic_year !== undefined && params.id_academic_year !== '' && params.id_academic_year !== 'all') {
+        query.set('id_academic_year', String(params.id_academic_year));
+      }
+      if (params.level !== undefined && params.level !== '' && params.level !== 'all') {
+        query.set('level', String(params.level));
+      }
+      if (params.id_course !== undefined && params.id_course !== '' && params.id_course !== 'all') {
+        query.set('id_course', String(params.id_course));
+      }
+    }
+    const qs = query.toString();
+    const url = qs ? `${API_URL}?${qs}` : API_URL;
     const res = await fetch(url);
     const json = await res.json();
     return json.data || [];

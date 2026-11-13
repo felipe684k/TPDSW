@@ -4,6 +4,7 @@ export const SIDEBAR_TABS = {
   STUDENTS: 'students',
   PROFESSORS: 'professors',
   COURSES: 'courses',
+  SECTIONS: 'sections',
   CLASSROOMS: 'classrooms',
   ACADEMIC_YEARS: 'academic-years',
   LEVELS: 'levels',

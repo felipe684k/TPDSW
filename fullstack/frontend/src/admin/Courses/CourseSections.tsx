@@ -64,8 +64,8 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
   const fetchSections = async (id_academic_year: number) => {
     setLoading(true)
     try {
-      const data = await sectionService.getSections(id_academic_year)
-      setSections(data.filter(s => s.id_course === courseId))
+      const data = await sectionService.getSections({ id_academic_year, id_course: courseId })
+      setSections(data)
     } catch (error) {
       console.error(error)
     } finally {

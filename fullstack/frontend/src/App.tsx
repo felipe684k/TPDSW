@@ -7,6 +7,7 @@ import Enrollments from './admin/Enrollments'
 import Students from './admin/Students/Students'
 import Professors from './admin/Professors'
 import Courses from './admin/Courses'
+import Sections from './admin/Sections'
 import Classrooms from './admin/Classrooms'
 import AcademicYears from './admin/AcademicYears'
 import Login from './auth/Login'
@@ -112,6 +113,10 @@ export default function App() {
 
           {activeTab === SIDEBAR_TABS.COURSES && (
             <Courses />
+          )}
+
+          {activeTab === SIDEBAR_TABS.SECTIONS && (
+            <Sections />
           )}
 
           {activeTab === SIDEBAR_TABS.CLASSROOMS && (
