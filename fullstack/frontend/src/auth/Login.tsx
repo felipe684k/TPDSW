@@ -132,14 +132,9 @@ export default function Login({ onLogin }: LoginProps) {
               </div>
               {/* Password Field */}
               <div className="flex flex-col gap-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                    Contraseña
-                  </label>
-                  <a href="#" className="text-xs text-blue-600 hover:text-blue-700 hover:underline font-medium">
-                    ¿Olvidaste tu clave?
-                  </a>
-                </div>
+                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                  Contraseña
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg className="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -158,18 +153,6 @@ export default function Login({ onLogin }: LoginProps) {
                   />
                 </div>
               </div>
-            </div>
-
-            {/* Remember session */}
-            <div className="flex items-center gap-2 pt-1">
-              <input 
-                type="checkbox" 
-                id="remember" 
-                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-              />
-              <label htmlFor="remember" className="text-sm text-slate-600 select-none cursor-pointer">
-                Mantener sesión iniciada
-              </label>
             </div>
 
             {/* Submit button */}

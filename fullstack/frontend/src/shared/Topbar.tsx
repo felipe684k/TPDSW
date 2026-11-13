@@ -26,7 +26,7 @@ export default function Topbar({ activeTab, setIsSidebarOpen }: { activeTab: Sid
         </button>
         <span className="hidden sm:inline">Inicio</span>
         <span className="hidden sm:inline opacity-50">/</span>
-        <strong className="text-white font-semibold capitalize tracking-wide">{activeTab.replace('-', ' ')}</strong>
+        <strong className="text-white font-semibold tracking-wide">{activeTab}</strong>
       </div>
       
       <div className="flex items-center gap-4">
@@ -41,12 +41,6 @@ export default function Topbar({ activeTab, setIsSidebarOpen }: { activeTab: Sid
             {STATUS_LABEL[connection]}
           </span>
         </div>
-
-        <button className="w-8 h-8 rounded-full flex items-center justify-center text-sm hover:bg-white/10 text-white transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-          </svg>
-        </button>
         
         <div className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-white/10 cursor-pointer transition-colors border border-transparent hover:border-white/10">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm border border-white/20">

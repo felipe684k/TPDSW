@@ -28,7 +28,7 @@ Regularidad:
 |CRUD simple|1. CRUD Aula<br>2. CRUD Ciclo Lectivo<br>3. CRUD Docente<br>4. CRUD Alumno|
 |CRUD dependiente|1. CRUD Comisión {depende de} CRUD Curso, CRUD Aula, CRUD Docente, CRUD Ciclo Lectivo y Horario<br>2. CRUD Curso {depende de} Nivel y Arancel (TuitionFee)<br>3. CRUD Inscripción {depende de} CRUD Alumno y CRUD Comisión|
 |Listado<br>+<br>detalle| 1. Listado de cursos filtrado por nivel muestra nombre del curso, carga horaria y costo => detalle del curso<br> 2. Listado de comisiones filtrado por nivel o curso muestra aula, horario, docente y cupo disponible => detalle de la comisión<br> 3. Listado de alumnos filtrado por comisión muestra nombre, DNI y fecha de inscripción => detalle del alumno|
-|CUU/Epic|1. CUU 1: Crear y editar comisiones (validando disponibilidad de aula y docente por horario)<br>2. CUU 2: Inscribir alumno a comisión (validando correlatividad de nivel, cupo y horarios)<br>3. CUU 3: Evaluar cursada y promover automáticamente de nivel al alumno<br>4. CUU 4: Registrar pagos de cuotas y reporte de alumnos con deuda|
+|CUU/Epic|1. CUU 1: Crear y editar comisiones (validando disponibilidad de aula y docente por horario)<br>2. CUU 2: Inscribir alumno a comisión (validando correlatividad de nivel y cupo)<br>3. CUU 3: Evaluar cursada y promover automáticamente de nivel al alumno<br>4. CUU 4: Registrar pagos de cuotas y reporte de alumnos con deuda|
 
 
 Adicionales para Aprobación

@@ -1,13 +1,13 @@
 export const SIDEBAR_TABS = {
-  DASHBOARD: 'dashboard',
-  ENROLLMENTS: 'enrollments',
-  STUDENTS: 'students',
-  PROFESSORS: 'professors',
-  COURSES: 'courses',
-  SECTIONS: 'sections',
-  CLASSROOMS: 'classrooms',
-  ACADEMIC_YEARS: 'academic-years',
-  LEVELS: 'levels',
+  DASHBOARD: 'Panel Principal',
+  ENROLLMENTS: 'Inscripciones',
+  STUDENTS: 'Alumnos',
+  PROFESSORS: 'Profesores',
+  COURSES: 'Cursos',
+  SECTIONS: 'Comisiones',
+  CLASSROOMS: 'Aulas',
+  ACADEMIC_YEARS: 'Ciclos Lectivos',
+  LEVELS: 'Niveles',
 } as const;
 
 export type SidebarTab = typeof SIDEBAR_TABS[keyof typeof SIDEBAR_TABS];

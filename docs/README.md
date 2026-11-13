@@ -14,9 +14,9 @@
 - **MySQL** v8.0 o superior corriendo en local (`localhost:3306`)
 
 ### 1. Configuración de la Base de Datos
-Crear una base de datos vacía en MySQL llamada `tpdsw_db`:
+Crear una base de datos vacía en MySQL llamada `instituto_ingles`:
 ```sql
-CREATE DATABASE IF NOT EXISTS tpdsw_db;
+CREATE DATABASE IF NOT EXISTS instituto_ingles;
 ```
 
 ### 2. Configuración e Inicio del Backend
@@ -26,7 +26,7 @@ npm install
 ```
 Verificar el archivo `fullstack/backend/.env`:
 ```env
-DB_NAME=tpdsw_db
+DB_NAME=instituto_ingles
 DB_USER=root
 DB_PASSWORD=tu_password
 DB_HOST=127.0.0.1
@@ -53,6 +53,6 @@ El frontend quedará disponible en `http://localhost:5173`.
 
 | Rol | Usuario | Contraseña | Acceso |
 | :--- | :--- | :--- | :--- |
-| **Administrador / Secretaría** | `admin` | `12345` | Gestión completa (Ciclos, Aulas, Niveles, Cursos, Comisiones, Profesores, Alumnos, Inscripciones, Pagos y Reporte de Deudores) |
+| **Administrador / Secretaría** | `admin` | `12345` | Gestión completa (Ciclos, Aulas, Cursos, Comisiones, Profesores, Alumnos, Inscripciones, Pagos y Reporte de Deudores) |
 | **Alumno** | `user` (o nombre en minúscula) | `12345` (o DNI del alumno) | Portal del Alumno (Cursadas e Historial de Cuotas/Pagos) |
 | **Profesor** | DNI o nombre del profesor | DNI | Acceso restringido (muestra aviso de bloqueo para rol Profesor) |

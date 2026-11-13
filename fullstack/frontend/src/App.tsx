@@ -35,7 +35,8 @@ export default function App() {
   })
 
   const [activeTab, setActiveTab] = useState<SidebarTab>(() => {
-    return (localStorage.getItem('activeTab') as any) || 'dashboard'
+    const saved = localStorage.getItem('activeTab') as SidebarTab
+    return Object.values(SIDEBAR_TABS).includes(saved) ? saved : SIDEBAR_TABS.DASHBOARD
   })
 
   useEffect(() => {
