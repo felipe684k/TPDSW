@@ -15,9 +15,21 @@ interface DataTableProps<T> {
   title: string;
   totalCount?: number;
   emptyMessage?: string;
+  onRowClick?: (item: T) => void;
+  isRowExpanded?: (item: T) => boolean;
+  renderExpandedRow?: (item: T) => React.ReactNode;
 }
 
-export default function DataTable<T>({ columns, data, title, totalCount, emptyMessage = 'No hay datos disponibles.' }: DataTableProps<T>) {
+export default function DataTable<T>({
+  columns,
+  data,
+  title,
+  totalCount,
+  emptyMessage = 'No hay datos disponibles.',
+  onRowClick,
+  isRowExpanded,
+  renderExpandedRow,
+}: DataTableProps<T>) {
   return (
     <div className={theme.table.wrapper}>
       <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white">
@@ -52,20 +64,37 @@ export default function DataTable<T>({ columns, data, title, totalCount, emptyMe
                 </td>
               </tr>
             ) : (
-              data.map((item, rowIndex) => (
-                <tr key={rowIndex} className={theme.table.row}>
-                  {columns.map((col, colIndex) => (
-                    <td
-                      key={colIndex}
-                      className={`p-3 text-xs ${col.className || theme.table.cellText} ${
-                        col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''
+              data.map((item, rowIndex) => {
+                const expanded = isRowExpanded ? isRowExpanded(item) : false;
+                return (
+                  <React.Fragment key={rowIndex}>
+                    <tr
+                      onClick={onRowClick ? () => onRowClick(item) : undefined}
+                      className={`${theme.table.row} ${onRowClick ? 'cursor-pointer' : ''} ${
+                        expanded ? 'bg-indigo-50/40' : ''
                       }`}
                     >
-                      {col.render ? col.render(item) : col.accessor ? String(item[col.accessor]) : null}
-                    </td>
-                  ))}
-                </tr>
-              ))
+                      {columns.map((col, colIndex) => (
+                        <td
+                          key={colIndex}
+                          className={`p-3 text-xs ${col.className || theme.table.cellText} ${
+                            col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''
+                          }`}
+                        >
+                          {col.render ? col.render(item) : col.accessor ? String(item[col.accessor]) : null}
+                        </td>
+                      ))}
+                    </tr>
+                    {expanded && renderExpandedRow && (
+                      <tr className="bg-slate-50/70">
+                        <td colSpan={columns.length} className="p-0 border-t border-slate-200">
+                          {renderExpandedRow(item)}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })
             )}
           </tbody>
         </table>

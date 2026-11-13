@@ -1,15 +1,20 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { isDatabaseConnectionError } from '../../middlewares/errorHandler.js';
-import { EnrollmentService } from './enrollment.service.js';
+import { EnrollmentService, EnrollmentError } from './enrollment.service.js';
 
 const enrollmentService = new EnrollmentService();
 
 export const getAllEnrollments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const enrollments = await enrollmentService.findAll();
+    const { id_section } = req.query;
+    const enrollments = await enrollmentService.findAll({ id_section });
     res.status(200).json({ status: 'ok', data: enrollments });
   } catch (error: any) {
     if (isDatabaseConnectionError(error)) return next(error);
+    if (error instanceof EnrollmentError || error?.statusCode) {
+      res.status(error.statusCode || 400).json({ status: 'error', message: error.message, data: [] });
+      return;
+    }
     console.error('Error fetching enrollments:', error);
     res.status(500).json({ status: 'db_error', message: 'Error interno al obtener las inscripciones', data: [] });
   }

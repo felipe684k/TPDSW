@@ -1,22 +1,86 @@
 import { Op } from 'sequelize';
-import { Enrollment, User, Section, Course, Level, UserLevel, Classroom, CURRENT_LEVEL_ORDER } from '../../models/index.js';
+import { Enrollment, User, Section, Course, Level, UserLevel, Classroom, AcademicYear, CURRENT_LEVEL_ORDER } from '../../models/index.js';
 import { todayLocalDate } from '../../utils/date.js';
 
+export class EnrollmentError extends Error {
+  statusCode: number;
+
+  constructor(message: string, statusCode: number = 400) {
+    super(message);
+    this.name = 'EnrollmentError';
+    this.statusCode = statusCode;
+  }
+}
+
 export class EnrollmentService {
-  async findAll() {
-    return await Enrollment.findAll({
+  async findAll(filters: { id_section?: any } = {}) {
+    const where: any = {};
+
+    if (filters.id_section !== undefined && filters.id_section !== '' && filters.id_section !== 'all') {
+      const sectionId = Number(filters.id_section);
+      if (!Number.isInteger(sectionId) || sectionId <= 0) {
+        throw new EnrollmentError('La comisión indicada para filtrar no es válida', 400);
+      }
+      where.id_section = sectionId;
+    }
+
+    const enrollments = await Enrollment.findAll({
+      where,
       include: [
-        { model: User, as: 'user' },
         {
-          model: Section, as: 'section',
+          model: User,
+          as: 'user',
+          include: [
+            { model: Level, as: 'levels' },
+            {
+              model: Enrollment,
+              as: 'enrollments',
+              include: [
+                {
+                  model: Section,
+                  as: 'section',
+                  include: [
+                    {
+                      model: Course,
+                      as: 'course',
+                      include: [{ model: Level, as: 'level' }]
+                    },
+                    { model: AcademicYear, as: 'academic_year' }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          model: Section,
+          as: 'section',
           include: [
             {
-              model: Course, as: 'course',
+              model: Course,
+              as: 'course',
               include: [{ model: Level, as: 'level' }]
-            }
+            },
+            { model: AcademicYear, as: 'academic_year' }
           ]
         }
       ]
+    });
+
+    return enrollments.map((e: any) => {
+      const plain = typeof e.toJSON === 'function' ? e.toJSON() : e;
+      if (plain.user && Array.isArray(plain.user.levels) && plain.user.levels.length > 0) {
+        const sortedLevels = [...plain.user.levels].sort((a: any, b: any) => {
+          const dateA = a.UserLevel?.start_date ? new Date(a.UserLevel.start_date).getTime() : 0;
+          const dateB = b.UserLevel?.start_date ? new Date(b.UserLevel.start_date).getTime() : 0;
+          if (dateB !== dateA) return dateB - dateA;
+          return Number(b.level_code) - Number(a.level_code);
+        });
+        plain.user.current_level = sortedLevels[0];
+      } else if (plain.user) {
+        plain.user.current_level = null;
+      }
+      return plain;
     });
   }
 
