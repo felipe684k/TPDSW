@@ -19,6 +19,10 @@ export const Course = sequelize.define('Course', {
     type: DataTypes.INTEGER,
     allowNull: false
   },
+  weekly_hours: {
+    type: DataTypes.DECIMAL(4, 1),
+    allowNull: true
+  },
   active: {
     type: DataTypes.BOOLEAN,
     allowNull: false,

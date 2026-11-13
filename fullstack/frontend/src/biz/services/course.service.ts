@@ -5,6 +5,7 @@ export interface Course {
   course_name: string;
   registration_fee: number;
   level_code: number;
+  weekly_hours?: number | string | null;
   active?: boolean;
   level?: {
     level_code: number;
@@ -20,9 +21,12 @@ export interface Course {
 const API_URL = `${API_BASE_URL}/courses`;
 
 export const courseService = {
-  getCourses: async (): Promise<Course[]> => {
+  getCourses: async (level?: number | string): Promise<Course[]> => {
     try {
-      const response = await fetch(API_URL);
+      const url = (level !== undefined && level !== '' && level !== 'all')
+        ? `${API_URL}?level=${encodeURIComponent(level)}`
+        : API_URL;
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Error al obtener los cursos');
       const json = await response.json();
       return json.data || [];

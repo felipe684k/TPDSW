@@ -25,9 +25,29 @@ export class CourseService {
     return name;
   }
 
-  async findAll() {
+  // Carga horaria semanal: opcional, pero si se envía debe ser un número entre 0,5 y 60
+  private parseWeeklyHours(value: any): number | null | undefined {
+    if (value === undefined) return undefined;
+    if (value === null || value === '') return null;
+    const hours = Number(value);
+    if (isNaN(hours) || hours < 0.5 || hours > 60) {
+      throw new CourseError('La carga horaria semanal debe ser un número entre 0,5 y 60 horas', 400);
+    }
+    return hours;
+  }
+
+  async findAll(filters: { level?: any } = {}) {
+    const where: any = { active: true };
+    if (filters.level !== undefined && filters.level !== '' && filters.level !== 'all') {
+      const levelCode = Number(filters.level);
+      if (!Number.isInteger(levelCode) || levelCode <= 0) {
+        throw new CourseError('El nivel indicado para filtrar no es válido', 400);
+      }
+      where.level_code = levelCode;
+    }
+
     return await Course.findAll({
-      where: { active: true },
+      where,
       include: [
         { model: Level, as: 'level' },
         { model: TuitionFee, as: 'tuition_fees' }
@@ -40,13 +60,16 @@ export class CourseService {
     level_code: any;
     registration_fee: any;
     initial_tuition_fee: any;
+    weekly_hours?: any;
   }) {
+    const weeklyHours = this.parseWeeklyHours(data.weekly_hours);
     const courseName = await this.assertNameAvailable(data.course_name);
 
     const newCourse: any = await Course.create({
       course_name: courseName,
       level_code: data.level_code,
       registration_fee: data.registration_fee,
+      weekly_hours: weeklyHours ?? null,
       active: true
     });
 
@@ -64,11 +87,14 @@ export class CourseService {
     course_name: any;
     level_code: any;
     registration_fee: any;
+    weekly_hours?: any;
   }) {
     const existingCourse = await Course.findOne({ where: { id_course: id } });
     if (!existingCourse) {
       return null;
     }
+
+    const weeklyHours = this.parseWeeklyHours(data.weekly_hours);
 
     const courseName = data.course_name !== undefined
       ? await this.assertNameAvailable(data.course_name, id)
@@ -77,7 +103,8 @@ export class CourseService {
     await Course.update({
       course_name: courseName,
       level_code: data.level_code,
-      registration_fee: data.registration_fee
+      registration_fee: data.registration_fee,
+      weekly_hours: weeklyHours
     }, { where: { id_course: id } });
 
     return existingCourse;
