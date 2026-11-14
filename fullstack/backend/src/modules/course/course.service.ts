@@ -13,6 +13,9 @@ export class CourseService {
   // Evita cursos activos con el mismo nombre (MySQL compara sin distinguir mayúsculas)
   private async assertNameAvailable(courseName: any, excludeId?: any) {
     const name = String(courseName ?? '').trim();
+    if (!name) {
+      throw new CourseError('El nombre del curso es obligatorio', 400);
+    }
     const where: any = { course_name: name, active: true };
     if (excludeId !== undefined) where.id_course = { [Op.ne]: excludeId };
 
@@ -32,6 +35,32 @@ export class CourseService {
       throw new CourseError('La carga horaria semanal debe ser un número entre 0,5 y 60 horas', 400);
     }
     return hours;
+  }
+
+  // La matrícula puede ser 0 (curso sin matrícula), pero no negativa
+  private parseRegistrationFee(value: any): number {
+    const fee = Number(value);
+    if (value === null || value === '' || !Number.isFinite(fee) || fee < 0) {
+      throw new CourseError('La matrícula debe ser un número mayor o igual a 0', 400);
+    }
+    return fee;
+  }
+
+  // La cuota mensual tiene que ser mayor a 0
+  private parseTuitionFee(value: any): number {
+    const fee = Number(value);
+    if (!Number.isFinite(fee) || fee <= 0) {
+      throw new CourseError('La cuota mensual debe ser un número mayor a 0', 400);
+    }
+    return fee;
+  }
+
+  // El nivel tiene que existir en la base
+  private async assertLevelExists(levelCode: any) {
+    const level = Number.isInteger(Number(levelCode)) ? await Level.findByPk(Number(levelCode)) : null;
+    if (!level) {
+      throw new CourseError('El nivel seleccionado no existe', 400);
+    }
   }
 
   async findAll(filters: { level?: any } = {}) {
@@ -61,12 +90,15 @@ export class CourseService {
     weekly_hours?: any;
   }) {
     const weeklyHours = this.parseWeeklyHours(data.weekly_hours);
+    const registrationFee = this.parseRegistrationFee(data.registration_fee);
+    const tuitionFee = this.parseTuitionFee(data.initial_tuition_fee);
+    await this.assertLevelExists(data.level_code);
     const courseName = await this.assertNameAvailable(data.course_name);
 
     const newCourse: any = await Course.create({
       course_name: courseName,
       level_code: data.level_code,
-      registration_fee: data.registration_fee,
+      registration_fee: registrationFee,
       weekly_hours: weeklyHours ?? null,
       active: true
     });
@@ -75,7 +107,7 @@ export class CourseService {
     await TuitionFee.create({
       id_course: newCourse.id_course,
       start_date: new Date(),
-      monthly_cost: data.initial_tuition_fee
+      monthly_cost: tuitionFee
     });
 
     return newCourse;
@@ -93,6 +125,12 @@ export class CourseService {
     }
 
     const weeklyHours = this.parseWeeklyHours(data.weekly_hours);
+    const registrationFee = data.registration_fee !== undefined
+      ? this.parseRegistrationFee(data.registration_fee)
+      : undefined;
+    if (data.level_code !== undefined) {
+      await this.assertLevelExists(data.level_code);
+    }
 
     const courseName = data.course_name !== undefined
       ? await this.assertNameAvailable(data.course_name, id)
@@ -101,7 +139,7 @@ export class CourseService {
     await Course.update({
       course_name: courseName,
       level_code: data.level_code,
-      registration_fee: data.registration_fee,
+      registration_fee: registrationFee,
       weekly_hours: weeklyHours
     }, { where: { id_course: id } });
 
