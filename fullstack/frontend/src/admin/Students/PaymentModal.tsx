@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-import { API_BASE_URL } from '../../biz/config'
+import { studentService } from '../../biz/services/student.service'
 import { paymentService, type Installment } from '../../biz/services/payment.service'
 import { academicYearService, type AcademicYear } from '../../biz/services/academicYear.service'
 import { formatDateAR, todayISO } from '../../biz/date'
@@ -114,20 +114,15 @@ export default function PaymentModal({ isOpen, onClose, studentId }: PaymentModa
 
   const fetchStudents = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/users?role=STUDENT`)
-      if (res.ok) {
-        const json = await res.json()
-        if (json.data && Array.isArray(json.data)) {
-          const mapped: Student[] = json.data.map((u: any) => ({
-            id: u.id,
-            fullName: `${u.last_name || ''}, ${u.first_name || ''}`.trim(),
-            dni: u.dni || '',
-            course: u.current_level && u.current_level !== 'No Level Assigned' ? u.current_level : 'Curso General'
-          }))
-          setStudentsList(mapped)
-          return
-        }
-      }
+      const students = await studentService.getStudents()
+      const mapped: Student[] = students.map((u: any) => ({
+        id: u.id,
+        fullName: `${u.last_name || ''}, ${u.first_name || ''}`.trim(),
+        dni: u.dni || '',
+        course: u.current_level && u.current_level !== 'No Level Assigned' ? u.current_level : 'Curso General'
+      }))
+      setStudentsList(mapped)
+      return
     } catch (e) {
       console.warn('Error loading students from backend:', e)
     }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { API_BASE_URL } from '../biz/config'
+import { authService } from '../biz/services/auth.service'
 
 //interfaz de typescript
 interface LoginProps {
@@ -33,30 +33,18 @@ export default function Login({ onLogin }: LoginProps) {
     setIsLoading(true)
 
     try {
-      //LLAMAMOS AL BACKEND CON UN POST A LOGIN Y ESPERAMOS LA RESPUESTA
-      const response = await fetch(`${API_BASE_URL}/users/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username, password: password })
-      })
-
-      //LO PASAMOS A OBJETO DE JS
-      const data = await response.json()
-
-      //SI EL BACKEND NO RESPONDE EXITO
-      if (!response.ok) {
-        setErrorMsg(data.message || 'Nombre de usuario o contraseña incorrectos.')
-        setIsLoading(false)
-        return
-      }
+      //LE PEDIMOS AL SERVICE QUE HAGA EL POST A /users/login Y ESPERAMOS EL USUARIO
+      //(el fetch está en biz/services/auth.service.ts, igual que en las demás pantallas)
+      const user = await authService.login(username, password)
 
       //ACA EL USUARIO LOGRO INGRESAR
       //EJECUTAMOS LA FUNCION onLogin QUE NOS PASO app.tsx
-      onLogin(data.data.role as 'ADMIN' | 'STUDENT', data.data) //manda el rol y el usuario completo
-      
+      onLogin(user.role, user) //manda el rol y el usuario completo
+
     } catch (error) {
+      //SI EL BACKEND NO RESPONDE EXITO (o no se pudo conectar), EL SERVICE NOS DA EL MENSAJE A MOSTRAR
       console.error(error)
-      setErrorMsg('Error al conectar al servidor. Por favor verifica que el backend esté corriendo.')
+      setErrorMsg(error instanceof Error ? error.message : 'Error al iniciar sesión.')
       setIsLoading(false)
     }
   }
