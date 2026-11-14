@@ -1,14 +1,12 @@
+import { AppError } from '../../errors/AppError.js';
 import { Op } from 'sequelize';
 import { Enrollment, User, Section, Course, Level, UserLevel, Classroom, AcademicYear, CURRENT_LEVEL_ORDER } from '../../models/index.js';
 import { todayLocalDate } from '../../utils/date.js';
 
-export class EnrollmentError extends Error {
-  statusCode: number;
-
+export class EnrollmentError extends AppError {
   constructor(message: string, statusCode: number = 400) {
-    super(message);
+    super(message, statusCode);
     this.name = 'EnrollmentError';
-    this.statusCode = statusCode;
   }
 }
 
@@ -126,7 +124,7 @@ export class EnrollmentService {
     });
 
     if (!section || !section.course) {
-      throw new Error('La comisión o el curso seleccionado no existe.');
+      throw new EnrollmentError('La comisión o el curso seleccionado no existe.', 404);
     }
 
     // Un alumno no puede inscribirse dos veces en la misma comisión (salvo que se haya dado de baja)
@@ -138,7 +136,7 @@ export class EnrollmentService {
       }
     });
     if (alreadyEnrolled) {
-      throw new Error('El alumno ya está inscripto en esta comisión.');
+      throw new EnrollmentError('El alumno ya está inscripto en esta comisión.', 409);
     }
 
     // Cupo: no puede haber más inscriptos vigentes que la capacidad del aula
@@ -148,21 +146,21 @@ export class EnrollmentService {
         where: { id_section: data.id_section, status: { [Op.ne]: 'Dado de Baja' } }
       });
       if (enrolledCount >= capacity) {
-        throw new Error(`La comisión no tiene cupo disponible: el aula "${section.classroom.name}" tiene capacidad para ${capacity} alumnos.`);
+        throw new EnrollmentError(`La comisión no tiene cupo disponible: el aula "${section.classroom.name}" tiene capacidad para ${capacity} alumnos.`, 409);
       }
     }
 
     const { currentLevel, allowedLevel } = await this.getAllowedLevelForStudent(Number(data.id_user));
 
     if (!allowedLevel) {
-      throw new Error(
+      throw new EnrollmentError(
         `El alumno ya posee el nivel máximo (${currentLevel?.name || 'C2'}) y no tiene un nivel siguiente para cursar.`
       );
     }
 
     if (Number(section.course.level_code) !== Number(allowedLevel.level_code)) {
       const currentDesc = currentLevel ? `tiene aprobado ${currentLevel.name}` : 'no tiene nivel previo';
-      throw new Error(
+      throw new EnrollmentError(
         `El alumno ${currentDesc}, por lo que solo puede inscribirse a cursos de nivel "${allowedLevel.name}" (el curso "${section.course.course_name}" es de nivel "${section.course.level?.name || section.course.level_code}").`
       );
     }
@@ -199,6 +197,17 @@ export class EnrollmentService {
     });
     if (!existingEnrollment) {
       return null;
+    }
+
+    // Nota (0 a 10) y asistencia (0 a 100): vacías se permiten, fuera de rango no
+    const isOutOfRange = (value: any, max: number) =>
+      value !== undefined && value !== null && value !== '' &&
+      (!Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > max);
+    if (isOutOfRange(data.final_grade, 10)) {
+      throw new EnrollmentError('La nota final debe ser un número entre 0 y 10', 400);
+    }
+    if (isOutOfRange(data.attendance_percentage, 100)) {
+      throw new EnrollmentError('El porcentaje de asistencia debe ser un número entre 0 y 100', 400);
     }
 
     await Enrollment.update({

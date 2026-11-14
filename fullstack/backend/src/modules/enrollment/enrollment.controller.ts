@@ -1,6 +1,6 @@
 import { type Request, type Response, type NextFunction } from 'express';
-import { isDatabaseConnectionError } from '../../middlewares/errorHandler.js';
-import { EnrollmentService, EnrollmentError } from './enrollment.service.js';
+import { AppError, parseId } from '../../errors/AppError.js';
+import { EnrollmentService } from './enrollment.service.js';
 
 const enrollmentService = new EnrollmentService();
 
@@ -9,14 +9,8 @@ export const getAllEnrollments = async (req: Request, res: Response, next: NextF
     const { id_section } = req.query;
     const enrollments = await enrollmentService.findAll({ id_section });
     res.status(200).json({ status: 'ok', data: enrollments });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof EnrollmentError || error?.statusCode) {
-      res.status(error.statusCode || 400).json({ status: 'error', message: error.message, data: [] });
-      return;
-    }
-    console.error('Error fetching enrollments:', error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno al obtener las inscripciones', data: [] });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -25,8 +19,7 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
     const { enrollment_date, final_grade, attendance_percentage, id_user, id_section } = req.body;
 
     if (!id_user || !id_section) {
-      res.status(400).json({ status: 'error', message: 'Faltan campos obligatorios' });
-      return;
+      throw new AppError('Faltan campos obligatorios', 400);
     }
 
     const newEnrollment = await enrollmentService.create({
@@ -38,17 +31,14 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
     });
 
     res.status(201).json({ status: 'ok', message: 'Inscripción registrada exitosamente', data: newEnrollment });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    console.error('Error creating enrollment:', error);
-    const msg = error?.message || 'Error interno al registrar la inscripción';
-    res.status(400).json({ status: 'error', message: msg });
+  } catch (error) {
+    next(error);
   }
 };
 
 export const updateEnrollment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = parseId(req.params.id);
     const { enrollment_date, final_grade, attendance_percentage, id_user, id_section, status } = req.body;
 
     const existingEnrollment = await enrollmentService.update(id, {
@@ -60,32 +50,26 @@ export const updateEnrollment = async (req: Request, res: Response, next: NextFu
       status
     });
     if (!existingEnrollment) {
-      res.status(404).json({ status: 'error', message: 'Inscripción no encontrada' });
-      return;
+      throw new AppError('Inscripción no encontrada', 404);
     }
 
     res.status(200).json({ status: 'ok', message: 'Inscripción actualizada exitosamente' });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    console.error('Error updating enrollment:', error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno al actualizar la inscripción' });
+  } catch (error) {
+    next(error);
   }
 };
 
 export const deleteEnrollment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = parseId(req.params.id);
 
     const existingEnrollment = await enrollmentService.delete(id);
     if (!existingEnrollment) {
-      res.status(404).json({ status: 'error', message: 'Inscripción no encontrada' });
-      return;
+      throw new AppError('Inscripción no encontrada', 404);
     }
 
     res.status(200).json({ status: 'ok', message: 'Inscripción dada de baja exitosamente' });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    console.error('Error deactivating enrollment:', error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno al desactivar la inscripción' });
+  } catch (error) {
+    next(error);
   }
 };

@@ -1,13 +1,11 @@
+import { AppError } from '../../errors/AppError.js';
 import { Op } from 'sequelize';
 import { Course, Level, TuitionFee, Section } from '../../models/index.js';
 
-export class CourseError extends Error {
-  statusCode: number;
-
+export class CourseError extends AppError {
   constructor(message: string, statusCode: number = 400) {
-    super(message);
+    super(message, statusCode);
     this.name = 'CourseError';
-    this.statusCode = statusCode;
   }
 }
 

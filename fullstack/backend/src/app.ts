@@ -1,8 +1,9 @@
-import express, { type Request, type Response } from 'express';
+import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import { sequelize, User, Level } from './models/index.js';
 import { errorHandler, isDatabaseConnectionError, DB_UNAVAILABLE_MESSAGE } from './middlewares/errorHandler.js';
+import { AppError } from './errors/AppError.js';
 
 async function seedDefaultUsers() {
   try {
@@ -156,6 +157,11 @@ app.get('/', (req: Request, res: Response) => {
   res.json({
     message: 'The Backend now runs 100% with TypeScript! 🚀',
   });
+});
+
+// Si ninguna ruta anterior respondió, la ruta no existe: se deriva un 404 al errorHandler
+app.use((req: Request, res: Response, next: NextFunction) => {
+  next(new AppError(`La ruta ${req.method} ${req.originalUrl} no existe`, 404));
 });
 
 // Middleware global de errores: siempre va después de todas las rutas

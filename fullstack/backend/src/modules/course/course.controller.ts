@@ -1,6 +1,6 @@
 import { type Request, type Response, type NextFunction } from 'express';
-import { isDatabaseConnectionError } from '../../middlewares/errorHandler.js';
-import { CourseService, CourseError } from './course.service.js';
+import { AppError, parseId } from '../../errors/AppError.js';
+import { CourseService } from './course.service.js';
 
 const courseService = new CourseService();
 
@@ -9,14 +9,8 @@ export const getAllCourses = async (req: Request, res: Response, next: NextFunct
     const { level } = req.query;
     const courses = await courseService.findAll({ level });
     res.status(200).json({ status: 'ok', data: courses });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof CourseError) {
-      res.status(error.statusCode).json({ status: 'error', message: error.message });
-      return;
-    }
-    console.error('Error fetching courses:', error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno al obtener los cursos', data: [] });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -25,8 +19,7 @@ export const createCourse = async (req: Request, res: Response, next: NextFuncti
     const { course_name, level_code, registration_fee, initial_tuition_fee, weekly_hours } = req.body;
     
     if (!course_name || !level_code || !initial_tuition_fee) {
-      res.status(400).json({ status: 'error', message: 'Faltan campos obligatorios' });
-      return;
+      throw new AppError('Faltan campos obligatorios', 400);
     }
 
     const newCourse = await courseService.create({
@@ -38,20 +31,14 @@ export const createCourse = async (req: Request, res: Response, next: NextFuncti
     });
 
     res.status(201).json({ status: 'ok', message: 'Curso registrado exitosamente', data: newCourse });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof CourseError) {
-      res.status(error.statusCode).json({ status: 'error', message: error.message });
-      return;
-    }
-    console.error('Error creating course:', error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno al crear el curso' });
+  } catch (error) {
+    next(error);
   }
 };
 
 export const updateCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = parseId(req.params.id);
     const { course_name, level_code, registration_fee, weekly_hours } = req.body;
     
     const existingCourse = await courseService.update(id, {
@@ -61,40 +48,26 @@ export const updateCourse = async (req: Request, res: Response, next: NextFuncti
       weekly_hours
     });
     if (!existingCourse) {
-      res.status(404).json({ status: 'error', message: 'Curso no encontrado' });
-      return;
+      throw new AppError('Curso no encontrado', 404);
     }
 
     res.status(200).json({ status: 'ok', message: 'Curso actualizado exitosamente' });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof CourseError) {
-      res.status(error.statusCode).json({ status: 'error', message: error.message });
-      return;
-    }
-    console.error('Error updating course:', error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno al actualizar el curso' });
+  } catch (error) {
+    next(error);
   }
 };
 
 export const deleteCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = parseId(req.params.id);
     
     const existingCourse = await courseService.delete(id);
     if (!existingCourse) {
-      res.status(404).json({ status: 'error', message: 'Curso no encontrado' });
-      return;
+      throw new AppError('Curso no encontrado', 404);
     }
     
     res.status(200).json({ status: 'ok', message: 'Curso desactivado exitosamente' });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof CourseError) {
-      res.status(error.statusCode).json({ status: 'error', message: error.message });
-      return;
-    }
-    console.error('Error deactivating course:', error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno al desactivar el curso' });
+  } catch (error) {
+    next(error);
   }
 };

@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { isDatabaseConnectionError } from '../../middlewares/errorHandler.js';
-import { PaymentService, PaymentError } from './payment.service.js';
+import { AppError } from '../../errors/AppError.js';
+import { PaymentService } from './payment.service.js';
 
 const paymentService = new PaymentService();
 
@@ -11,10 +11,8 @@ export const getAllPayments = async (req: Request, res: Response, next: NextFunc
   try {
     const payments = await paymentService.findAll();
     res.status(200).json({ status: 'ok', data: payments });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    console.error('Error fetching payments:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error al consultar los pagos', data: [] });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -25,8 +23,7 @@ export const getStudentAccountStatus = async (req: Request, res: Response, next:
   try {
     const { id_user } = req.params;
     if (!id_user) {
-      res.status(400).json({ status: 'error', message: 'Se requiere el ID del alumno', data: null });
-      return;
+      throw new AppError('Se requiere el ID del alumno', 400);
     }
 
     const { id_academic_year } = req.query;
@@ -52,14 +49,8 @@ export const getStudentAccountStatus = async (req: Request, res: Response, next:
         installments: result.installments
       }
     });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof PaymentError || error?.statusCode) {
-      res.status(error.statusCode || 400).json({ status: 'error', message: error.message, data: null });
-      return;
-    }
-    console.error('Error fetching account status:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error al consultar el estado de cuenta', data: null });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -83,14 +74,8 @@ export const registerPayment = async (req: Request, res: Response, next: NextFun
       message: result.message,
       data: result.payment
     });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof PaymentError || error?.statusCode) {
-      res.status(error.statusCode || 400).json({ status: 'error', message: error.message, data: null });
-      return;
-    }
-    console.error('Error registering payment:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno al registrar el pago', data: null });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -104,9 +89,7 @@ export const getDebtors = async (req: Request, res: Response, next: NextFunction
       id_academic_year ? Number(id_academic_year) : undefined
     );
     res.status(200).json({ status: 'ok', data: debtors });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    console.error('Error fetching debtors:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error al consultar los deudores', data: [] });
+  } catch (error) {
+    next(error);
   }
 };

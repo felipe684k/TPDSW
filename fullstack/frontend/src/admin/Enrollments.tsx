@@ -75,7 +75,7 @@ export default function Enrollments() {
       setEnrollmentToDelete(null);
     } catch (error) {
       console.error('Error deactivating enrollment:', error);
-      alert('Error al desactivar la inscripción.');
+      alert(error instanceof Error ? error.message : 'Error al desactivar la inscripción.');
     }
   };
 
@@ -113,7 +113,7 @@ export default function Enrollments() {
       setUpdateModalOpen(false);
     } catch (error) {
       console.error('Error updating enrollment:', error);
-      alert('Error al guardar la inscripción. Por favor verificá los datos.');
+      alert(error instanceof Error ? error.message : 'Error al guardar la inscripción. Por favor verificá los datos.');
     }
   };
 

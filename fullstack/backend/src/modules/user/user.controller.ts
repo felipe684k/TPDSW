@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { isDatabaseConnectionError } from '../../middlewares/errorHandler.js';
-import { UserService, UserError } from './user.service.js';
+import { AppError, parseId } from '../../errors/AppError.js';
+import { UserService } from './user.service.js';
 
 const userService = new UserService();
 
@@ -9,10 +9,8 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
     const { search, level } = req.query;
     const cleanUsers = await userService.findAll({ search, level });
     res.status(200).json({ status: 'ok', message: 'Lista obtenida exitosamente', data: cleanUsers });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    console.error('Error querying users:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: [] });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -20,8 +18,7 @@ export const checkStudentDni = async (req: Request, res: Response, next: NextFun
   try {
     const { dni } = req.params;
     if (!dni) {
-      res.status(400).json({ status: 'error', message: 'DNI es obligatorio', data: null });
-      return;
+      throw new AppError('DNI es obligatorio', 400);
     }
 
     const student = await userService.checkStudentDni(dni as string);
@@ -31,10 +28,8 @@ export const checkStudentDni = async (req: Request, res: Response, next: NextFun
     }
 
     res.status(200).json({ status: 'not_found', data: null });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    console.error('Error checking student DNI:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -48,38 +43,18 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       message: 'Inicio de sesión exitoso',
       data: userData
     });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof UserError || error?.statusCode) {
-      res.status(error.statusCode || 400).json({
-        status: 'error',
-        message: error.message,
-        data: null
-      });
-      return;
-    }
-    console.error('Error logging in:', error?.message || error);
-    res.status(500).json({
-      status: 'db_error',
-      message: 'Error interno al iniciar sesión',
-      data: null
-    });
+  } catch (error) {
+    next(error);
   }
 };
 
 export const getUserById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id } = req.params;
-    const foundUser = await userService.findById(id as string);
+    const id = parseId(req.params.id);
+    const foundUser = await userService.findById(id);
     res.status(200).json({ status: 'ok', message: 'Alumno encontrado exitosamente', data: foundUser });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof UserError || error?.statusCode) {
-      res.status(error.statusCode || 404).json({ status: 'error', message: error.message, data: null });
-      return;
-    }
-    console.error('Error finding student with ID ' + req.params.id + ':', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno al buscar el alumno', data: null });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -102,23 +77,17 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
     }
 
     res.status(201).json({ status: 'ok', message: 'Alumno registrado exitosamente', data: result.user });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof UserError || error?.statusCode) {
-      res.status(error.statusCode || 400).json({ status: 'error', message: error.message, data: null });
-      return;
-    }
-    console.error('Error creating student:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
+  } catch (error) {
+    next(error);
   }
 };
 
 export const updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = parseId(req.params.id);
     const { dni, first_name, last_name, phone, birth_date, email, username, password, level_code } = req.body;
 
-    const updatedData = await userService.update(id as string, {
+    const updatedData = await userService.update(id, {
       dni,
       first_name,
       last_name,
@@ -135,29 +104,17 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
       message: 'Alumno actualizado exitosamente',
       data: updatedData
     });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof UserError || error?.statusCode) {
-      res.status(error.statusCode || 400).json({ status: 'error', message: error.message, data: null });
-      return;
-    }
-    console.error('Error updating student:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
+  } catch (error) {
+    next(error);
   }
 };
 
 export const deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id } = req.params;
-    await userService.delete(id as string);
+    const id = parseId(req.params.id);
+    await userService.delete(id);
     res.status(200).json({ status: 'ok', message: 'Alumno desactivado exitosamente', data: null });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof UserError || error?.statusCode) {
-      res.status(error.statusCode || 400).json({ status: 'error', message: error.message, data: null });
-      return;
-    }
-    console.error('Error deactivating student:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
+  } catch (error) {
+    next(error);
   }
 };

@@ -1,13 +1,11 @@
+import { AppError } from '../../errors/AppError.js';
 import { Op } from 'sequelize';
 import { AcademicYear, Section } from '../../models/index.js';
 
-export class AcademicYearError extends Error {
-  statusCode: number;
-
+export class AcademicYearError extends AppError {
   constructor(message: string, statusCode: number = 400) {
-    super(message);
+    super(message, statusCode);
     this.name = 'AcademicYearError';
-    this.statusCode = statusCode;
   }
 }
 
@@ -15,6 +13,9 @@ export class AcademicYearService {
   // Prevent duplicate academic year names
   private async assertNameAvailable(name: any, excludeId?: number) {
     const cleanName = String(name ?? '').trim();
+    if (!cleanName) {
+      throw new AcademicYearError('El nombre del ciclo lectivo es obligatorio', 400);
+    }
     const where: any = { name: cleanName };
     if (excludeId !== undefined) where.id_academic_year = { [Op.ne]: excludeId };
 

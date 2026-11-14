@@ -1,3 +1,4 @@
+import { AppError } from '../../errors/AppError.js';
 import { Op } from 'sequelize';
 import { ENROLLMENT_STATUS, INSTALLMENT_STATUS, REGISTRATION_INSTALLMENT } from '../../constants.js';
 import { Payment, Enrollment, User, Section, Course, TuitionFee, AcademicYear, Classroom, Schedule } from '../../models/index.js';
@@ -131,13 +132,10 @@ export const getMonthlyFee = (course: any, year?: number, monthNum?: number): nu
   return Number(chosen.monthly_cost) || DEFAULT_MONTHLY_FEE;
 };
 
-export class PaymentError extends Error {
-  statusCode: number;
-
+export class PaymentError extends AppError {
   constructor(message: string, statusCode: number = 400) {
-    super(message);
+    super(message, statusCode);
     this.name = 'PaymentError';
-    this.statusCode = statusCode;
   }
 }
 

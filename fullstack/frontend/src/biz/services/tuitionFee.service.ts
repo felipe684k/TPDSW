@@ -25,7 +25,10 @@ export const tuitionFeeService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Error al crear la cuota');
+    if (!response.ok) {
+      const errorJson = await response.json().catch(() => null);
+      throw new Error(errorJson?.message || 'Error al crear la cuota');
+    }
     return response.json();
   }
 };

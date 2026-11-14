@@ -163,6 +163,8 @@ export default function Courses() {
       fetchCourses(selectedLevelFilter)
     } catch (error) {
       console.error(error)
+      setToast({ text: error instanceof Error ? error.message : 'Error al actualizar la cuota', type: 'danger' })
+      setTimeout(() => setToast(null), 4000)
     }
   }
 

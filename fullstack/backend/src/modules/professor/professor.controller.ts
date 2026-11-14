@@ -1,7 +1,6 @@
 import { type Request, type Response, type NextFunction } from 'express';
-import { isDatabaseConnectionError } from '../../middlewares/errorHandler.js';
+import { AppError, parseId } from '../../errors/AppError.js';
 import { ProfessorService } from './professor.service.js';
-import { UserError } from '../user/user.service.js';
 
 const professorService = new ProfessorService();
 
@@ -11,10 +10,8 @@ export const getAllProfessors = async (req: Request, res: Response, next: NextFu
     const professors = await professorService.findAll({ search, status });
 
     res.status(200).json({ status: 'ok', message: 'Profesores obtenidos exitosamente', data: professors });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    console.error('Error querying professors:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: [] });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -29,10 +26,8 @@ export const checkProfessorDni = async (req: Request, res: Response, next: NextF
     }
 
     res.status(200).json({ status: 'not_found', data: null });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    console.error('Error checking professor DNI:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -41,8 +36,7 @@ export const createProfessor = async (req: Request, res: Response, next: NextFun
     const { dni, first_name, last_name, phone, email, birth_date } = req.body;
 
     if (!dni || !first_name || !last_name) {
-      res.status(400).json({ status: 'error', message: 'DNI, Nombre y Apellido son obligatorios', data: null });
-      return;
+      throw new AppError('DNI, Nombre y Apellido son obligatorios', 400);
     }
 
     const result = await professorService.create({
@@ -55,8 +49,7 @@ export const createProfessor = async (req: Request, res: Response, next: NextFun
     });
 
     if (result.conflict) {
-      res.status(409).json({ status: 'error', message: 'Ya existe un usuario con el DNI: ' + dni, data: null });
-      return;
+      throw new AppError('Ya existe un usuario con el DNI: ' + dni, 409);
     }
 
     if (result.reactivated) {
@@ -65,20 +58,14 @@ export const createProfessor = async (req: Request, res: Response, next: NextFun
     }
 
     res.status(201).json({ status: 'ok', message: 'Profesor registrado exitosamente', data: result.data });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof UserError) {
-      res.status(error.statusCode).json({ status: 'error', message: error.message, data: null });
-      return;
-    }
-    console.error('Error registering professor:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
+  } catch (error) {
+    next(error);
   }
 };
 
 export const updateProfessor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = parseId(req.params.id);
     const { dni, first_name, last_name, phone, email, birth_date, active } = req.body;
 
     const updatedData = await professorService.update(id, {
@@ -92,37 +79,27 @@ export const updateProfessor = async (req: Request, res: Response, next: NextFun
     });
 
     if (!updatedData) {
-      res.status(404).json({ status: 'error', message: 'No se encontró un profesor con ID ' + id, data: null });
-      return;
+      throw new AppError('No se encontró un profesor con ID ' + id, 404);
     }
 
     res.status(200).json({ status: 'ok', message: 'Profesor actualizado exitosamente', data: updatedData });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    if (error instanceof UserError) {
-      res.status(error.statusCode).json({ status: 'error', message: error.message, data: null });
-      return;
-    }
-    console.error('Error updating professor:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
+  } catch (error) {
+    next(error);
   }
 };
 
 export const deleteProfessor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = parseId(req.params.id);
 
     const deleted = await professorService.delete(id);
 
     if (!deleted) {
-      res.status(404).json({ status: 'error', message: 'No se encontró un profesor activo con ID ' + id, data: null });
-      return;
+      throw new AppError('No se encontró un profesor activo con ID ' + id, 404);
     }
 
     res.status(200).json({ status: 'ok', message: 'Profesor desactivado exitosamente', data: null });
-  } catch (error: any) {
-    if (isDatabaseConnectionError(error)) return next(error);
-    console.error('Error deactivating professor:', error?.message || error);
-    res.status(500).json({ status: 'db_error', message: 'Error interno del servidor', data: null });
+  } catch (error) {
+    next(error);
   }
 };

@@ -1,3 +1,4 @@
+import { AppError } from '../../errors/AppError.js';
 import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import { User } from '../../models/user.js';
@@ -5,13 +6,10 @@ import { sequelize, Level, UserLevel, Enrollment, Section, Course, AcademicYear,
 import { ENROLLMENT_STATUS } from '../../constants.js';
 import { todayLocalDate } from '../../utils/date.js';
 
-export class UserError extends Error {
-  statusCode: number;
-
+export class UserError extends AppError {
   constructor(message: string, statusCode: number = 400) {
-    super(message);
+    super(message, statusCode);
     this.name = 'UserError';
-    this.statusCode = statusCode;
   }
 }
 

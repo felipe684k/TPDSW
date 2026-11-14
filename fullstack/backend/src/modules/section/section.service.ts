@@ -1,3 +1,4 @@
+import { AppError } from '../../errors/AppError.js';
 import { Op } from 'sequelize';
 import { Section, Schedule, SectionSchedule, UserSection, Course, Classroom, AcademicYear, User, Level, Enrollment } from '../../models/index.js';
 import { sequelize } from '../../config/database.js';
@@ -18,13 +19,10 @@ export interface CreateSectionDto {
   id_professor?: number;
 }
 
-export class SectionError extends Error {
-  statusCode: number;
-
+export class SectionError extends AppError {
   constructor(message: string, statusCode: number = 400) {
-    super(message);
+    super(message, statusCode);
     this.name = 'SectionError';
-    this.statusCode = statusCode;
   }
 }
 

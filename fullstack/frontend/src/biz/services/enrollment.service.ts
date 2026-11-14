@@ -109,7 +109,10 @@ export const enrollmentService = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(enrollmentData),
             });
-            if (!response.ok) throw new Error('Error al actualizar la inscripción');
+            if (!response.ok) {
+                const errorJson = await response.json().catch(() => null);
+                throw new Error(errorJson?.message || 'Error al actualizar la inscripción');
+            }
             const json = await response.json();
             return json.data;
         } catch (error) {
@@ -123,7 +126,10 @@ export const enrollmentService = {
             const response = await fetch(`${API_URL}/${id}`, {
                 method: 'DELETE',
             });
-            if (!response.ok) throw new Error('Error al desactivar la inscripción');
+            if (!response.ok) {
+                const errorJson = await response.json().catch(() => null);
+                throw new Error(errorJson?.message || 'Error al desactivar la inscripción');
+            }
         } catch (error) {
             console.error(error);
             throw error;
