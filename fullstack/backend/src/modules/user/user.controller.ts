@@ -2,8 +2,17 @@ import type { Request, Response, NextFunction } from 'express';
 import { AppError, parseId } from '../../errors/AppError.js';
 import { UserService } from './user.service.js';
 
+/**
+ * CONTROLLER DE USUARIOS / ALUMNOS  (/api/users)
+ *
+ * Capa HTTP: cada función recibe el pedido (req), toma los datos que necesita
+ * (req.body, req.params, req.query), llama al service y arma la respuesta (res).
+ * No tiene reglas de negocio: esas están en el service.
+ * Si algo falla, el catch deriva el error al middleware de errores con next(error).
+ */
 const userService = new UserService();
 
+// GET /api/users?search=&level= → lista alumnos (búsqueda por nombre o DNI y filtro por nivel)
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { search, level } = req.query;
@@ -14,6 +23,7 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
+// GET /api/users/check-dni/:dni → busca un alumno dado de baja con ese DNI (para reactivarlo)
 export const checkStudentDni = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { dni } = req.params;
@@ -33,6 +43,7 @@ export const checkStudentDni = async (req: Request, res: Response, next: NextFun
   }
 };
 
+// POST /api/users/login → valida usuario y contraseña y devuelve los datos del usuario (sin la contraseña)
 export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { username, password } = req.body;
@@ -48,6 +59,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
   }
 };
 
+// GET /api/users/:id → detalle de un alumno
 export const getUserById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = parseId(req.params.id);
@@ -58,6 +70,7 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
+// POST /api/users → crea un alumno (o reactiva uno dado de baja con el mismo DNI)
 export const createUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { dni, first_name, last_name, phone, birth_date, email, level_code } = req.body;
@@ -82,6 +95,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
   }
 };
 
+// PUT /api/users/:id → edita un alumno
 export const updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = parseId(req.params.id);
@@ -109,6 +123,7 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
   }
 };
 
+// DELETE /api/users/:id → baja lógica del alumno y de sus inscripciones
 export const deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = parseId(req.params.id);

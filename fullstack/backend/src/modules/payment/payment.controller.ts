@@ -2,11 +2,17 @@ import type { Request, Response, NextFunction } from 'express';
 import { AppError } from '../../errors/AppError.js';
 import { PaymentService } from './payment.service.js';
 
+/**
+ * CONTROLLER DE PAGOS  (/api/payments)
+ *
+ * Capa HTTP: cada función recibe el pedido (req), toma los datos que necesita
+ * (req.body, req.params, req.query), llama al service y arma la respuesta (res).
+ * No tiene reglas de negocio: esas están en el service.
+ * Si algo falla, el catch deriva el error al middleware de errores con next(error).
+ */
 const paymentService = new PaymentService();
 
-/**
- * Obtener todos los pagos registrados
- */
+// GET /api/payments → lista todos los pagos registrados
 export const getAllPayments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const payments = await paymentService.findAll();
@@ -16,9 +22,7 @@ export const getAllPayments = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-/**
- * Obtener el estado de cuenta de un alumno por ID de usuario
- */
+// GET /api/payments/student/:id_user?id_academic_year= → estado de cuenta de un alumno
 export const getStudentAccountStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id_user } = req.params;
@@ -54,9 +58,7 @@ export const getStudentAccountStatus = async (req: Request, res: Response, next:
   }
 };
 
-/**
- * Registrar un nuevo pago de cuota
- */
+// POST /api/payments → registra el pago (total o parcial) de una cuota o de la matrícula
 export const registerPayment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id_enrollment, installment_month, amount, payment_method, payment_date } = req.body;
@@ -79,9 +81,7 @@ export const registerPayment = async (req: Request, res: Response, next: NextFun
   }
 };
 
-/**
- * Obtener listado de deudores
- */
+// GET /api/payments/debtors?id_academic_year= → reporte de alumnos con cuotas vencidas sin pagar
 export const getDebtors = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id_academic_year } = req.query;

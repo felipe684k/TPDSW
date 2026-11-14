@@ -2,8 +2,17 @@ import { type Request, type Response, type NextFunction } from 'express';
 import { AppError, parseId } from '../../errors/AppError.js';
 import { ProfessorService } from './professor.service.js';
 
+/**
+ * CONTROLLER DE DOCENTES  (/api/professors)
+ *
+ * Capa HTTP: cada función recibe el pedido (req), toma los datos que necesita
+ * (req.body, req.params, req.query), llama al service y arma la respuesta (res).
+ * No tiene reglas de negocio: esas están en el service.
+ * Si algo falla, el catch deriva el error al middleware de errores con next(error).
+ */
 const professorService = new ProfessorService();
 
+// GET /api/professors → lista los docentes
 export const getAllProfessors = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { search, status } = req.query;
@@ -15,6 +24,7 @@ export const getAllProfessors = async (req: Request, res: Response, next: NextFu
   }
 };
 
+// GET /api/professors/check-dni/:dni → busca un docente dado de baja con ese DNI (para reactivarlo)
 export const checkProfessorDni = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { dni } = req.params;
@@ -31,6 +41,7 @@ export const checkProfessorDni = async (req: Request, res: Response, next: NextF
   }
 };
 
+// POST /api/professors → crea un docente (o reactiva uno dado de baja con el mismo DNI)
 export const createProfessor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { dni, first_name, last_name, phone, email, birth_date } = req.body;
@@ -63,6 +74,7 @@ export const createProfessor = async (req: Request, res: Response, next: NextFun
   }
 };
 
+// PUT /api/professors/:id → edita un docente
 export const updateProfessor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = parseId(req.params.id);
@@ -88,6 +100,7 @@ export const updateProfessor = async (req: Request, res: Response, next: NextFun
   }
 };
 
+// DELETE /api/professors/:id → baja lógica del docente
 export const deleteProfessor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = parseId(req.params.id);

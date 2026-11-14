@@ -2,8 +2,17 @@ import { type Request, type Response, type NextFunction } from 'express';
 import { AppError, parseId } from '../../errors/AppError.js';
 import { ClassroomService } from './classroom.service.js';
 
+/**
+ * CONTROLLER DE AULAS  (/api/classrooms)
+ *
+ * Capa HTTP: cada función recibe el pedido (req), toma los datos que necesita
+ * (req.body, req.params, req.query), llama al service y arma la respuesta (res).
+ * No tiene reglas de negocio: esas están en el service.
+ * Si algo falla, el catch deriva el error al middleware de errores con next(error).
+ */
 const classroomService = new ClassroomService();
 
+// GET /api/classrooms → lista todas las aulas
 export const getClassrooms = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const classrooms = await classroomService.findAll();
@@ -13,6 +22,7 @@ export const getClassrooms = async (req: Request, res: Response, next: NextFunct
     }
 };
 
+// POST /api/classrooms → crea un aula
 export const createClassroom = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name, capacity } = req.body;
@@ -23,6 +33,7 @@ export const createClassroom = async (req: Request, res: Response, next: NextFun
     }
 };
 
+// PUT /api/classrooms/:id → edita un aula
 export const updateClassroom = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const id = parseId(req.params.id);
@@ -39,6 +50,7 @@ export const updateClassroom = async (req: Request, res: Response, next: NextFun
     }
 };
 
+// DELETE /api/classrooms/:id → elimina un aula (si no tiene comisiones)
 export const deleteClassroom = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const id = parseId(req.params.id);
