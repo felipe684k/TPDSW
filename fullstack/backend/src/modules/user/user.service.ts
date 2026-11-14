@@ -44,6 +44,16 @@ export function normalizeEmail(email: any): string | null {
   return clean === '' ? null : clean;
 }
 
+// Formato de DNI (7 u 8 números, sin puntos) y de email (texto@texto.dominio). Solo valida lo que se envía.
+export function assertValidDniAndEmail(dni?: any, email?: string | null) {
+  if (dni !== undefined && !/^\d{7,8}$/.test(String(dni))) {
+    throw new UserError('El DNI debe tener 7 u 8 números, sin puntos ni espacios', 400);
+  }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new UserError('El email no tiene un formato válido (ej. nombre@email.com)', 400);
+  }
+}
+
 // Genera un username libre a partir del nombre: "juan", "juan2", "juan3"...
 export async function generateUniqueUsername(base: string, excludeId?: number | string): Promise<string> {
   const cleanBase = base.toLowerCase().trim() || 'usuario';
@@ -295,6 +305,7 @@ export class UserService {
     }
 
     const cleanEmail = normalizeEmail(email);
+    assertValidDniAndEmail(dni, cleanEmail);
     const hashedPassword = await bcrypt.hash(dni.toString(), 10);
 
     const activeExistingUser: any = await User.findOne({ where: { dni } });
@@ -388,6 +399,7 @@ export class UserService {
       dataToUpdate.password = await bcrypt.hash(password, 10);
     }
 
+    assertValidDniAndEmail(dataToUpdate.dni, dataToUpdate.email);
     await assertUniqueUserFields(
       { dni: dataToUpdate.dni, email: dataToUpdate.email, username: dataToUpdate.username },
       id

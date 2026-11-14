@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import { User } from '../../models/user.js';
-import { normalizeEmail, assertUniqueUserFields } from '../user/user.service.js';
+import { normalizeEmail, assertUniqueUserFields, assertValidDniAndEmail } from '../user/user.service.js';
 
 export class ProfessorService {
   async findAll(filters: { search?: any; status?: any }) {
@@ -64,6 +64,7 @@ export class ProfessorService {
     birth_date: any;
   }) {
     const { dni, first_name, last_name, phone, email, birth_date } = data;
+    assertValidDniAndEmail(dni, normalizeEmail(email));
 
     const activeExistingProfessor: any = await User.findOne({ where: { dni, active: true } });
     if (activeExistingProfessor) {
@@ -138,6 +139,7 @@ export class ProfessorService {
     if (birth_date !== undefined) dataToUpdate.birth_date = birth_date;
     if (active !== undefined) dataToUpdate.active = active;
 
+    assertValidDniAndEmail(dataToUpdate.dni, dataToUpdate.email);
     await assertUniqueUserFields({ dni: dataToUpdate.dni, email: dataToUpdate.email }, id);
 
     await User.update(dataToUpdate, { where: { id, role: 'PROFESSOR' } });
