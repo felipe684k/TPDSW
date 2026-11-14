@@ -24,14 +24,20 @@ CREATE DATABASE IF NOT EXISTS instituto_ingles;
 cd fullstack/backend
 npm install
 ```
-Verificar el archivo `fullstack/backend/.env`:
+Crear el archivo `fullstack/backend/.env` copiando el ejemplo incluido en el repositorio:
+```bash
+cp .env.example .env
+```
+Y completar los datos de tu MySQL (como mínimo `DB_PASSWORD`):
 ```env
 DB_NAME=instituto_ingles
 DB_USER=root
 DB_PASSWORD=tu_password
 DB_HOST=127.0.0.1
 DB_PORT=3306
+PORT=3000
 ```
+> El `.env` no se sube al repositorio porque contiene la contraseña de la base de datos.
 Iniciar el servidor de desarrollo (sincroniza las tablas y crea los niveles y usuarios iniciales automáticamente):
 ```bash
 npm run dev
