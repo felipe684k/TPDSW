@@ -1,7 +1,13 @@
 /**
- * Error "esperado" del sistema: algo que el usuario hizo mal o que no se puede hacer
+ * ERRORES DEL SISTEMA
+ *
+ * AppError es el error "esperado" del sistema: algo que el usuario hizo mal o que no se puede hacer
  * (un dato faltante, algo que no existe, un horario ocupado...).
- * Lleva el código HTTP con el que hay que responder; el que arma la respuesta es el errorHandler.
+ * Hereda de Error (la clase de error de JavaScript) y le agrega el código HTTP con el que hay que
+ * responder. El que arma la respuesta es el errorHandler (middlewares/errorHandler.ts).
+ *
+ * Cada módulo tiene su propia clase que hereda de esta (CourseError, SectionError, UserError...),
+ * así el nombre del error dice de qué módulo viene.
  *
  * Uso: throw new AppError('Curso no encontrado', 404);
  */

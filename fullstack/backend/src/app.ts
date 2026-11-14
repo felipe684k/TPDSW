@@ -1,3 +1,15 @@
+/**
+ * PUNTO DE ENTRADA DEL BACKEND
+ *
+ * Este archivo arma y levanta el servidor Express. En orden:
+ *   1. Conecta con MySQL, sincroniza las tablas y carga los datos iniciales (initDatabase).
+ *   2. Registra los middlewares globales (cors y express.json).
+ *   3. Monta un router por cada módulo bajo /api/...
+ *   4. Agrega el 404 para rutas inexistentes y el middleware de errores (siempre al final).
+ *   5. Empieza a escuchar pedidos en el puerto configurado.
+ *
+ * Recorrido de un pedido: router → controller → service → modelo (Sequelize) → MySQL.
+ */
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
@@ -5,9 +17,15 @@ import { sequelize, User, Level } from './models/index.js';
 import { errorHandler, isDatabaseConnectionError, DB_UNAVAILABLE_MESSAGE } from './middlewares/errorHandler.js';
 import { AppError } from './errors/AppError.js';
 
+// ─── DATOS INICIALES ────────────────────────────────────────────────────────
+
+/**
+ * Crea los usuarios de demo si no existen: admin (Secretaría) y user (alumno), ambos con clave 12345.
+ * Si ya existen pero su clave quedó guardada en texto plano (versiones viejas), la pasa a hash con bcrypt.
+ */
 async function seedDefaultUsers() {
   try {
-    // 1. Admin user
+    // 1. Usuario administrador
     const admin: any = await User.scope('withPassword').findOne({ where: { username: 'admin' } });
     if (!admin) {
       const adminPasswordHash = await bcrypt.hash('12345', 10);
@@ -23,12 +41,13 @@ async function seedDefaultUsers() {
       });
       console.log('👤 Usuario admin inicial creado (admin / 12345)');
     } else if (typeof admin.password === 'string' && !admin.password.startsWith('$2')) {
+      // Los hash de bcrypt empiezan con "$2": si no, la clave está en texto plano
       const adminPasswordHash = await bcrypt.hash('12345', 10);
       await admin.update({ password: adminPasswordHash });
       console.log('🔑 Contraseña de admin actualizada a hash');
     }
 
-    // 2. Student demo user
+    // 2. Usuario alumno de demo
     const student: any = await User.scope('withPassword').findOne({ where: { username: 'user' } });
     if (!student) {
       const studentPasswordHash = await bcrypt.hash('12345', 10);
@@ -53,6 +72,10 @@ async function seedDefaultUsers() {
   }
 }
 
+/**
+ * Si la tabla de niveles está vacía, crea A1 → A2 → B1 → B2 → C1 → C2
+ * y encadena cada uno con el siguiente (next_level_code), que es lo que usa la promoción de nivel.
+ */
 async function seedDefaultLevels() {
   try {
     const count = await Level.count();
@@ -63,6 +86,7 @@ async function seedDefaultLevels() {
         const level: any = await Level.create({ name });
         createdLevels.push(level);
       }
+      // Cada nivel apunta al siguiente; C2 queda sin siguiente (es el último)
       for (let i = 0; i < createdLevels.length - 1; i++) {
         await createdLevels[i].update({ next_level_code: createdLevels[i + 1].level_code });
       }
@@ -73,10 +97,16 @@ async function seedDefaultLevels() {
   }
 }
 
-// Sincroniza las tablas y carga los datos iniciales. Si MySQL todavía no está disponible
-// (por ejemplo, el backend arrancó antes que el gestor), reintenta cada 5 segundos.
+// ─── CONEXIÓN Y SINCRONIZACIÓN CON LA BASE ──────────────────────────────────
+
+// Si MySQL todavía no está disponible (por ejemplo, el backend arrancó antes que el gestor),
+// se reintenta cada 5 segundos.
 const DB_RETRY_MS = 5000;
 
+/**
+ * Borra índices viejos duplicados de la tabla user. Versiones anteriores del modelo creaban
+ * un índice nuevo en cada arranque; se dejan solo la clave primaria y los 3 índices únicos con nombre.
+ */
 async function cleanupLegacyIndexes(): Promise<void> {
   try {
     const keepUserIndexes = new Set(['PRIMARY', 'user_dni_unique', 'user_email_unique', 'user_username_unique']);
@@ -95,6 +125,11 @@ async function cleanupLegacyIndexes(): Promise<void> {
   }
 }
 
+/**
+ * Prepara la base: limpia índices viejos, crea o actualiza las tablas según los modelos
+ * (sync con alter) y carga los datos iniciales.
+ * Si la base no responde, no corta el servidor: vuelve a intentar en 5 segundos.
+ */
 async function initDatabase(attempt = 1): Promise<void> {
   try {
     await cleanupLegacyIndexes();
@@ -112,7 +147,10 @@ async function initDatabase(attempt = 1): Promise<void> {
   }
 }
 
+// Se llama sin await: el servidor sigue arrancando mientras la base se prepara
 initDatabase();
+
+// ─── SERVIDOR EXPRESS ───────────────────────────────────────────────────────
 
 import userRouter from './modules/user/user.router.js';
 import professorRouter from './modules/professor/professor.router.js';
@@ -129,10 +167,11 @@ const app = express();
 // Puerto del servidor: se toma del .env (PORT) y, si no está definido, se usa 3000
 const PORT = Number(process.env.PORT) || 3000;
 
-app.use(cors());
-app.use(express.json());
+// Middlewares globales: se ejecutan en este orden para todos los pedidos
+app.use(cors());          // permite que el front (otro puerto) le haga pedidos a esta API
+app.use(express.json());  // convierte el body JSON del pedido en un objeto (req.body)
 
-// Configure routes
+// Rutas: cada módulo tiene su router; acá se define el prefijo de URL de cada uno
 app.use('/api/users', userRouter);
 app.use('/api/professors', professorRouter);
 app.use('/api/levels', levelRoutes);
@@ -144,7 +183,8 @@ app.use('/api/academic-years', academicYearRoutes);
 app.use('/api/sections', sectionRoutes);
 app.use('/api/payments', paymentRouter);
 
-// Health check: además de responder, verifica que la base de datos esté disponible
+// Health check: además de responder, verifica que la base de datos esté disponible.
+// El front lo consulta cada 5 segundos para mostrar el cartel de conexión.
 app.get('/api/health', async (req: Request, res: Response) => {
   try {
     await sequelize.authenticate();
@@ -154,6 +194,7 @@ app.get('/api/health', async (req: Request, res: Response) => {
   }
 });
 
+// Ruta raíz: solo confirma que el servidor está prendido
 app.get('/', (req: Request, res: Response) => {
   res.json({
     message: 'The Backend now runs 100% with TypeScript! 🚀',
@@ -168,6 +209,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Middleware global de errores: siempre va después de todas las rutas
 app.use(errorHandler);
 
+// '0.0.0.0' permite conectarse también desde otras máquinas de la red, no solo desde localhost
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Backend server running on: http://localhost:${PORT}`);
 });

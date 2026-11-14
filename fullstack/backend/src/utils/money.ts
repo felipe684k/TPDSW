@@ -1,4 +1,6 @@
 /**
+ * UTILIDAD DE MONTOS
+ *
  * Formatea un monto en pesos con formato argentino: punto para miles y coma para decimales.
  * Ejemplos: 12000 -> "$12.000", 1500.5 -> "$1.500,5"
  */

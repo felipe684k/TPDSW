@@ -1,7 +1,19 @@
+/**
+ * MIDDLEWARE DE ERRORES
+ *
+ * Manejo de errores centralizado: todos los errores del backend terminan acá.
+ *   - Los services lanzan errores con throw (AppError con su código HTTP).
+ *   - Los controllers los atrapan con catch y los derivan con next(error).
+ *   - Este middleware decide el código y el mensaje, y responde siempre con el mismo formato:
+ *     { status, success: false, message, data: null }
+ *
+ * Express lo reconoce como middleware de errores porque recibe 4 parámetros (error, req, res, next).
+ */
 import type { Request, Response, NextFunction } from 'express';
 import { ConnectionError, ConnectionTimedOutError } from 'sequelize';
 import { AppError } from '../errors/AppError.js';
 
+// Mensaje que ve el usuario cuando MySQL no responde (también lo usa /api/health en app.ts)
 export const DB_UNAVAILABLE_MESSAGE = 'No hay conexión con la base de datos. Intentá de nuevo en unos minutos.';
 
 /**
@@ -31,6 +43,7 @@ function sendError(res: Response, statusCode: number, message: string, status: s
  * con next(error) y acá se decide qué se responde.
  */
 export function errorHandler(error: any, req: Request, res: Response, next: NextFunction) {
+  // Si ya se empezó a mandar una respuesta no se puede mandar otra: se lo deja a Express
   if (res.headersSent) {
     return next(error);
   }
