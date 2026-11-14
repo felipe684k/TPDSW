@@ -2,6 +2,17 @@ import { AppError } from '../../errors/AppError.js';
 import { Op } from 'sequelize';
 import { AcademicYear, Section } from '../../models/index.js';
 
+/**
+ * SERVICE DE CICLOS LECTIVOS
+ *
+ * Capa de lógica de negocio: valida las reglas y usa los modelos para leer y guardar en la base.
+ * No usa req ni res: si algo no se puede hacer, lanza un error con su código HTTP.
+ *
+ * Valida que el nombre no se repita y que la fecha de fin sea posterior a la de inicio.
+ * Se elimina de verdad (borrado físico), pero solo si no tiene comisiones.
+ */
+
+// Error propio del módulo: hereda de AppError, así el errorHandler responde con su código
 export class AcademicYearError extends AppError {
   constructor(message: string, statusCode: number = 400) {
     super(message, statusCode);
@@ -10,7 +21,7 @@ export class AcademicYearError extends AppError {
 }
 
 export class AcademicYearService {
-  // Prevent duplicate academic year names
+  // El nombre es obligatorio y no se puede repetir (excludeId: al editar, se excluye el propio ciclo)
   private async assertNameAvailable(name: any, excludeId?: number) {
     const cleanName = String(name ?? '').trim();
     if (!cleanName) {
@@ -26,7 +37,7 @@ export class AcademicYearService {
     return cleanName;
   }
 
-  // Validate that end_date is after start_date
+  // La fecha de fin tiene que ser posterior a la de inicio (se comparan como texto AAAA-MM-DD)
   private assertValidDates(startDate: any, endDate: any) {
     const start = String(startDate ?? '').slice(0, 10);
     const end = String(endDate ?? '').slice(0, 10);
@@ -35,22 +46,28 @@ export class AcademicYearService {
     }
   }
 
+  // ─── CRUD ───
+
+  // Ciclos lectivos, del más nuevo al más viejo
   async findAll() {
     return await AcademicYear.findAll({
       order: [['start_date', 'DESC']]
     });
   }
 
+  // Un ciclo lectivo por su id (null si no existe)
   async findById(id: number) {
     return await AcademicYear.findByPk(id);
   }
 
+  // Crea un ciclo lectivo validando fechas y nombre
   async create(data: { name: string; start_date: string | Date; end_date: string | Date }) {
     this.assertValidDates(data.start_date, data.end_date);
     const name = await this.assertNameAvailable(data.name);
     return await AcademicYear.create({ ...data, name });
   }
 
+  // Edita un ciclo: las fechas se validan combinando las nuevas con las que ya tenía
   async update(id: number, data: { name?: string; start_date?: string | Date; end_date?: string | Date }) {
     const academicYear: any = await AcademicYear.findByPk(id);
     if (!academicYear) {
@@ -66,12 +83,13 @@ export class AcademicYearService {
     return await academicYear.update(data);
   }
 
+  // Elimina un ciclo lectivo si no tiene comisiones
   async delete(id: number) {
     const academicYear = await AcademicYear.findByPk(id);
     if (!academicYear) {
       return null;
     }
-    // Prevent deleting an academic year that has sections
+    // No se puede eliminar un ciclo que tiene comisiones
     const sectionsCount = await Section.count({ where: { id_academic_year: id } });
     if (sectionsCount > 0) {
       throw new AcademicYearError('No se puede eliminar el ciclo lectivo porque tiene comisiones asociadas', 409);

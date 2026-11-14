@@ -4,6 +4,21 @@ import { sequelize } from '../../config/database.js';
 import { Enrollment, User, Section, Course, Level, UserLevel, Classroom, AcademicYear, CURRENT_LEVEL_ORDER } from '../../models/index.js';
 import { todayLocalDate } from '../../utils/date.js';
 
+/**
+ * SERVICE DE INSCRIPCIONES
+ *
+ * Capa de lógica de negocio: valida las reglas y usa los modelos para leer y guardar en la base.
+ * No usa req ni res: si algo no se puede hacer, lanza un EnrollmentError con su código.
+ *
+ * CASO DE USO 2: inscribir un alumno a una comisión, validando el nivel que le corresponde
+ *                (correlatividad) y que haya cupo en el aula.
+ * CASO DE USO 3: evaluar la cursada (nota y asistencia) y, si aprueba con 7 o más,
+ *                promoverlo automáticamente al nivel del curso.
+ * Los dos casos están relacionados: el nivel que agrega el CUU 3 es el que usa el CUU 2
+ * para decidir a qué curso se puede inscribir el alumno después.
+ */
+
+// Error propio del módulo: hereda de AppError, así el errorHandler responde con su código
 export class EnrollmentError extends AppError {
   constructor(message: string, statusCode: number = 400) {
     super(message, statusCode);
@@ -12,6 +27,10 @@ export class EnrollmentError extends AppError {
 }
 
 export class EnrollmentService {
+  // ─── CONSULTAS ───
+
+  // Listado de inscripciones (filtro opcional por comisión). Incluye al alumno con su historial
+  // de niveles y cursadas (para el detalle) y la comisión con su curso y ciclo lectivo.
   async findAll(filters: { id_section?: any } = {}) {
     const where: any = {};
 
@@ -66,6 +85,8 @@ export class EnrollmentService {
       ]
     });
 
+    // A cada alumno se le agrega current_level: su nivel actual, que es el más reciente del
+    // historial (y si hay dos de la misma fecha, el más avanzado)
     return enrollments.map((e: any) => {
       const plain = typeof e.toJSON === 'function' ? e.toJSON() : e;
       if (plain.user && Array.isArray(plain.user.levels) && plain.user.levels.length > 0) {
@@ -83,10 +104,20 @@ export class EnrollmentService {
     });
   }
 
+  // ─── CASO DE USO 2: INSCRIBIR ALUMNO ───
+
+  /**
+   * Correlatividad de niveles: calcula a qué nivel puede inscribirse el alumno.
+   *   - Sin niveles aprobados → al primero (A1).
+   *   - Con nivel X aprobado → solo al siguiente de X (next_level_code).
+   *   - Con el último nivel (C2) → a ninguno (allowedLevel = null).
+   * Devuelve también el nivel actual, para armar el mensaje de error.
+   */
   async getAllowedLevelForStudent(id_user: number) {
     const allLevels: any[] = await Level.findAll();
     if (allLevels.length === 0) return { currentLevel: null, allowedLevel: null };
 
+    // Se trae al alumno con sus niveles ordenados: el primero de la lista es el nivel actual
     const userWithLevels: any = await User.findByPk(id_user, {
       include: [{ model: Level, as: 'levels' }],
       order: CURRENT_LEVEL_ORDER
@@ -110,6 +141,14 @@ export class EnrollmentService {
     return { currentLevel, allowedLevel: nextLevel };
   }
 
+  /**
+   * Inscribe un alumno a una comisión. Validaciones, en orden:
+   *   1. La comisión y su curso existen (404).
+   *   2. El alumno no está ya inscripto en esa comisión (409).
+   *   3. Hay cupo: los inscriptos activos no llegan a la capacidad del aula (409).
+   *   4. El nivel del curso es el que le corresponde al alumno (correlatividad, 400).
+   * La inscripción se crea con estado "Activo". La matrícula queda como deuda en su estado de cuenta.
+   */
   async create(data: {
     enrollment_date: any;
     final_grade: any;
@@ -151,6 +190,7 @@ export class EnrollmentService {
       }
     }
 
+    // Correlatividad: el curso tiene que ser del nivel que le corresponde al alumno
     const { currentLevel, allowedLevel } = await this.getAllowedLevelForStudent(Number(data.id_user));
 
     if (!allowedLevel) {
@@ -178,6 +218,13 @@ export class EnrollmentService {
     return newEnrollment;
   }
 
+  // ─── CASO DE USO 3: EVALUAR CURSADA Y PROMOVER DE NIVEL ───
+
+  /**
+   * Guarda nota, asistencia y estado de la inscripción.
+   * Si la nota final es 7 o más, agrega el nivel del curso al historial del alumno: así,
+   * en su próxima inscripción (CUU 2) ya le corresponde el nivel siguiente.
+   */
   async update(id: any, data: {
     enrollment_date: any;
     final_grade: any;
@@ -211,7 +258,7 @@ export class EnrollmentService {
       throw new EnrollmentError('El porcentaje de asistencia debe ser un número entre 0 y 100', 400);
     }
 
-    // Update student level if final grade meets the passing threshold
+    // Nota como número (null si vino vacía) y nivel del curso que se está evaluando
     const grade = data.final_grade !== undefined && data.final_grade !== null && data.final_grade !== ''
       ? Number(data.final_grade)
       : null;
@@ -248,6 +295,9 @@ export class EnrollmentService {
     return existingEnrollment;
   }
 
+  // ─── BAJA ───
+
+  // Baja de la inscripción: no se borra, se cambia el estado a "Dado de Baja" (se conservan sus pagos)
   async delete(id: any) {
     const existingEnrollment = await Enrollment.findOne({ where: { id_enrollment: id } });
     if (!existingEnrollment) {

@@ -5,6 +5,28 @@ import { Payment, Enrollment, User, Section, Course, TuitionFee, AcademicYear, C
 import { todayLocalDate, toArgentinaDateString, currentArgentinaYearMonth } from '../../utils/date.js';
 import { formatMoney } from '../../utils/money.js';
 
+/**
+ * SERVICE DE PAGOS
+ *
+ * Capa de lógica de negocio: valida las reglas y usa los modelos para leer y guardar en la base.
+ * No usa req ni res: si algo no se puede hacer, lanza un PaymentError con su código.
+ *
+ * CASO DE USO 4: registrar pagos de cuotas y generar el reporte de alumnos deudores.
+ * Usa los datos de las inscripciones (CUU 2): de cada inscripción salen la matrícula y las cuotas.
+ *
+ * Reglas de cobro:
+ *   - Matrícula: se cobra una vez y se debe desde el día de la inscripción.
+ *   - Cuotas: de Marzo a Diciembre, desde el mes en que se inscribió el alumno.
+ *   - Cada cuota vence el día 10; si el alumno se inscribió después, vence el día de la inscripción.
+ *   - Recién se considera deuda al día siguiente del vencimiento.
+ *   - Se puede pagar en partes (pagos parciales) y adelantar cuotas que todavía no vencieron.
+ *
+ * Arriba están las funciones auxiliares (helpers) y abajo la clase PaymentService.
+ */
+
+// ─── HELPERS ────────────────────────────────────────────────────────────────
+
+// Meses del ciclo lectivo que se cobran. enName permite reconocer pagos viejos guardados en inglés.
 export const ACADEMIC_MONTHS = [
   { name: 'Marzo', enName: 'March', monthNum: 3 },
   { name: 'Abril', enName: 'April', monthNum: 4 },
@@ -18,6 +40,7 @@ export const ACADEMIC_MONTHS = [
   { name: 'Diciembre', enName: 'December', monthNum: 12 }
 ];
 
+// true si el texto guardado en un pago corresponde a ese mes ("Marzo", "marzo" o "March")
 export const matchesMonth = (value: string | undefined, m: { name: string; enName: string }) => {
   if (!value) return false;
   const lower = value.toLowerCase();
@@ -37,7 +60,7 @@ export const getRegistrationFee = (course: any): number => Math.max(0, Number(co
 // Suma de lo pagado en una lista de pagos
 const sumPaid = (payments: any[]): number => payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
-// Estado de una cuota según lo pagado
+// Estado de una cuota según lo pagado: Pagado, Parcial, Pendiente (vencida) o A vencer
 const getInstallmentStatus = (baseAmount: number, totalPaid: number, isDue: boolean): string => {
   if (totalPaid >= baseAmount) return INSTALLMENT_STATUS.PAID;
   if (totalPaid > 0) return INSTALLMENT_STATUS.PARTIAL;
@@ -50,6 +73,7 @@ const toDisplayDate = (isoDate: string): string => {
   return y && m && d ? `${d}/${m}/${y}` : isoDate;
 };
 
+// Valor de respaldo, solo si un curso no tuviera ninguna cuota cargada
 const DEFAULT_MONTHLY_FEE = 12000;
 
 // Las cuotas vencen el día 10 de cada mes
@@ -121,6 +145,7 @@ export const getMonthlyFee = (course: any, year?: number, monthNum?: number): nu
     return Number(course?.registration_fee) || DEFAULT_MONTHLY_FEE;
   }
 
+  // fees está ordenado de la más vieja a la más nueva: se queda con la última que ya regía al vencimiento
   let chosen = fees[fees.length - 1];
   if (year && monthNum) {
     const dueDate = getInstallmentDueDate(year, monthNum);
@@ -132,6 +157,9 @@ export const getMonthlyFee = (course: any, year?: number, monthNum?: number): nu
   return Number(chosen.monthly_cost) || DEFAULT_MONTHLY_FEE;
 };
 
+// ─── SERVICE ────────────────────────────────────────────────────────────────
+
+// Error propio del módulo: hereda de AppError, así el errorHandler responde con su código
 export class PaymentError extends AppError {
   constructor(message: string, statusCode: number = 400) {
     super(message, statusCode);
@@ -139,6 +167,7 @@ export class PaymentError extends AppError {
   }
 }
 
+// DTO: datos que llegan del front para registrar un pago
 export interface RegisterPaymentDto {
   id_enrollment: number | string;
   installment_month: string;
@@ -148,6 +177,7 @@ export interface RegisterPaymentDto {
 }
 
 export class PaymentService {
+  // Todos los pagos, del más nuevo al más viejo, con el alumno y la comisión de cada uno
   async findAll() {
     return await Payment.findAll({
       include: [
@@ -176,6 +206,12 @@ export class PaymentService {
     });
   }
 
+  /**
+   * Estado de cuenta de un alumno (opcionalmente de un solo ciclo lectivo).
+   * Para cada inscripción arma la lista de ítems a cobrar: primero la matrícula y después las
+   * cuotas mensuales, cada una con su monto, lo pagado, el saldo, el vencimiento y su estado.
+   * No se guarda nada: se calcula en el momento a partir de las inscripciones y los pagos.
+   */
   async getStudentAccountStatus(id_user: string | number, id_academic_year?: number) {
     const sectionWhere: any = {};
     if (id_academic_year) {
@@ -333,6 +369,12 @@ export class PaymentService {
     };
   }
 
+  /**
+   * Registra un pago (total o parcial) de la matrícula o de una cuota mensual.
+   * Valida: que la inscripción exista y esté activa, que el mes sea válido y no anterior a la
+   * inscripción, que el concepto no esté ya saldado y que el monto no supere el saldo pendiente.
+   * El pago se guarda con estado "Pagado" si completa el total, o "Parcial" si todavía falta.
+   */
   async registerPayment(data: RegisterPaymentDto) {
     const { id_enrollment, installment_month, amount, payment_method, payment_date } = data;
 
@@ -421,6 +463,7 @@ export class PaymentService {
       previousPayments = enrollmentPayments.filter(p => matchesMonth(p.installment_month, month));
     }
 
+    // Cuánto se pagó antes y cuánto falta: no se puede pagar algo saldado ni pagar de más
     const alreadyPaid = sumPaid(previousPayments);
     const remainingBefore = Math.max(0, baseAmount - alreadyPaid);
 
@@ -458,6 +501,12 @@ export class PaymentService {
     };
   }
 
+  /**
+   * Reporte de deudores (opcionalmente de un solo ciclo lectivo).
+   * Recorre las inscripciones activas de alumnos activos y suma lo que deben:
+   * la matrícula sin pagar y las cuotas ya vencidas sin pagar (las "A vencer" no cuentan).
+   * Devuelve una fila por alumno con el total de deuda y qué conceptos debe.
+   */
   async getDebtors(id_academic_year?: number) {
     const sectionWhere: any = {};
     if (id_academic_year) {
@@ -495,6 +544,7 @@ export class PaymentService {
       ]
     });
 
+    // Map: clave = id del alumno, valor = su fila del reporte (para acumular varias inscripciones)
     const debtorsMap = new Map();
     const today = todayLocalDate();
 
@@ -508,6 +558,7 @@ export class PaymentService {
 
       const enrollmentDate = toLocalDateString(enroll.enrollment_date);
       const firstBillableMonth = getFirstBillableMonth(ayYear, enrollmentDate);
+      // Meses que ya vencieron desde que se inscribió
       const dueMonths = ACADEMIC_MONTHS.filter(m =>
         m.monthNum >= firstBillableMonth && isInstallmentDue(ayYear, m.monthNum, today, enrollmentDate)
       );
@@ -558,6 +609,7 @@ export class PaymentService {
       debtorsMap.set(userObj.id, debtor);
     }
 
+    // Los Set (listas sin repetidos) se convierten en texto separado por comas para el front
     return Array.from(debtorsMap.values()).map(({ courses, academicYears, unpaidMonths, ...debtor }) => ({
       ...debtor,
       course: [...courses].join(', '),

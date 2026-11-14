@@ -2,6 +2,17 @@ import { AppError } from '../../errors/AppError.js';
 import { Op } from 'sequelize';
 import { Classroom, Section } from '../../models/index.js';
 
+/**
+ * SERVICE DE AULAS
+ *
+ * Capa de lógica de negocio: valida las reglas y usa los modelos para leer y guardar en la base.
+ * No usa req ni res: si algo no se puede hacer, lanza un error con su código HTTP.
+ *
+ * La capacidad del aula es el cupo de las comisiones que la usan.
+ * Se elimina de verdad (borrado físico), pero solo si no tiene comisiones asignadas.
+ */
+
+// Error propio del módulo: hereda de AppError, así el errorHandler responde con su código
 export class ClassroomError extends AppError {
   constructor(message: string, statusCode: number = 400) {
     super(message, statusCode);
@@ -34,14 +45,19 @@ export class ClassroomService {
         }
     }
 
+    // ─── CRUD ───
+
+    // Lista todas las aulas
     async findAll() {
         return await Classroom.findAll();
     }
+    // Crea un aula validando capacidad y nombre
     async create(data: { name: string; capacity: number }) {
         this.assertValidCapacity(data.capacity);
         const name = await this.assertNameAvailable(data.name);
         return await Classroom.create({ ...data, name });
     }
+    // Edita un aula (null si no existe, y el controller responde 404)
     async update(id: number, data: { name?: string; capacity?: number }) {
         const classroom = await Classroom.findByPk(id);
         if (!classroom) {
@@ -55,6 +71,7 @@ export class ClassroomService {
         }
         return await classroom.update(data);
     }
+    // Elimina un aula si no tiene comisiones asignadas
     async delete(id: number) {
         const classroom = await Classroom.findByPk(id);
         if (!classroom) {

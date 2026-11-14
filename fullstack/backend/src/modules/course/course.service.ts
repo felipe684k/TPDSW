@@ -3,6 +3,17 @@ import { Op } from 'sequelize';
 import { sequelize } from '../../config/database.js';
 import { Course, Level, TuitionFee, Section } from '../../models/index.js';
 
+/**
+ * SERVICE DE CURSOS
+ *
+ * Capa de lógica de negocio: valida las reglas y usa los modelos para leer y guardar en la base.
+ * No usa req ni res: si algo no se puede hacer, lanza un error con su código HTTP.
+ *
+ * Al crear un curso también se crea su primera cuota mensual (en una transacción).
+ * La baja es lógica (active = false) y no se permite si el curso tiene comisiones.
+ */
+
+// Error propio del módulo: hereda de AppError, así el errorHandler responde con su código
 export class CourseError extends AppError {
   constructor(message: string, statusCode: number = 400) {
     super(message, statusCode);
@@ -12,6 +23,8 @@ export class CourseError extends AppError {
 
 export class CourseService {
   // Evita cursos activos con el mismo nombre (MySQL compara sin distinguir mayúsculas)
+  // ─── VALIDACIONES INTERNAS (private: solo se usan dentro de esta clase) ───
+
   private async assertNameAvailable(courseName: any, excludeId?: any) {
     const name = String(courseName ?? '').trim();
     if (!name) {
@@ -64,6 +77,9 @@ export class CourseService {
     }
   }
 
+  // ─── CRUD ───
+
+  // Cursos activos (con su nivel y su historial de cuotas), con filtro opcional por nivel
   async findAll(filters: { level?: any } = {}) {
     const where: any = { active: true };
     if (filters.level !== undefined && filters.level !== '' && filters.level !== 'all') {
@@ -83,6 +99,7 @@ export class CourseService {
     });
   }
 
+  // Crea el curso validando montos, nivel y nombre, junto con su cuota inicial
   async create(data: {
     course_name: any;
     level_code: any;
@@ -107,7 +124,7 @@ export class CourseService {
         active: true
       }, { transaction: t });
 
-      // Create associated tuition fee
+      // Cuota inicial del curso: rige desde hoy
       await TuitionFee.create({
         id_course: newCourse.id_course,
         start_date: new Date(),
@@ -122,6 +139,7 @@ export class CourseService {
     }
   }
 
+  // Edita el curso; solo se validan y cambian los campos que se enviaron
   async update(id: any, data: {
     course_name: any;
     level_code: any;
@@ -155,19 +173,20 @@ export class CourseService {
     return existingCourse;
   }
 
+  // Baja lógica del curso
   async delete(id: any) {
     const existingCourse = await Course.findOne({ where: { id_course: id } });
     if (!existingCourse) {
       return null;
     }
 
-    // Prevent deactivating a course that has associated sections
+    // No se puede dar de baja un curso que tiene comisiones
     const sectionsCount = await Section.count({ where: { id_course: id } });
     if (sectionsCount > 0) {
       throw new CourseError('No se puede desactivar el curso porque tiene comisiones asociadas', 409);
     }
 
-    // Logical delete
+    // Baja lógica: se marca como inactivo en vez de borrar la fila
     await Course.update({ active: false }, { where: { id_course: id } });
     return existingCourse;
   }

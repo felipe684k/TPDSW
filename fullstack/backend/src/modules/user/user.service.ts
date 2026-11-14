@@ -6,6 +6,21 @@ import { sequelize, Level, UserLevel, Enrollment, Section, Course, AcademicYear,
 import { ENROLLMENT_STATUS } from '../../constants.js';
 import { todayLocalDate } from '../../utils/date.js';
 
+/**
+ * SERVICE DE USUARIOS / ALUMNOS
+ *
+ * Capa de lógica de negocio: valida las reglas y usa los modelos para leer y guardar en la base.
+ * No usa req ni res: si algo no se puede hacer, lanza un UserError con su código.
+ *
+ * Maneja el login y el CRUD de alumnos. Algunas funciones (normalizeEmail, assertValidDniAndEmail,
+ * assertUniqueUserFields) se exportan porque también las usa el service de docentes:
+ * alumnos y docentes están en la misma tabla user.
+ *
+ * Bajas: son lógicas. Al DNI, email y username se les agrega "_deleted_<fecha>" para liberarlos;
+ * si se vuelve a cargar el mismo DNI, se reactiva el registro original (y se conserva su historial).
+ */
+
+// Error propio del módulo: hereda de AppError, así el errorHandler responde con su código
 export class UserError extends AppError {
   constructor(message: string, statusCode: number = 400) {
     super(message, statusCode);
@@ -13,6 +28,7 @@ export class UserError extends AppError {
   }
 }
 
+// DTOs: forma de los datos que llegan del front para crear y para editar un alumno
 export interface CreateUserDto {
   dni: string;
   first_name: string;
@@ -34,6 +50,8 @@ export interface UpdateUserDto {
   password?: string;
   level_code?: number | string;
 }
+
+// ─── HELPERS (también los usa el service de docentes) ───
 
 // Roles que pueden iniciar sesión
 export const LOGIN_ROLES = ['ADMIN', 'STUDENT'];
@@ -68,7 +86,8 @@ export async function generateUniqueUsername(base: string, excludeId?: number | 
   }
 }
 
-// Verifica que DNI y email no estén usados por otro usuario
+// Verifica que DNI, email y username no estén usados por otro usuario (409 si ya existen).
+// excludeId: al editar, se excluye al propio usuario (Op.ne = "distinto de") para que no choque consigo mismo.
 export async function assertUniqueUserFields(
   fields: { dni?: string; email?: string | null; username?: string },
   excludeId?: number | string
@@ -91,6 +110,10 @@ export async function assertUniqueUserFields(
 }
 
 export class UserService {
+  // ─── CONSULTAS ───
+
+  // Listado de alumnos activos, con búsqueda por DNI, nombre o apellido (LIKE = "contiene")
+  // y filtro por nivel actual. A cada alumno se le agrega su nivel actual (current_level).
   async findAll(filters: { search?: any; level?: any } = {}) {
     const { search, level } = filters;
 
@@ -110,6 +133,8 @@ export class UserService {
       };
     }
 
+    // Filtro por nivel ACTUAL: una subconsulta SQL busca el último nivel de cada alumno y lo compara.
+    // sequelize.escape evita inyección SQL al meter el valor que vino del front.
     if (level) {
       searchConditions = {
         ...searchConditions,
@@ -147,8 +172,10 @@ export class UserService {
     });
   }
 
+  // Busca un alumno por DNI: primero entre los activos y, si no está, entre los dados de baja.
+  // El front lo usa al cargar un alumno nuevo para ofrecer reactivar uno dado de baja.
   async checkStudentDni(dni: string) {
-    // 1. Search active student
+    // 1. Buscar alumno activo
     let student: any = await User.findOne({
       where: { dni, role: 'STUDENT', active: true },
       include: [{ model: Level, as: 'levels' }],
@@ -165,7 +192,7 @@ export class UserService {
       };
     }
 
-    // 2. Search inactive/deleted student
+    // 2. Buscar alumno dado de baja (su DNI quedó guardado como "<dni>_deleted_<fecha>")
     student = await User.findOne({
       where: {
         dni: { [Op.like]: `${dni}_deleted_%` },
@@ -189,6 +216,14 @@ export class UserService {
     return null;
   }
 
+  // ─── LOGIN ───
+
+  /**
+   * Inicio de sesión. Busca un usuario activo por username, DNI o email y compara la contraseña
+   * con bcrypt.compare (la guardada está encriptada, por eso no se compara con ===).
+   * Solo pueden entrar ADMIN y STUDENT; los docentes reciben un 403.
+   * Devuelve los datos del usuario sin la contraseña.
+   */
   async login(username?: string, password?: string) {
     if (!username || !password) {
       throw new UserError('Por favor ingresa usuario y contraseña', 400);
@@ -196,6 +231,7 @@ export class UserService {
 
     const cleanInput = username.trim();
 
+    // scope('withPassword'): por defecto el modelo nunca trae la contraseña; acá se pide explícitamente
     let foundUser: any = await User.scope('withPassword').findOne({
       where: {
         [Op.or]: [
@@ -246,6 +282,7 @@ export class UserService {
     return userData;
   }
 
+  // Detalle de un alumno con su historial de niveles y sus cursadas (404 si no existe)
   async findById(id: number | string) {
     const foundUser: any = await User.findOne({
       where: {
@@ -279,6 +316,7 @@ export class UserService {
       throw new UserError('No se encontró un alumno con ID: ' + id, 404);
     }
 
+    // Nivel actual: el más reciente del historial (y si hay dos de la misma fecha, el más avanzado)
     const plain = typeof foundUser.toJSON === 'function' ? foundUser.toJSON() : foundUser;
     if (Array.isArray(plain.levels) && plain.levels.length > 0) {
       const sortedLevels = [...plain.levels].sort((a: any, b: any) => {
@@ -297,6 +335,13 @@ export class UserService {
     return plain;
   }
 
+  // ─── ALTA, EDICIÓN Y BAJA ───
+
+  /**
+   * Crea un alumno. Si ya existía uno dado de baja con ese DNI, lo reactiva con los datos nuevos.
+   * La contraseña inicial es su DNI (encriptada con bcrypt) y el username se genera con su nombre.
+   * level_code: último nivel aprobado (opcional); si no tiene, empieza en A1.
+   */
   async create(data: CreateUserDto) {
     const { dni, first_name, last_name, phone, birth_date, email, level_code } = data;
 
@@ -379,6 +424,8 @@ export class UserService {
     }
   }
 
+  // Edita un alumno: solo se actualizan los campos que se enviaron. Si se envía level_code,
+  // se reemplaza su último nivel aprobado (es una corrección manual de la Secretaría).
   async update(id: number | string, data: UpdateUserDto) {
     const { dni, first_name, last_name, phone, birth_date, email, username, password, level_code } = data;
 
@@ -428,6 +475,8 @@ export class UserService {
     return { dni, ...safeData, level_code };
   }
 
+  // Baja lógica del alumno: se libera su DNI, email y username con el sufijo "_deleted_<fecha>"
+  // y se dan de baja sus inscripciones activas, todo en una transacción
   async delete(id: number | string) {
     const student: any = await User.findOne({ where: { id: id, role: 'STUDENT', active: true } });
     if (!student) {

@@ -3,7 +3,21 @@ import bcrypt from 'bcryptjs';
 import { User } from '../../models/user.js';
 import { normalizeEmail, assertUniqueUserFields, assertValidDniAndEmail } from '../user/user.service.js';
 
+/**
+ * SERVICE DE DOCENTES
+ *
+ * Capa de lógica de negocio: valida las reglas y usa los modelos para leer y guardar en la base.
+ * No usa req ni res: si algo no se puede hacer, lanza un error con su código HTTP.
+ *
+ * Los docentes se guardan en la misma tabla que los alumnos (user) con role = PROFESSOR,
+ * por eso usa las validaciones compartidas de user.service (DNI, email, campos únicos).
+ * Los docentes no pueden iniciar sesión. La baja es lógica y, si se vuelve a cargar
+ * el mismo DNI, se reactiva el registro original.
+ */
 export class ProfessorService {
+  // ─── CONSULTAS ───
+
+  // Listado de docentes, con búsqueda y filtro por estado (activos / inactivos)
   async findAll(filters: { search?: any; status?: any }) {
     const { search, status } = filters;
 
@@ -34,6 +48,7 @@ export class ProfessorService {
     });
   }
 
+  // Busca un docente por DNI (activo o dado de baja) para avisar o reactivarlo desde el front
   async checkDni(dni: any) {
     let prof: any = await User.findOne({ where: { dni, role: 'PROFESSOR', active: true } });
     if (prof) {
@@ -55,6 +70,10 @@ export class ProfessorService {
     return null;
   }
 
+  // ─── ALTA, EDICIÓN Y BAJA ───
+
+  // Crea un docente, o reactiva uno dado de baja con el mismo DNI.
+  // Si ya hay un usuario activo con ese DNI devuelve conflict: true y el controller responde 409.
   async create(data: {
     dni: any;
     first_name: any;
@@ -114,6 +133,7 @@ export class ProfessorService {
     return { conflict: false, reactivated: false, data: newProfessor };
   }
 
+  // Edita un docente: solo se cambian los campos que se enviaron (null si no existe)
   async update(id: any, data: {
     dni?: any;
     first_name?: any;
@@ -147,6 +167,7 @@ export class ProfessorService {
     return { id, ...dataToUpdate };
   }
 
+  // Baja lógica: active = false y se agrega "_deleted_<fecha>" a DNI, email y username para liberarlos
   async delete(id: any) {
     const professor: any = await User.findOne({ where: { id, role: 'PROFESSOR', active: true } });
 
