@@ -126,7 +126,8 @@ import sectionRoutes from './modules/section/section.router.js';
 import paymentRouter from './modules/payment/payment.router.js';
 
 const app = express();
-const PORT = 3000;
+// Puerto del servidor: se toma del .env (PORT) y, si no está definido, se usa 3000
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(cors());
 app.use(express.json());
