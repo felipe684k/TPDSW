@@ -1,3 +1,21 @@
+/**
+ * MODELOS Y RELACIONES
+ *
+ * Cada archivo de esta carpeta define un modelo de Sequelize: una clase que representa una tabla
+ * de MySQL. sequelize.define(nombre, columnas, opciones) describe la tabla, y con el modelo se
+ * hacen las consultas sin escribir SQL (findAll, findByPk, create, update, destroy...).
+ * timestamps: false → las tablas no tienen las columnas automáticas createdAt / updatedAt.
+ *
+ * Este archivo importa todos los modelos, define las RELACIONES entre ellos y los exporta juntos.
+ * El resto del backend importa los modelos desde acá (así las relaciones ya están configuradas).
+ *
+ * Cómo se leen las relaciones (siempre se definen de a pares, una para cada lado):
+ *   - A.belongsTo(B)      → A "pertenece a" B: la tabla A tiene la clave foránea (ej. section.id_course).
+ *   - B.hasMany(A)        → B "tiene muchos" A: el otro lado de la misma relación.
+ *   - A.belongsToMany(B)  → muchos a muchos, a través de una tabla intermedia (through).
+ *   - as: 'nombre'        → nombre con el que se trae el dato relacionado en un include.
+ *                           Ej: Section.findAll({ include: [{ model: Course, as: 'course' }] })
+ */
 import { sequelize } from '../config/database.js';
 
 import User from './user.js';
@@ -14,24 +32,25 @@ import SectionSchedule from './section_schedule.js';
 import Enrollment from './enrollment.js';
 import Payment from './payment.js';
 
-// Relationships
-// Recursive Level
+// ─── RELACIONES ─────────────────────────────────────────────────────────────
+
+// Nivel → nivel siguiente (relación recursiva: la tabla level se relaciona consigo misma)
 Level.belongsTo(Level, { as: 'NextLevel', foreignKey: 'next_level_code' });
 Level.hasMany(Level, { as: 'PreviousLevels', foreignKey: 'next_level_code' });
 
-// Course -> Level
+// Curso → Nivel: cada curso es de un nivel; un nivel tiene muchos cursos
 Course.belongsTo(Level, { foreignKey: 'level_code', as: 'level' });
 Level.hasMany(Course, { foreignKey: 'level_code', as: 'courses' });
 
-// TuitionFee -> Course
+// Arancel → Curso: un curso tiene muchas cuotas (historial de precios)
 TuitionFee.belongsTo(Course, { foreignKey: 'id_course', as: 'course' });
 Course.hasMany(TuitionFee, { foreignKey: 'id_course', as: 'tuition_fees' });
 
-// UserLevel (M:N between User and Level)
+// Alumno ↔ Nivel (muchos a muchos con la tabla user_level): historial de niveles aprobados
 User.belongsToMany(Level, { through: UserLevel, foreignKey: 'id_user', otherKey: 'level_code', as: 'levels' });
 Level.belongsToMany(User, { through: UserLevel, foreignKey: 'level_code', otherKey: 'id_user', as: 'users' });
 
-// Section -> Course, Classroom, AcademicYear
+// Comisión → Curso, Aula y Ciclo lectivo: cada comisión tiene uno de cada uno
 Section.belongsTo(Course, { foreignKey: 'id_course', as: 'course' });
 Course.hasMany(Section, { foreignKey: 'id_course', as: 'sections' });
 
@@ -41,22 +60,22 @@ Classroom.hasMany(Section, { foreignKey: 'id_classroom', as: 'sections' });
 Section.belongsTo(AcademicYear, { foreignKey: 'id_academic_year', as: 'academic_year' });
 AcademicYear.hasMany(Section, { foreignKey: 'id_academic_year', as: 'sections' });
 
-// UserSection (M:N between User and Section)
+// Docente ↔ Comisión (muchos a muchos con la tabla user_section): qué docentes dictan cada comisión
 User.belongsToMany(Section, { through: UserSection, foreignKey: 'id_user', otherKey: 'id_section', as: 'sections' });
 Section.belongsToMany(User, { through: UserSection, foreignKey: 'id_section', otherKey: 'id_user', as: 'professors' });
 
-// SectionSchedule (M:N between Section and Schedule)
+// Comisión ↔ Horario (muchos a muchos con la tabla section_schedule): días y horas de cursado
 Section.belongsToMany(Schedule, { through: SectionSchedule, foreignKey: 'id_section', otherKey: 'id_schedule', as: 'schedules' });
 Schedule.belongsToMany(Section, { through: SectionSchedule, foreignKey: 'id_schedule', otherKey: 'id_section', as: 'sections' });
 
-// Enrollment -> User, Section
+// Inscripción → Alumno y Comisión: cada inscripción es de un alumno en una comisión
 Enrollment.belongsTo(User, { foreignKey: 'id_user', as: 'user' });
 User.hasMany(Enrollment, { foreignKey: 'id_user', as: 'enrollments' });
 
 Enrollment.belongsTo(Section, { foreignKey: 'id_section', as: 'section' });
 Section.hasMany(Enrollment, { foreignKey: 'id_section', as: 'enrollments' });
 
-// Payment -> Enrollment
+// Pago → Inscripción: una inscripción tiene muchos pagos (matrícula y cuotas)
 Payment.belongsTo(Enrollment, { foreignKey: 'id_enrollment', as: 'enrollment' });
 Enrollment.hasMany(Payment, { foreignKey: 'id_enrollment', as: 'payments' });
 

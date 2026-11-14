@@ -1,6 +1,12 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 
+/**
+ * MODELO DOCENTE-COMISIÓN  (tabla: user_section)
+ *
+ * Tabla intermedia de la relación muchos a muchos entre docente (user) y comisión:
+ * qué docentes dictan cada comisión.
+ */
 export const UserSection = sequelize.define('UserSection', {
   id_user: {
     type: DataTypes.INTEGER,

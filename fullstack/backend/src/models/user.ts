@@ -11,12 +11,22 @@ export function stripDeletedSuffix(value: string | null | undefined): string | n
   return typeof value === 'string' ? value.replace(/_deleted_\d+$/, '') : value;
 }
 
+/**
+ * MODELO USUARIO  (tabla: user)
+ *
+ * Una sola tabla para todas las personas del sistema; el campo role dice qué es cada una:
+ *   - ADMIN: Secretaría, administra todo.
+ *   - STUDENT: alumno, puede entrar a ver sus cursadas y su estado de cuenta.
+ *   - PROFESSOR: docente, se asigna a comisiones pero no puede iniciar sesión.
+ * Tener una sola tabla permite controlar que un DNI o email no se repita entre alumnos y docentes.
+ */
 export const User = sequelize.define('User', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
   },
+  // get(): se ejecuta al leer el valor; acá devuelve el DNI sin el sufijo "_deleted_..."
   dni: {
     type: DataTypes.STRING(50),
     allowNull: false,
@@ -48,6 +58,7 @@ export const User = sequelize.define('User', {
     allowNull: false,
     get() { return stripDeletedSuffix(this.getDataValue('username')); }
   },
+  // Siempre se guarda encriptada con bcrypt (nunca en texto plano)
   password: {
     type: DataTypes.STRING(255),
     allowNull: false
@@ -56,6 +67,7 @@ export const User = sequelize.define('User', {
     type: DataTypes.ENUM('STUDENT', 'PROFESSOR', 'ADMIN'),
     allowNull: false
   },
+  // Baja lógica: al dar de baja se pone en false (se conserva el historial)
   active: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
