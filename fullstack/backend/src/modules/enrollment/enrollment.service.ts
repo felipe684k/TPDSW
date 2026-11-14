@@ -1,5 +1,6 @@
 import { AppError } from '../../errors/AppError.js';
 import { Op } from 'sequelize';
+import { sequelize } from '../../config/database.js';
 import { Enrollment, User, Section, Course, Level, UserLevel, Classroom, AcademicYear, CURRENT_LEVEL_ORDER } from '../../models/index.js';
 import { todayLocalDate } from '../../utils/date.js';
 
@@ -210,28 +211,38 @@ export class EnrollmentService {
       throw new EnrollmentError('El porcentaje de asistencia debe ser un número entre 0 y 100', 400);
     }
 
-    await Enrollment.update({
-      enrollment_date: data.enrollment_date,
-      final_grade: data.final_grade,
-      attendance_percentage: data.attendance_percentage,
-      id_user: data.id_user,
-      id_section: data.id_section,
-      status: data.status,
-    }, { where: { id_enrollment: id } });
-
     // Update student level if final grade meets the passing threshold
     const grade = data.final_grade !== undefined && data.final_grade !== null && data.final_grade !== ''
       ? Number(data.final_grade)
       : null;
     const courseLevelCode = existingEnrollment.section?.course?.level_code;
 
-    // Se agrega el nivel aprobado al historial del alumno sin borrar los anteriores.
-    // Si ya lo tenía (por ejemplo, se volvió a cargar la nota), se deja la fecha original.
-    if (grade !== null && !isNaN(grade) && grade >= 7 && courseLevelCode) {
-      await UserLevel.findOrCreate({
-        where: { id_user: existingEnrollment.id_user, level_code: Number(courseLevelCode) },
-        defaults: { start_date: todayLocalDate() }
-      });
+    // Nota y subida de nivel se guardan juntas: si falla una, no se guarda ninguna
+    const t = await sequelize.transaction();
+    try {
+      await Enrollment.update({
+        enrollment_date: data.enrollment_date,
+        final_grade: data.final_grade,
+        attendance_percentage: data.attendance_percentage,
+        id_user: data.id_user,
+        id_section: data.id_section,
+        status: data.status,
+      }, { where: { id_enrollment: id }, transaction: t });
+
+      // Se agrega el nivel aprobado al historial del alumno sin borrar los anteriores.
+      // Si ya lo tenía (por ejemplo, se volvió a cargar la nota), se deja la fecha original.
+      if (grade !== null && !isNaN(grade) && grade >= 7 && courseLevelCode) {
+        await UserLevel.findOrCreate({
+          where: { id_user: existingEnrollment.id_user, level_code: Number(courseLevelCode) },
+          defaults: { start_date: todayLocalDate() },
+          transaction: t
+        });
+      }
+
+      await t.commit();
+    } catch (error) {
+      await t.rollback();
+      throw error;
     }
 
     return existingEnrollment;

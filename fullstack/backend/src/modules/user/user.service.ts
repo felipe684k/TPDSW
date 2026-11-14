@@ -314,8 +314,36 @@ export class UserService {
     await assertUniqueUserFields({ email: cleanEmail }, inactiveUser?.id);
     const username = await generateUniqueUsername(first_name, inactiveUser?.id);
 
-    if (inactiveUser) {
-      await inactiveUser.update({
+    // Alumno y nivel se guardan juntos: si falla uno, no se guarda ninguno
+    const t = await sequelize.transaction();
+    try {
+      if (inactiveUser) {
+        await inactiveUser.update({
+          first_name,
+          last_name,
+          phone,
+          birth_date,
+          email: cleanEmail,
+          username,
+          password: hashedPassword,
+          dni,
+          active: true
+        }, { transaction: t });
+
+        if (level_code !== undefined) {
+          await UserLevel.destroy({ where: { id_user: inactiveUser.id }, transaction: t });
+          if (level_code !== '' && level_code !== null) {
+            const actualDate = todayLocalDate();
+            await UserLevel.create({ id_user: inactiveUser.id, level_code: Number(level_code), start_date: actualDate }, { transaction: t });
+          }
+        }
+
+        await t.commit();
+        return { user: inactiveUser, reactivated: true };
+      }
+
+      const newUser = await User.create({
+        dni,
         first_name,
         last_name,
         phone,
@@ -323,40 +351,21 @@ export class UserService {
         email: cleanEmail,
         username,
         password: hashedPassword,
-        dni,
+        role: 'STUDENT',
         active: true
-      });
+      }, { transaction: t });
 
-      if (level_code !== undefined) {
-        await UserLevel.destroy({ where: { id_user: inactiveUser.id } });
-        if (level_code !== '' && level_code !== null) {
-          const actualDate = todayLocalDate();
-          await UserLevel.create({ id_user: inactiveUser.id, level_code: Number(level_code), start_date: actualDate });
-        }
+      if (level_code) {
+        const actualDate = todayLocalDate();
+        await UserLevel.create({ id_user: newUser.dataValues.id, level_code: Number(level_code), start_date: actualDate }, { transaction: t });
       }
 
-      return { user: inactiveUser, reactivated: true };
+      await t.commit();
+      return { user: newUser, reactivated: false };
+    } catch (error) {
+      await t.rollback();
+      throw error;
     }
-
-    const newUser = await User.create({
-      dni,
-      first_name,
-      last_name,
-      phone,
-      birth_date,
-      email: cleanEmail,
-      username,
-      password: hashedPassword,
-      role: 'STUDENT',
-      active: true
-    });
-
-    if (level_code) {
-      const actualDate = todayLocalDate();
-      await UserLevel.create({ id_user: newUser.dataValues.id, level_code: Number(level_code), start_date: actualDate });
-    }
-
-    return { user: newUser, reactivated: false };
   }
 
   async update(id: number | string, data: UpdateUserDto) {
@@ -384,14 +393,23 @@ export class UserService {
       id
     );
 
-    await User.update(dataToUpdate, { where: { id: id, role: 'STUDENT', active: true } });
+    // Datos y nivel se guardan juntos: así nunca se borra el nivel sin crear el nuevo
+    const t = await sequelize.transaction();
+    try {
+      await User.update(dataToUpdate, { where: { id: id, role: 'STUDENT', active: true }, transaction: t });
 
-    if (level_code !== undefined) {
-      await UserLevel.destroy({ where: { id_user: id } });
-      if (level_code !== '' && level_code !== null) {
-        const actualDate = todayLocalDate();
-        await UserLevel.create({ id_user: Number(id), level_code: Number(level_code), start_date: actualDate });
+      if (level_code !== undefined) {
+        await UserLevel.destroy({ where: { id_user: id }, transaction: t });
+        if (level_code !== '' && level_code !== null) {
+          const actualDate = todayLocalDate();
+          await UserLevel.create({ id_user: Number(id), level_code: Number(level_code), start_date: actualDate }, { transaction: t });
+        }
       }
+
+      await t.commit();
+    } catch (error) {
+      await t.rollback();
+      throw error;
     }
 
     const { password: _omitPassword, ...safeData } = dataToUpdate;
@@ -405,21 +423,30 @@ export class UserService {
     }
 
     const ts = Date.now();
-    await User.update(
-      {
-        active: false,
-        email: student.email ? `${student.email}_deleted_${ts}` : null,
-        username: `${student.username}_deleted_${ts}`,
-        dni: `${student.dni}_deleted_${ts}`
-      },
-      { where: { id: id, role: 'STUDENT', active: true } }
-    );
+    // Baja del alumno y de sus inscripciones juntas: si falla una, no se aplica ninguna
+    const t = await sequelize.transaction();
+    try {
+      await User.update(
+        {
+          active: false,
+          email: student.email ? `${student.email}_deleted_${ts}` : null,
+          username: `${student.username}_deleted_${ts}`,
+          dni: `${student.dni}_deleted_${ts}`
+        },
+        { where: { id: id, role: 'STUDENT', active: true }, transaction: t }
+      );
 
-    // Al dar de baja al alumno, también se dan de baja sus inscripciones vigentes
-    await Enrollment.update(
-      { status: ENROLLMENT_STATUS.DROPPED },
-      { where: { id_user: id, status: { [Op.ne]: ENROLLMENT_STATUS.DROPPED } } }
-    );
+      // Al dar de baja al alumno, también se dan de baja sus inscripciones vigentes
+      await Enrollment.update(
+        { status: ENROLLMENT_STATUS.DROPPED },
+        { where: { id_user: id, status: { [Op.ne]: ENROLLMENT_STATUS.DROPPED } }, transaction: t }
+      );
+
+      await t.commit();
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
 
     return true;
   }

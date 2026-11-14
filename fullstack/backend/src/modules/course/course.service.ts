@@ -1,5 +1,6 @@
 import { AppError } from '../../errors/AppError.js';
 import { Op } from 'sequelize';
+import { sequelize } from '../../config/database.js';
 import { Course, Level, TuitionFee, Section } from '../../models/index.js';
 
 export class CourseError extends AppError {
@@ -95,22 +96,30 @@ export class CourseService {
     await this.assertLevelExists(data.level_code);
     const courseName = await this.assertNameAvailable(data.course_name);
 
-    const newCourse: any = await Course.create({
-      course_name: courseName,
-      level_code: data.level_code,
-      registration_fee: registrationFee,
-      weekly_hours: weeklyHours ?? null,
-      active: true
-    });
+    // Curso y cuota inicial se guardan juntos: si falla uno, no se guarda ninguno
+    const t = await sequelize.transaction();
+    try {
+      const newCourse: any = await Course.create({
+        course_name: courseName,
+        level_code: data.level_code,
+        registration_fee: registrationFee,
+        weekly_hours: weeklyHours ?? null,
+        active: true
+      }, { transaction: t });
 
-    // Create associated tuition fee
-    await TuitionFee.create({
-      id_course: newCourse.id_course,
-      start_date: new Date(),
-      monthly_cost: tuitionFee
-    });
+      // Create associated tuition fee
+      await TuitionFee.create({
+        id_course: newCourse.id_course,
+        start_date: new Date(),
+        monthly_cost: tuitionFee
+      }, { transaction: t });
 
-    return newCourse;
+      await t.commit();
+      return newCourse;
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
   }
 
   async update(id: any, data: {
