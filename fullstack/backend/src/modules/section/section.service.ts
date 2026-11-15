@@ -63,6 +63,48 @@ export class SectionService {
     return cleanName;
   }
 
+  // Valida que las entidades referenciadas (curso activo, aula, ciclo lectivo y docente activo) existan
+  private async assertValidReferences(
+    refs: {
+      id_course: number;
+      id_classroom: number;
+      id_academic_year: number;
+      id_professor?: number | undefined;
+    },
+    transaction?: any
+  ) {
+    const course: any = await Course.findByPk(refs.id_course, { transaction });
+    if (!course) {
+      throw new SectionError('El curso seleccionado no existe.', 404);
+    }
+    if (!course.active) {
+      throw new SectionError('El curso seleccionado se encuentra inactivo.', 400);
+    }
+
+    const classroom: any = await Classroom.findByPk(refs.id_classroom, { transaction });
+    if (!classroom) {
+      throw new SectionError('El aula seleccionada no existe.', 404);
+    }
+
+    const academicYear: any = await AcademicYear.findByPk(refs.id_academic_year, { transaction });
+    if (!academicYear) {
+      throw new SectionError('El ciclo lectivo seleccionado no existe.', 404);
+    }
+
+    let professor: any = null;
+    if (refs.id_professor !== undefined && refs.id_professor !== null && String(refs.id_professor) !== '') {
+      professor = await User.findOne({
+        where: { id: refs.id_professor, role: 'PROFESSOR', active: true },
+        transaction
+      });
+      if (!professor) {
+        throw new SectionError('El profesor seleccionado no existe o no se encuentra activo.', 404);
+      }
+    }
+
+    return { course, classroom, academicYear, professor };
+  }
+
   // Agrega a la comisión la cantidad de inscriptos activos y el cupo disponible
   // (capacidad del aula menos inscriptos que no están dados de baja)
   private formatSectionWithSpots(section: any) {
@@ -213,6 +255,11 @@ export class SectionService {
 
     const t = await sequelize.transaction();
     try {
+      await this.assertValidReferences(
+        { id_course, id_classroom, id_academic_year, id_professor },
+        t
+      );
+
       // Verificar superposición de aulas: para cada horario nuevo se buscan comisiones de la
       // misma aula y el mismo ciclo que ese día tengan un horario que se pise con el nuevo
       // (empieza antes de que el nuevo termine y termina después de que el nuevo empieza)
@@ -394,10 +441,15 @@ export class SectionService {
         );
       }
 
-      const targetClassroom: any = await Classroom.findByPk(targetClassroomId, { transaction: t });
-      if (!targetClassroom) {
-        throw new SectionError('El aula seleccionada no existe.', 404);
-      }
+      const { classroom: targetClassroom } = await this.assertValidReferences(
+        {
+          id_course: targetCourseId,
+          id_classroom: targetClassroomId,
+          id_academic_year: targetAcademicYearId,
+          id_professor: targetProfessorId
+        },
+        t
+      );
 
       // La nueva aula tiene que tener lugar para los alumnos que ya están inscriptos
       if (Number(targetClassroom.capacity) < activeEnrollmentsCount) {

@@ -49,11 +49,11 @@ export default function CourseSections({ courseId }: CourseSectionsProps) {
       const [academicYearsData, classroomsData, professorsData] = await Promise.all([
         academicYearService.getAcademicYears(),
         classroomService.getClassrooms(),
-        professorService.getProfessors()
+        professorService.getProfessors(undefined, 'Activo')
       ])
       setAcademicYears(academicYearsData)
       setClassrooms(classroomsData)
-      setProfessors(professorsData)
+      setProfessors(professorsData.filter((p) => p.active !== false))
       
       if (academicYearsData.length > 0) {
         setSelectedAcademicYearId(academicYearsData[0].id_academic_year!)

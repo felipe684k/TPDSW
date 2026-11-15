@@ -338,6 +338,77 @@ export class UserService {
   // ─── ALTA, EDICIÓN Y BAJA ───
 
   /**
+   * Sincroniza el nivel actual del alumno en user_level sin destruir su historial previo:
+   * - Si level_code no fue enviado (undefined) o coincide con el nivel actual, no altera la tabla.
+   * - Si se envía vacío/null ("Sin nivel asignado"), elimina los niveles registrados.
+   * - Si se retrocede manualmente de nivel, elimina únicamente los niveles superiores al indicado.
+   * - Si se avanza o asigna un nivel que no tenía, lo registra con findOrCreate conservando los anteriores.
+   */
+  private async syncStudentLevel(
+    id_user: number,
+    level_code: number | string | null | undefined,
+    transaction: any
+  ) {
+    if (level_code === undefined) return;
+
+    const currentLevels: any[] = await UserLevel.findAll({
+      where: { id_user },
+      order: [
+        ['start_date', 'DESC'],
+        ['level_code', 'DESC']
+      ],
+      transaction
+    });
+
+    const currentLevelCode = currentLevels.length > 0 ? Number(currentLevels[0].level_code) : null;
+
+    if (level_code === '' || level_code === null) {
+      if (currentLevelCode !== null) {
+        await UserLevel.destroy({ where: { id_user }, transaction });
+      }
+      return;
+    }
+
+    const targetCode = Number(level_code);
+    if (!Number.isInteger(targetCode) || targetCode <= 0) {
+      throw new UserError('El nivel indicado no es válido', 400);
+    }
+
+    // Si el nivel enviado coincide con el nivel actual del alumno, no se altera el historial ni las fechas
+    if (targetCode === currentLevelCode) {
+      return;
+    }
+
+    // Si se corrige manualmente a un nivel inferior, solo se borran los niveles superiores al elegido
+    if (currentLevelCode !== null && targetCode < currentLevelCode) {
+      await UserLevel.destroy({
+        where: {
+          id_user,
+          level_code: { [Op.gt]: targetCode }
+        },
+        transaction
+      });
+    }
+
+    // Se agrega el nivel si no lo tenía (conservando la fecha original si ya existía en su historial)
+    const [levelEntry, created] = await UserLevel.findOrCreate({
+      where: { id_user, level_code: targetCode },
+      defaults: { start_date: todayLocalDate() },
+      transaction
+    });
+
+    // Si ya tenía ese nivel pero quedó algún nivel inferior con fecha posterior, actualizamos su fecha para que sea el actual
+    if (!created) {
+      const remainingLowerWithNewerDate = currentLevels.some(
+        l => Number(l.level_code) < targetCode && String(l.start_date) > String(levelEntry.getDataValue('start_date'))
+      );
+      if (remainingLowerWithNewerDate) {
+        await levelEntry.update({ start_date: todayLocalDate() }, { transaction });
+      }
+    }
+  }
+
+  /**
    * Crea un alumno. Si ya existía uno dado de baja con ese DNI, lo reactiva con los datos nuevos.
    * La contraseña inicial es su DNI (encriptada con bcrypt) y el username se genera con su nombre.
    * level_code: último nivel aprobado (opcional); si no tiene, empieza en A1.
@@ -386,13 +457,7 @@ export class UserService {
           active: true
         }, { transaction: t });
 
-        if (level_code !== undefined) {
-          await UserLevel.destroy({ where: { id_user: inactiveUser.id }, transaction: t });
-          if (level_code !== '' && level_code !== null) {
-            const actualDate = todayLocalDate();
-            await UserLevel.create({ id_user: inactiveUser.id, level_code: Number(level_code), start_date: actualDate }, { transaction: t });
-          }
-        }
+        await this.syncStudentLevel(Number(inactiveUser.id), level_code, t);
 
         await t.commit();
         return { user: inactiveUser, reactivated: true };
@@ -411,9 +476,8 @@ export class UserService {
         active: true
       }, { transaction: t });
 
-      if (level_code) {
-        const actualDate = todayLocalDate();
-        await UserLevel.create({ id_user: newUser.dataValues.id, level_code: Number(level_code), start_date: actualDate }, { transaction: t });
+      if (level_code !== undefined && level_code !== '' && level_code !== null) {
+        await this.syncStudentLevel(Number(newUser.dataValues.id), level_code, t);
       }
 
       await t.commit();
@@ -424,8 +488,8 @@ export class UserService {
     }
   }
 
-  // Edita un alumno: solo se actualizan los campos que se enviaron. Si se envía level_code,
-  // se reemplaza su último nivel aprobado (es una corrección manual de la Secretaría).
+  // Edita un alumno: solo se actualizan los campos que se enviaron. Si se envía level_code y cambió
+  // respecto al nivel actual, se sincroniza sin destruir su historial previo.
   async update(id: number | string, data: UpdateUserDto) {
     const { dni, first_name, last_name, phone, birth_date, email, username, password, level_code } = data;
 
@@ -452,18 +516,11 @@ export class UserService {
       id
     );
 
-    // Datos y nivel se guardan juntos: así nunca se borra el nivel sin crear el nuevo
+    // Datos y nivel se guardan juntos en una misma transacción
     const t = await sequelize.transaction();
     try {
       await User.update(dataToUpdate, { where: { id: id, role: 'STUDENT', active: true }, transaction: t });
-
-      if (level_code !== undefined) {
-        await UserLevel.destroy({ where: { id_user: id }, transaction: t });
-        if (level_code !== '' && level_code !== null) {
-          const actualDate = todayLocalDate();
-          await UserLevel.create({ id_user: Number(id), level_code: Number(level_code), start_date: actualDate }, { transaction: t });
-        }
-      }
+      await this.syncStudentLevel(Number(id), level_code, t);
 
       await t.commit();
     } catch (error) {

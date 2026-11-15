@@ -156,6 +156,13 @@ export class EnrollmentService {
     id_user: any;
     id_section: any;
   }) {
+    const student: any = await User.findOne({
+      where: { id: data.id_user, role: 'STUDENT', active: true }
+    });
+    if (!student) {
+      throw new EnrollmentError('El alumno seleccionado no existe o no se encuentra activo.', 404);
+    }
+
     const section: any = await Section.findByPk(data.id_section, {
       include: [
         { model: Course, as: 'course', include: [{ model: Level, as: 'level' }] },
@@ -165,6 +172,10 @@ export class EnrollmentService {
 
     if (!section || !section.course) {
       throw new EnrollmentError('La comisión o el curso seleccionado no existe.', 404);
+    }
+
+    if (!section.course.active) {
+      throw new EnrollmentError('No se puede inscribir a una comisión cuyo curso se encuentra inactivo.', 400);
     }
 
     // Un alumno no puede inscribirse dos veces en la misma comisión (salvo que se haya dado de baja)

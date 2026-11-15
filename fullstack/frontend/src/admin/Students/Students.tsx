@@ -126,15 +126,22 @@ export default function Students() {
 
     try {
       if (editingId) {
-        await studentService.updateStudent(editingId, {
+        const originalStudent = students.find(s => s.id === editingId);
+        const originalLevelCode = originalStudent?.level_code !== undefined && originalStudent?.level_code !== null
+          ? String(originalStudent.level_code)
+          : '';
+        const updatePayload: Partial<Student> = {
           dni: formData.dni,
           first_name: formData.first_name,
           last_name: formData.last_name,
           phone: formData.phone,
           email: formData.email,
           birth_date: formData.birth_date,
-          level_code: formData.level_code
-        })
+        };
+        if (formData.level_code !== originalLevelCode) {
+          updatePayload.level_code = formData.level_code;
+        }
+        await studentService.updateStudent(editingId, updatePayload)
       } else {
         await studentService.createStudent(formData)
       }

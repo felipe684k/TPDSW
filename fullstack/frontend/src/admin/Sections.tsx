@@ -84,13 +84,13 @@ export default function Sections() {
         courseService.getCourses(),
         academicYearService.getAcademicYears(),
         classroomService.getClassrooms(),
-        professorService.getProfessors(),
+        professorService.getProfessors(undefined, 'Activo'),
       ])
       setLevels(levelsData)
       setCourses(coursesData)
       setAcademicYears(yearsData)
       setClassrooms(classroomsData)
-      setProfessors(professorsData)
+      setProfessors(professorsData.filter((p) => p.active !== false))
     } catch (error) {
       console.error('Error loading catalogs:', error)
     }
