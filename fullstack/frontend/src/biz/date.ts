@@ -32,3 +32,15 @@ export function todayISO(): string {
   const d = new Date()
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
+
+/**
+ * Normaliza una fecha (string o Date) al formato local "aaaa-mm-dd" para comparar y ordenar
+ * fechas de negocio con el mismo criterio que el backend (sin desfase UTC).
+ */
+export function toLocalDateISO(value: string | Date | null | undefined): string {
+  if (!value) return ''
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+  const d = value instanceof Date ? value : new Date(value)
+  if (isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}

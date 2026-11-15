@@ -85,8 +85,8 @@ export default function Enrollments() {
     const normalized = normalizeStatus(enrollment.status);
     setFormData({
       status: normalized === 'Dado de Baja' ? 'Activo' : normalized,
-      final_grade: enrollment.final_grade ? enrollment.final_grade.toString() : '',
-      attendance_percentage: enrollment.attendance_percentage ? enrollment.attendance_percentage.toString() : ''
+      final_grade: enrollment.final_grade != null ? String(enrollment.final_grade) : '',
+      attendance_percentage: enrollment.attendance_percentage != null ? String(enrollment.attendance_percentage) : ''
     });
     setUpdateModalOpen(true);
   };
@@ -98,8 +98,8 @@ export default function Enrollments() {
     try {
       const dataToSave = {
         status: formData.status,
-        final_grade: formData.final_grade ? Number(formData.final_grade) : null,
-        attendance_percentage: formData.attendance_percentage ? Number(formData.attendance_percentage) : null
+        final_grade: formData.final_grade.trim() !== '' ? Number(formData.final_grade) : null,
+        attendance_percentage: formData.attendance_percentage.trim() !== '' ? Number(formData.attendance_percentage) : null
       };
 
       await enrollmentService.updateEnrollment(editingId, dataToSave);

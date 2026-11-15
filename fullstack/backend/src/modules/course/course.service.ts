@@ -2,6 +2,7 @@ import { AppError } from '../../errors/AppError.js';
 import { Op } from 'sequelize';
 import { sequelize } from '../../config/database.js';
 import { Course, Level, TuitionFee, Section } from '../../models/index.js';
+import { todayLocalDate } from '../../utils/date.js';
 
 /**
  * SERVICE DE CURSOS
@@ -124,10 +125,10 @@ export class CourseService {
         active: true
       }, { transaction: t });
 
-      // Cuota inicial del curso: rige desde hoy
+      // Cuota inicial del curso: rige desde hoy (en hora local argentina)
       await TuitionFee.create({
         id_course: newCourse.id_course,
-        start_date: new Date(),
+        start_date: todayLocalDate(),
         monthly_cost: tuitionFee
       }, { transaction: t });
 

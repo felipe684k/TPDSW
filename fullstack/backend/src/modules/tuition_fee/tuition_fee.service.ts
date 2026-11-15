@@ -1,5 +1,6 @@
 import { AppError } from '../../errors/AppError.js';
 import { TuitionFee, Course } from '../../models/index.js';
+import { todayLocalDate, toArgentinaDateString } from '../../utils/date.js';
 
 /**
  * SERVICE DE ARANCELES (cuotas mensuales)
@@ -20,7 +21,7 @@ export class TuitionFeeError extends AppError {
 }
 
 export class TuitionFeeService {
-  // Historial de cuotas de los cursos activos, de la más nueva a la más vieja
+  // Historial de cuotas de los cursos activos, de la más nueva a la más vieja (desempatando por id_tuition_fee)
   async findAll() {
     return await TuitionFee.findAll({
       include: [{
@@ -29,13 +30,16 @@ export class TuitionFeeService {
         attributes: ['course_name'],
         where: { active: true }
       }],
-      order: [['start_date', 'DESC']]
+      order: [
+        ['start_date', 'DESC'],
+        ['id_tuition_fee', 'DESC']
+      ]
     });
   }
 
-  // Carga un nuevo valor de cuota para un curso existente
-  async create(data: { id_course: number; monthly_cost: number; start_date: string | Date }) {
-    if (!data.id_course || !data.start_date) {
+  // Carga un nuevo valor de cuota para un curso existente usando fecha local argentina
+  async create(data: { id_course: number; monthly_cost: number; start_date?: string | Date }) {
+    if (!data.id_course) {
       throw new TuitionFeeError('Faltan campos obligatorios', 400);
     }
 
@@ -49,6 +53,22 @@ export class TuitionFeeService {
       throw new TuitionFeeError('El curso no existe', 404);
     }
 
-    return await TuitionFee.create({ ...data, monthly_cost: cost });
+    let normalizedStartDate = todayLocalDate();
+    if (data.start_date) {
+      if (typeof data.start_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data.start_date)) {
+        normalizedStartDate = data.start_date;
+      } else {
+        const parsed = new Date(data.start_date);
+        if (!isNaN(parsed.getTime())) {
+          normalizedStartDate = toArgentinaDateString(parsed);
+        }
+      }
+    }
+
+    return await TuitionFee.create({
+      id_course: data.id_course,
+      monthly_cost: cost,
+      start_date: normalizedStartDate
+    });
   }
 }

@@ -50,14 +50,11 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
 export const updateEnrollment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = parseId(req.params.id);
-    const { enrollment_date, final_grade, attendance_percentage, id_user, id_section, status } = req.body;
+    const { final_grade, attendance_percentage, status } = req.body;
 
     const existingEnrollment = await enrollmentService.update(id, {
-      enrollment_date,
       final_grade,
       attendance_percentage,
-      id_user,
-      id_section,
       status
     });
     if (!existingEnrollment) {

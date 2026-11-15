@@ -8,8 +8,14 @@ import FormInput from '../shared/components/FormInput'
 import FormSelect from '../shared/components/FormSelect'
 import CourseSections from './Courses/CourseSections'
 import { theme } from '../shared/theme'
-import { formatDateAR } from '../biz/date'
+import { formatDateAR, todayISO, toLocalDateISO } from '../biz/date'
 import { formatMoney } from '../biz/money'
+
+const sortTuitionFeesAsc = (fees: Course['tuition_fees'] = []) =>
+  [...(fees || [])].sort((a, b) =>
+    toLocalDateISO(a.start_date).localeCompare(toLocalDateISO(b.start_date)) ||
+    Number(a.id_tuition_fee) - Number(b.id_tuition_fee)
+  )
 
 export default function Courses() {
   const [modalOpen, setModalOpen] = useState(false)
@@ -78,8 +84,9 @@ export default function Courses() {
 
   const handleEdit = (course: Course) => {
     setEditingId(course.id_course || null)
-    const lastTuitionFee = course.tuition_fees && course.tuition_fees.length > 0 
-      ? course.tuition_fees[course.tuition_fees.length - 1].monthly_cost 
+    const sortedFees = sortTuitionFeesAsc(course.tuition_fees)
+    const lastTuitionFee = sortedFees.length > 0 
+      ? sortedFees[sortedFees.length - 1].monthly_cost 
       : ''
       
     setFormData({ 
@@ -151,7 +158,7 @@ export default function Courses() {
     e.preventDefault()
     if (!selectedCourse || !selectedCourse.id_course) return
     try {
-      const today = new Date().toISOString()
+      const today = todayISO()
       await tuitionFeeService.createTuitionFee({
         id_course: selectedCourse.id_course,
         monthly_cost: Number(newTuitionFeeAmount),
@@ -261,7 +268,7 @@ export default function Courses() {
                   {/* Level Course Cards */}
                   <div className="space-y-3">
                     {levelCourses.map((course) => {
-                      const sortedFees = course.tuition_fees ? [...course.tuition_fees].sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()) : []
+                      const sortedFees = sortTuitionFeesAsc(course.tuition_fees)
                       const activeFee = sortedFees.length > 0 ? sortedFees[sortedFees.length - 1] : null;
                       const isExpanded = expandedCourse === course.id_course;
                       
@@ -643,8 +650,8 @@ export default function Courses() {
             <p className="text-sm text-slate-500 text-center py-4">No hay historial de cuotas para este curso.</p>
           ) : (
             <div className="space-y-3">
-              {[...selectedCourse.tuition_fees]
-                .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
+              {sortTuitionFeesAsc(selectedCourse.tuition_fees)
+                .reverse()
                 .map((fee, idx) => (
                   <div key={idx} className="flex justify-between items-center p-3 rounded-lg border border-slate-200 bg-slate-50">
                     <div>

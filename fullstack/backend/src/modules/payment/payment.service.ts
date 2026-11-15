@@ -26,8 +26,10 @@ import { formatMoney } from '../../utils/money.js';
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
-// Meses del ciclo lectivo que se cobran. enName permite reconocer pagos viejos guardados en inglés.
-export const ACADEMIC_MONTHS = [
+// Todos los meses del año calendario (para derivar el rango de cuotas según start_date y end_date del ciclo)
+export const ALL_MONTHS = [
+  { name: 'Enero', enName: 'January', monthNum: 1 },
+  { name: 'Febrero', enName: 'February', monthNum: 2 },
   { name: 'Marzo', enName: 'March', monthNum: 3 },
   { name: 'Abril', enName: 'April', monthNum: 4 },
   { name: 'Mayo', enName: 'May', monthNum: 5 },
@@ -39,6 +41,9 @@ export const ACADEMIC_MONTHS = [
   { name: 'Noviembre', enName: 'November', monthNum: 11 },
   { name: 'Diciembre', enName: 'December', monthNum: 12 }
 ];
+
+// Meses por defecto del ciclo lectivo (Marzo a Diciembre), usado como respaldo si el ciclo no tiene fechas válidas.
+export const ACADEMIC_MONTHS = ALL_MONTHS.filter(m => m.monthNum >= 3 && m.monthNum <= 12);
 
 // true si el texto guardado en un pago corresponde a ese mes ("Marzo", "marzo" o "March")
 export const matchesMonth = (value: string | undefined, m: { name: string; enName: string }) => {
@@ -100,20 +105,6 @@ export const isInstallmentDue = (
   enrollmentDate?: string
 ): boolean => today > getInstallmentDueDate(year, monthNum, enrollmentDate);
 
-/**
- * Primer mes que se le cobra a una inscripción: el mes en que se inscribió.
- * Si se inscribió antes de que empiece el ciclo, se cobra desde Marzo; si se inscribió en un año
- * posterior al del ciclo, no corresponde ninguna cuota (devuelve 13).
- */
-export const getFirstBillableMonth = (ayYear: number, enrollmentDate?: string): number => {
-  const firstMonth = ACADEMIC_MONTHS[0]!.monthNum;
-  if (!enrollmentDate) return firstMonth;
-  const [enrollYear, enrollMonth] = enrollmentDate.split('-').map(Number) as [number, number];
-  if (enrollYear < ayYear) return firstMonth;
-  if (enrollYear > ayYear) return 13;
-  return Math.max(firstMonth, enrollMonth);
-};
-
 // Fecha en formato AAAA-MM-DD según la hora argentina (sin pasar por UTC)
 const toLocalDateString = (value: any): string => {
   if (!value) return '';
@@ -121,6 +112,45 @@ const toLocalDateString = (value: any): string => {
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   const d = new Date(value);
   return isNaN(d.getTime()) ? '' : toArgentinaDateString(d);
+};
+
+/**
+ * Deriva los meses cobrables del ciclo lectivo a partir de su start_date y end_date.
+ * Si no tuviera fechas válidas, utiliza Marzo a Diciembre (ACADEMIC_MONTHS) como respaldo.
+ */
+export const getAcademicYearMonths = (ay: any): typeof ALL_MONTHS => {
+  const startStr = toLocalDateString(ay?.start_date);
+  const endStr = toLocalDateString(ay?.end_date);
+  if (!startStr || !endStr) return ACADEMIC_MONTHS;
+
+  const [startYear, startMonth] = startStr.split('-').map(Number) as [number, number];
+  const [endYear, endMonth] = endStr.split('-').map(Number) as [number, number];
+  if (!startYear || !startMonth || !endYear || !endMonth) return ACADEMIC_MONTHS;
+
+  const effectiveEndMonth = endYear > startYear ? 12 : endMonth;
+  if (effectiveEndMonth < startMonth) return ACADEMIC_MONTHS;
+
+  const months = ALL_MONTHS.filter(m => m.monthNum >= startMonth && m.monthNum <= effectiveEndMonth);
+  return months.length > 0 ? months : ACADEMIC_MONTHS;
+};
+
+/**
+ * Primer mes que se le cobra a una inscripción: el mes en que se inscribió, acotado al inicio del ciclo.
+ * Si se inscribió antes de que empiece el ciclo, se cobra desde el primer mes del ciclo; si se inscribió
+ * después de finalizado el ciclo, no corresponde ninguna cuota (devuelve 13).
+ */
+export const getFirstBillableMonth = (
+  ayYear: number,
+  enrollmentDate?: string,
+  cycleMonths: typeof ALL_MONTHS = ACADEMIC_MONTHS
+): number => {
+  const firstMonth = cycleMonths[0]?.monthNum ?? ACADEMIC_MONTHS[0]!.monthNum;
+  const lastMonth = cycleMonths[cycleMonths.length - 1]?.monthNum ?? 12;
+  if (!enrollmentDate) return firstMonth;
+  const [enrollYear, enrollMonth] = enrollmentDate.split('-').map(Number) as [number, number];
+  if (enrollYear < ayYear) return firstMonth;
+  if (enrollYear > ayYear || enrollMonth > lastMonth) return 13;
+  return Math.max(firstMonth, enrollMonth);
 };
 
 // Año calendario del ciclo lectivo (por su fecha de inicio, o por el número en el nombre)
@@ -279,10 +309,11 @@ export class PaymentService {
       const ay = enroll.section?.academic_year;
       const ayName = ay?.name || 'Ciclo Lectivo';
       const ayYear = getAcademicYearNumber(ay);
+      const cycleMonths = getAcademicYearMonths(ay);
 
       const isDropped = enroll.status === ENROLLMENT_STATUS.DROPPED;
       const enrollmentDate = toLocalDateString(enroll.enrollment_date);
-      const firstBillableMonth = getFirstBillableMonth(ayYear, enrollmentDate);
+      const firstBillableMonth = getFirstBillableMonth(ayYear, enrollmentDate, cycleMonths);
 
       const registeredPayments: any[] = enroll.payments || [];
 
@@ -341,13 +372,14 @@ export class PaymentService {
         });
       }
 
-      // 2. Cuotas mensuales: desde el mes de inscripción hasta Diciembre (también las que todavía no vencieron,
-      // para poder adelantarlas). Una inscripción dada de baja ya no genera cuotas a cobrar.
+      // 2. Cuotas mensuales: desde el mes de inscripción hasta el fin del ciclo lectivo (también las que todavía
+      // no vencieron, para poder adelantarlas). Una inscripción dada de baja ya no genera cuotas a cobrar.
       // Siempre se muestran los meses que tienen pagos registrados.
-      const hasPayments = (m: typeof ACADEMIC_MONTHS[number]) =>
+      const cycleMonthNums = new Set(cycleMonths.map(cm => cm.monthNum));
+      const hasPayments = (m: typeof ALL_MONTHS[number]) =>
         registeredPayments.some(p => matchesMonth(p.installment_month, m));
-      const monthsToShow = ACADEMIC_MONTHS.filter(m =>
-        hasPayments(m) || (!isDropped && m.monthNum >= firstBillableMonth)
+      const monthsToShow = ALL_MONTHS.filter(m =>
+        hasPayments(m) || (!isDropped && cycleMonthNums.has(m.monthNum) && m.monthNum >= firstBillableMonth)
       );
 
       monthsToShow.forEach((m) => {
@@ -440,15 +472,22 @@ export class PaymentService {
       installmentLabel = 'La matrícula';
       previousPayments = enrollmentPayments.filter(p => isRegistrationInstallment(p.installment_month));
     } else {
-      // Solo se cobran los meses del ciclo lectivo (Marzo a Diciembre). Se aceptan cuotas adelantadas.
-      const month = ACADEMIC_MONTHS.find(m => matchesMonth(String(installment_month).trim(), m));
+      // Solo se cobran los meses comprendidos en el ciclo lectivo. Se aceptan cuotas adelantadas.
+      const ay = existingEnrollment.section?.academic_year;
+      const cycleMonths = getAcademicYearMonths(ay);
+      const month = cycleMonths.find(m => matchesMonth(String(installment_month).trim(), m));
       if (!month) {
-        throw new PaymentError(`"${installment_month}" no es un mes de cuota válido. Las cuotas van de Marzo a Diciembre.`, 400);
+        const firstCycleName = cycleMonths[0]?.name || 'Marzo';
+        const lastCycleName = cycleMonths[cycleMonths.length - 1]?.name || 'Diciembre';
+        throw new PaymentError(
+          `"${installment_month}" no es un mes de cuota válido para este ciclo lectivo (${firstCycleName} a ${lastCycleName}).`,
+          400
+        );
       }
-      const ayYear = getAcademicYearNumber(existingEnrollment.section?.academic_year);
-      const firstBillableMonth = getFirstBillableMonth(ayYear, toLocalDateString(existingEnrollment.enrollment_date));
+      const ayYear = getAcademicYearNumber(ay);
+      const firstBillableMonth = getFirstBillableMonth(ayYear, toLocalDateString(existingEnrollment.enrollment_date), cycleMonths);
       if (month.monthNum < firstBillableMonth) {
-        const firstName = ACADEMIC_MONTHS.find(m => m.monthNum === firstBillableMonth)?.name;
+        const firstName = cycleMonths.find(m => m.monthNum === firstBillableMonth)?.name;
         throw new PaymentError(
           firstName
             ? `El alumno se inscribió en ${firstName}: no se cobran cuotas anteriores a ese mes.`
@@ -555,11 +594,12 @@ export class PaymentService {
       const course = enroll.section?.course;
       const ay = enroll.section?.academic_year;
       const ayYear = getAcademicYearNumber(ay);
+      const cycleMonths = getAcademicYearMonths(ay);
 
       const enrollmentDate = toLocalDateString(enroll.enrollment_date);
-      const firstBillableMonth = getFirstBillableMonth(ayYear, enrollmentDate);
-      // Meses que ya vencieron desde que se inscribió
-      const dueMonths = ACADEMIC_MONTHS.filter(m =>
+      const firstBillableMonth = getFirstBillableMonth(ayYear, enrollmentDate, cycleMonths);
+      // Meses del ciclo que ya vencieron desde que se inscribió
+      const dueMonths = cycleMonths.filter(m =>
         m.monthNum >= firstBillableMonth && isInstallmentDue(ayYear, m.monthNum, today, enrollmentDate)
       );
 

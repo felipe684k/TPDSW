@@ -66,6 +66,8 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
 
   const formatMonth = (monthName: string, year?: number) => {
     const map: Record<string, string> = {
+      january: 'Enero',
+      february: 'Febrero',
       march: 'Marzo',
       april: 'Abril',
       may: 'Mayo',
@@ -86,6 +88,71 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
     if (s === 'Pending' || s === 'Pendiente') return 'Pendiente';
     if (s === 'Dropped' || s === 'Dado de Baja') return 'Dado de Baja';
     return s;
+  };
+
+  const getStatusBadgeClasses = (statusLabel?: string) => {
+    if (statusLabel === 'Dado de Baja') {
+      return 'bg-rose-50 text-rose-700 border-rose-200';
+    }
+    if (statusLabel === 'Pendiente') {
+      return 'bg-amber-50 text-amber-700 border-amber-200';
+    }
+    return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+  };
+
+  const activeEnrollments = enrollments.filter(
+    e => normalizeEnrollmentStatus(e.status) !== 'Dado de Baja'
+  );
+  const droppedEnrollments = enrollments.filter(
+    e => normalizeEnrollmentStatus(e.status) === 'Dado de Baja'
+  );
+
+  const renderEnrollmentCard = (enroll: any) => {
+    const section = enroll.section;
+    const course = section?.course;
+    const classroom = section?.classroom?.name || 'Sin aula asignada';
+    const scheduleText = formatSchedule(section?.schedules);
+    const professorText = formatProfessor(section?.professors);
+    const statusLabel = normalizeEnrollmentStatus(enroll.status);
+
+    return (
+      <div key={enroll.id_enrollment} className="bg-slate-50 border border-slate-200 rounded-xl p-4 hover:border-blue-300 transition-colors shadow-sm">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <h3 className="text-base font-bold text-slate-800">
+              {course?.course_name || 'Curso'}
+            </h3>
+            <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 inline-block mt-1">
+              {section?.name || 'Comisión'}
+            </span>
+          </div>
+          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${getStatusBadgeClasses(statusLabel)}`}>
+            {statusLabel}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mt-3 pt-2 border-t border-slate-200/60">
+          <div className="flex items-center gap-2 text-xs text-slate-600 font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className="truncate">{scheduleText}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-600 font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span className="truncate">{professorText}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-600 font-medium col-span-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            <span className="truncate">{classroom}</span>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -183,65 +250,31 @@ export default function StudentDashboard({ userData, onLogout }: StudentDashboar
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
-              Mis Cursos Actuales ({enrollments.length})
+              Mis Cursos Actuales ({activeEnrollments.length})
             </h2>
 
-            {enrollments.length === 0 ? (
+            {activeEnrollments.length === 0 ? (
               <div className="bg-slate-50 border border-dashed border-slate-200 rounded-xl p-8 text-center text-slate-500">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
-                <p className="font-semibold text-sm text-slate-700">No estás inscripto en ningún curso</p>
+                <p className="font-semibold text-sm text-slate-700">No estás inscripto en ningún curso activo</p>
                 <p className="text-xs text-slate-400 mt-1">Acércate a secretaría para realizar una inscripción.</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {enrollments.map(enroll => {
-                  const section = enroll.section;
-                  const course = section?.course;
-                  const classroom = section?.classroom?.name || 'Sin aula asignada';
-                  const scheduleText = formatSchedule(section?.schedules);
-                  const professorText = formatProfessor(section?.professors);
+                {activeEnrollments.map(renderEnrollmentCard)}
+              </div>
+            )}
 
-                  return (
-                    <div key={enroll.id_enrollment} className="bg-slate-50 border border-slate-200 rounded-xl p-4 hover:border-blue-300 transition-colors shadow-sm">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="text-base font-bold text-slate-800">
-                            {course?.course_name || 'Curso'}
-                          </h3>
-                          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 inline-block mt-1">
-                            {section?.name || 'Comisión'}
-                          </span>
-                        </div>
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200">
-                          {normalizeEnrollmentStatus(enroll.status)}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 mt-3 pt-2 border-t border-slate-200/60">
-                        <div className="flex items-center gap-2 text-xs text-slate-600 font-medium">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span className="truncate">{scheduleText}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-slate-600 font-medium">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                          <span className="truncate">{professorText}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-slate-600 font-medium col-span-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                          </svg>
-                          <span className="truncate">{classroom}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+            {droppedEnrollments.length > 0 && (
+              <div className="mt-6 pt-5 border-t border-slate-200">
+                <h3 className="text-sm font-bold text-slate-600 mb-3">
+                  Inscripciones Dadas de Baja ({droppedEnrollments.length})
+                </h3>
+                <div className="space-y-3 opacity-80">
+                  {droppedEnrollments.map(renderEnrollmentCard)}
+                </div>
               </div>
             )}
           </div>

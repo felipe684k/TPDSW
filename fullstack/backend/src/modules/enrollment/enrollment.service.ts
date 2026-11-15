@@ -232,17 +232,14 @@ export class EnrollmentService {
   // ─── CASO DE USO 3: EVALUAR CURSADA Y PROMOVER DE NIVEL ───
 
   /**
-   * Guarda nota, asistencia y estado de la inscripción.
-   * Si la nota final es 7 o más, agrega el nivel del curso al historial del alumno: así,
-   * en su próxima inscripción (CUU 2) ya le corresponde el nivel siguiente.
+   * Guarda nota, asistencia y estado de la inscripción (restringiendo la edición solo a estos campos).
+   * Si la nota final es 7 o más, agrega el nivel del curso al historial del alumno.
+   * Si una nota previamente >= 7 se rectifica a < 7 (o vacía), revierte el nivel otorgado por esa cursada.
    */
   async update(id: any, data: {
-    enrollment_date: any;
-    final_grade: any;
-    attendance_percentage: any;
-    id_user: any;
-    id_section: any;
-    status: any;
+    final_grade?: any;
+    attendance_percentage?: any;
+    status?: any;
   }) {
     const existingEnrollment: any = await Enrollment.findOne({
       where: { id_enrollment: id },
@@ -269,32 +266,73 @@ export class EnrollmentService {
       throw new EnrollmentError('El porcentaje de asistencia debe ser un número entre 0 y 100', 400);
     }
 
-    // Nota como número (null si vino vacía) y nivel del curso que se está evaluando
-    const grade = data.final_grade !== undefined && data.final_grade !== null && data.final_grade !== ''
-      ? Number(data.final_grade)
+    // Nota previa y nota nueva como número (null si está vacía)
+    const previousGrade = existingEnrollment.final_grade !== undefined && existingEnrollment.final_grade !== null && existingEnrollment.final_grade !== ''
+      ? Number(existingEnrollment.final_grade)
       : null;
+    const grade = data.final_grade !== undefined
+      ? (data.final_grade !== null && data.final_grade !== '' ? Number(data.final_grade) : null)
+      : previousGrade;
+    const attendance = data.attendance_percentage !== undefined
+      ? (data.attendance_percentage !== null && data.attendance_percentage !== '' ? Number(data.attendance_percentage) : null)
+      : existingEnrollment.attendance_percentage;
+    const nextStatus = data.status !== undefined ? data.status : existingEnrollment.status;
+
     const courseLevelCode = existingEnrollment.section?.course?.level_code;
 
-    // Nota y subida de nivel se guardan juntas: si falla una, no se guarda ninguna
+    // Nota y sincronización de nivel se guardan juntas en una transacción
     const t = await sequelize.transaction();
     try {
       await Enrollment.update({
-        enrollment_date: data.enrollment_date,
-        final_grade: data.final_grade,
-        attendance_percentage: data.attendance_percentage,
-        id_user: data.id_user,
-        id_section: data.id_section,
-        status: data.status,
+        final_grade: grade,
+        attendance_percentage: attendance,
+        status: nextStatus,
       }, { where: { id_enrollment: id }, transaction: t });
 
-      // Se agrega el nivel aprobado al historial del alumno sin borrar los anteriores.
-      // Si ya lo tenía (por ejemplo, se volvió a cargar la nota), se deja la fecha original.
-      if (grade !== null && !isNaN(grade) && grade >= 7 && courseLevelCode) {
-        await UserLevel.findOrCreate({
-          where: { id_user: existingEnrollment.id_user, level_code: Number(courseLevelCode) },
-          defaults: { start_date: todayLocalDate() },
-          transaction: t
-        });
+      if (courseLevelCode) {
+        const levelNum = Number(courseLevelCode);
+        if (grade !== null && !isNaN(grade) && grade >= 7) {
+          // Se agrega el nivel aprobado al historial del alumno sin borrar los anteriores.
+          // Si ya lo tenía (por ejemplo, se volvió a cargar la nota), se deja la fecha original.
+          await UserLevel.findOrCreate({
+            where: { id_user: existingEnrollment.id_user, level_code: levelNum },
+            defaults: { start_date: todayLocalDate() },
+            transaction: t
+          });
+        } else if (previousGrade !== null && !isNaN(previousGrade) && previousGrade >= 7) {
+          // Si antes tenía nota >= 7 y se rectificó a < 7 (o null), verificamos si tiene otra cursada
+          // aprobada de ese mismo nivel; si no tiene ninguna, se revierte el nivel otorgado.
+          const otherApprovedSameLevel = await Enrollment.count({
+            where: {
+              id_user: existingEnrollment.id_user,
+              id_enrollment: { [Op.ne]: id },
+              final_grade: { [Op.gte]: 7 }
+            },
+            include: [
+              {
+                model: Section,
+                as: 'section',
+                required: true,
+                include: [
+                  {
+                    model: Course,
+                    as: 'course',
+                    required: true,
+                    where: { level_code: levelNum }
+                  }
+                ]
+              }
+            ],
+            transaction: t
+          });
+
+          if (otherApprovedSameLevel === 0) {
+            await UserLevel.destroy({
+              where: { id_user: existingEnrollment.id_user, level_code: levelNum },
+              transaction: t
+            });
+          }
+        }
       }
 
       await t.commit();

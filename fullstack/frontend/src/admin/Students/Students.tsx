@@ -154,6 +154,7 @@ export default function Students() {
 
       setEditingId(null)
       fetchStudents()
+      fetchDebtors(selectedDebtYear)
 
     } catch (error) {
       console.error("Error saving student", error)
@@ -168,6 +169,7 @@ export default function Students() {
         setToast({ text: "Alumno desactivado exitosamente", type: 'danger' })
         setTimeout(() => setToast(null), 3000)
         fetchStudents()
+        fetchDebtors(selectedDebtYear)
         setStudentToDelete(null)
       } catch (error) {
         console.error("Error deleting student", error)
@@ -441,6 +443,7 @@ export default function Students() {
         student={students.find(s => s.id === enrollStudentId) || null}
         onSuccess={() => {
           setEnrollStudentId(null)
+          fetchDebtors(selectedDebtYear)
           setToast({ text: "Inscripción registrada exitosamente", type: 'success' })
           setTimeout(() => setToast(null), 3000)
         }}
