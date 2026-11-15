@@ -57,11 +57,11 @@ export class ClassroomService {
         const name = await this.assertNameAvailable(data.name);
         return await Classroom.create({ ...data, name });
     }
-    // Edita un aula (null si no existe, y el controller responde 404)
+    // Edita un aula (404 si no existe)
     async update(id: number, data: { name?: string; capacity?: number }) {
         const classroom = await Classroom.findByPk(id);
         if (!classroom) {
-            return null;
+            throw new ClassroomError('Aula no encontrada', 404);
         }
         if (data.capacity !== undefined) {
             this.assertValidCapacity(data.capacity);
@@ -71,11 +71,11 @@ export class ClassroomService {
         }
         return await classroom.update(data);
     }
-    // Elimina un aula si no tiene comisiones asignadas
+    // Elimina un aula si no tiene comisiones asignadas (404 si no existe)
     async delete(id: number) {
         const classroom = await Classroom.findByPk(id);
         if (!classroom) {
-            return null;
+            throw new ClassroomError('Aula no encontrada', 404);
         }
 
         const sectionsCount = await Section.count({ where: { id_classroom: id } });

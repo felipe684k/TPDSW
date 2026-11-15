@@ -156,6 +156,10 @@ export class EnrollmentService {
     id_user: any;
     id_section: any;
   }) {
+    if (!data.id_user || !data.id_section) {
+      throw new EnrollmentError('Faltan campos obligatorios', 400);
+    }
+
     const student: any = await User.findOne({
       where: { id: data.id_user, role: 'STUDENT', active: true }
     });
@@ -252,7 +256,7 @@ export class EnrollmentService {
       ]
     });
     if (!existingEnrollment) {
-      return null;
+      throw new EnrollmentError('Inscripción no encontrada', 404);
     }
 
     // Nota (0 a 10) y asistencia (0 a 100): vacías se permiten, fuera de rango no
@@ -350,7 +354,7 @@ export class EnrollmentService {
   async delete(id: any) {
     const existingEnrollment = await Enrollment.findOne({ where: { id_enrollment: id } });
     if (!existingEnrollment) {
-      return null;
+      throw new EnrollmentError('Inscripción no encontrada', 404);
     }
 
     await Enrollment.update(

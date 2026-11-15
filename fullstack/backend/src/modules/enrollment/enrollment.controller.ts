@@ -1,5 +1,5 @@
 import { type Request, type Response, type NextFunction } from 'express';
-import { AppError, parseId } from '../../errors/AppError.js';
+import { parseId } from '../../errors/AppError.js';
 import { sendSuccess } from '../../utils/response.js';
 import { EnrollmentService } from './enrollment.service.js';
 
@@ -28,11 +28,6 @@ export const getAllEnrollments = async (req: Request, res: Response, next: NextF
 export const createEnrollment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { enrollment_date, final_grade, attendance_percentage, id_user, id_section } = req.body;
-
-    if (!id_user || !id_section) {
-      throw new AppError('Faltan campos obligatorios', 400);
-    }
-
     const newEnrollment = await enrollmentService.create({
       enrollment_date,
       final_grade,
@@ -52,15 +47,11 @@ export const updateEnrollment = async (req: Request, res: Response, next: NextFu
   try {
     const id = parseId(req.params.id);
     const { final_grade, attendance_percentage, status } = req.body;
-
     const existingEnrollment = await enrollmentService.update(id, {
       final_grade,
       attendance_percentage,
       status
     });
-    if (!existingEnrollment) {
-      throw new AppError('Inscripción no encontrada', 404);
-    }
 
     sendSuccess(res, existingEnrollment, 'Inscripción actualizada exitosamente');
   } catch (error) {
@@ -72,12 +63,7 @@ export const updateEnrollment = async (req: Request, res: Response, next: NextFu
 export const deleteEnrollment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = parseId(req.params.id);
-
-    const existingEnrollment = await enrollmentService.delete(id);
-    if (!existingEnrollment) {
-      throw new AppError('Inscripción no encontrada', 404);
-    }
-
+    await enrollmentService.delete(id);
     sendSuccess(res, null, 'Inscripción dada de baja exitosamente');
   } catch (error) {
     next(error);

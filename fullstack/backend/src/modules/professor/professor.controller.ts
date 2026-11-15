@@ -1,5 +1,5 @@
 import { type Request, type Response, type NextFunction } from 'express';
-import { AppError, parseId } from '../../errors/AppError.js';
+import { parseId } from '../../errors/AppError.js';
 import { sendSuccess } from '../../utils/response.js';
 import { ProfessorService } from './professor.service.js';
 
@@ -46,11 +46,6 @@ export const checkProfessorDni = async (req: Request, res: Response, next: NextF
 export const createProfessor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { dni, first_name, last_name, phone, email, birth_date } = req.body;
-
-    if (!dni || !first_name || !last_name) {
-      throw new AppError('DNI, Nombre y Apellido son obligatorios', 400);
-    }
-
     const result = await professorService.create({
       dni,
       first_name,
@@ -59,10 +54,6 @@ export const createProfessor = async (req: Request, res: Response, next: NextFun
       email,
       birth_date
     });
-
-    if (result.conflict) {
-      throw new AppError('Ya existe un usuario con el DNI: ' + dni, 409);
-    }
 
     if (result.reactivated) {
       sendSuccess(res, result.data, 'Profesor reactivado exitosamente', 200);
@@ -91,10 +82,6 @@ export const updateProfessor = async (req: Request, res: Response, next: NextFun
       active
     });
 
-    if (!updatedData) {
-      throw new AppError('No se encontró un profesor con ID ' + id, 404);
-    }
-
     sendSuccess(res, updatedData, 'Profesor actualizado exitosamente');
   } catch (error) {
     next(error);
@@ -105,13 +92,7 @@ export const updateProfessor = async (req: Request, res: Response, next: NextFun
 export const deleteProfessor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = parseId(req.params.id);
-
-    const deleted = await professorService.delete(id);
-
-    if (!deleted) {
-      throw new AppError('No se encontró un profesor activo con ID ' + id, 404);
-    }
-
+    await professorService.delete(id);
     sendSuccess(res, null, 'Profesor desactivado exitosamente');
   } catch (error) {
     next(error);

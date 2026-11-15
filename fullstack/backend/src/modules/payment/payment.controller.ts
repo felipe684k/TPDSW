@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { AppError } from '../../errors/AppError.js';
+import { parseId } from '../../errors/AppError.js';
 import { sendSuccess } from '../../utils/response.js';
 import { PaymentService } from './payment.service.js';
 
@@ -26,15 +26,11 @@ export const getAllPayments = async (req: Request, res: Response, next: NextFunc
 // GET /api/payments/student/:id_user?id_academic_year= → estado de cuenta de un alumno
 export const getStudentAccountStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id_user } = req.params;
-    if (!id_user) {
-      throw new AppError('Se requiere el ID del alumno', 400);
-    }
-
+    const id_user = parseId(req.params.id_user);
     const { id_academic_year } = req.query;
 
     const result = await paymentService.getStudentAccountStatus(
-      id_user as string,
+      id_user,
       id_academic_year ? Number(id_academic_year) : undefined
     );
 

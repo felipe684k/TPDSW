@@ -1,5 +1,5 @@
 import { type Request, type Response, type NextFunction } from 'express';
-import { AppError, parseId } from '../../errors/AppError.js';
+import { parseId } from '../../errors/AppError.js';
 import { sendSuccess } from '../../utils/response.js';
 import { ClassroomService } from './classroom.service.js';
 
@@ -39,12 +39,7 @@ export const updateClassroom = async (req: Request, res: Response, next: NextFun
     try {
         const id = parseId(req.params.id);
         const { name, capacity } = req.body;
-
-        const classroom = await classroomService.update(Number(id), { name, capacity });
-        if (!classroom) {
-            throw new AppError('Aula no encontrada', 404);
-        }
-
+        const classroom = await classroomService.update(id, { name, capacity });
         sendSuccess(res, classroom, 'Aula actualizada exitosamente');
     } catch (error) {
         next(error);
@@ -55,11 +50,7 @@ export const updateClassroom = async (req: Request, res: Response, next: NextFun
 export const deleteClassroom = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const id = parseId(req.params.id);
-        const classroom = await classroomService.delete(Number(id));
-        if (!classroom) {
-            throw new AppError('Aula no encontrada', 404);
-        }
-
+        await classroomService.delete(id);
         sendSuccess(res, null, 'Aula eliminada exitosamente');
     } catch (error) {
         next(error);

@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { AppError, parseId } from '../../errors/AppError.js';
+import { parseId } from '../../errors/AppError.js';
 import { sendSuccess } from '../../utils/response.js';
 import { UserService } from './user.service.js';
 
@@ -28,11 +28,7 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
 export const checkStudentDni = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { dni } = req.params;
-    if (!dni) {
-      throw new AppError('DNI es obligatorio', 400);
-    }
-
-    const student = await userService.checkStudentDni(dni as string);
+    const student = await userService.checkStudentDni(dni);
     if (student) {
       sendSuccess(res, student, 'Alumno encontrado');
       return;

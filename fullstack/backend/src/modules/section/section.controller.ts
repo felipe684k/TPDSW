@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { AppError, parseId } from '../../errors/AppError.js';
+import { parseId } from '../../errors/AppError.js';
 import { sendSuccess } from '../../utils/response.js';
 import { SectionService } from './section.service.js';
 
@@ -28,10 +28,7 @@ export const getSections = async (req: Request, res: Response, next: NextFunctio
 export const getSectionById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = parseId(req.params.id);
-    const section = await sectionService.findById(Number(id));
-    if (!section) {
-      throw new AppError('Comisión no encontrada', 404);
-    }
+    const section = await sectionService.findById(id);
     sendSuccess(res, section, 'Comisión obtenida exitosamente');
   } catch (error) {
     next(error);
@@ -61,7 +58,7 @@ export const updateSection = async (req: Request, res: Response, next: NextFunct
   try {
     const id = parseId(req.params.id);
     const { name, id_course, id_classroom, id_academic_year, schedules, id_professor } = req.body;
-    const updatedSection = await sectionService.update(Number(id), {
+    const updatedSection = await sectionService.update(id, {
       name,
       id_course,
       id_classroom,
@@ -69,9 +66,6 @@ export const updateSection = async (req: Request, res: Response, next: NextFunct
       schedules,
       id_professor
     });
-    if (!updatedSection) {
-      throw new AppError('Comisión no encontrada', 404);
-    }
     sendSuccess(res, updatedSection, 'Comisión actualizada exitosamente');
   } catch (error) {
     next(error);
@@ -82,7 +76,7 @@ export const updateSection = async (req: Request, res: Response, next: NextFunct
 export const deleteSection = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = parseId(req.params.id);
-    await sectionService.delete(Number(id));
+    await sectionService.delete(id);
     sendSuccess(res, null, 'Comisión eliminada exitosamente');
   } catch (error) {
     next(error);

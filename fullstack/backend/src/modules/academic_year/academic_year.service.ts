@@ -55,9 +55,13 @@ export class AcademicYearService {
     });
   }
 
-  // Un ciclo lectivo por su id (null si no existe)
+  // Un ciclo lectivo por su id (404 si no existe)
   async findById(id: number) {
-    return await AcademicYear.findByPk(id);
+    const academicYear = await AcademicYear.findByPk(id);
+    if (!academicYear) {
+      throw new AcademicYearError('Ciclo lectivo no encontrado', 404);
+    }
+    return academicYear;
   }
 
   // Crea un ciclo lectivo validando fechas y nombre
@@ -71,7 +75,7 @@ export class AcademicYearService {
   async update(id: number, data: { name?: string; start_date?: string | Date; end_date?: string | Date }) {
     const academicYear: any = await AcademicYear.findByPk(id);
     if (!academicYear) {
-      return null;
+      throw new AcademicYearError('Ciclo lectivo no encontrado', 404);
     }
     const start = data.start_date ?? academicYear.start_date;
     const end = data.end_date ?? academicYear.end_date;
@@ -87,7 +91,7 @@ export class AcademicYearService {
   async delete(id: number) {
     const academicYear = await AcademicYear.findByPk(id);
     if (!academicYear) {
-      return null;
+      throw new AcademicYearError('Ciclo lectivo no encontrado', 404);
     }
     // No se puede eliminar un ciclo que tiene comisiones
     const sectionsCount = await Section.count({ where: { id_academic_year: id } });

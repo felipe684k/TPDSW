@@ -174,7 +174,10 @@ export class UserService {
 
   // Busca un alumno por DNI: primero entre los activos y, si no está, entre los dados de baja.
   // El front lo usa al cargar un alumno nuevo para ofrecer reactivar uno dado de baja.
-  async checkStudentDni(dni: string) {
+  async checkStudentDni(dni: any) {
+    if (!dni || !String(dni).trim()) {
+      throw new UserError('DNI es obligatorio', 400);
+    }
     // 1. Buscar alumno activo
     let student: any = await User.findOne({
       where: { dni, role: 'STUDENT', active: true },

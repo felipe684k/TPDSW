@@ -217,7 +217,7 @@ export class SectionService {
     return sections.map((s) => this.formatSectionWithSpots(s));
   }
 
-  // Detalle de una comisión (con los mismos datos relacionados que el listado). null si no existe.
+  // Detalle de una comisión (con los mismos datos relacionados que el listado). 404 si no existe.
   async findById(id: number) {
     const section = await Section.findByPk(id, {
       include: [
@@ -235,7 +235,9 @@ export class SectionService {
         }
       ]
     });
-    if (!section) return null;
+    if (!section) {
+      throw new SectionError('Comisión no encontrada', 404);
+    }
     return this.formatSectionWithSpots(section);
   }
 
@@ -402,7 +404,7 @@ export class SectionService {
     });
 
     if (!existingSection) {
-      return null;
+      throw new SectionError('Comisión no encontrada', 404);
     }
 
     // Valores finales ("target"): el nuevo si se envió, o el actual de la comisión si no

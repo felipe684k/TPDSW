@@ -108,6 +108,9 @@ export class CourseService {
     initial_tuition_fee: any;
     weekly_hours?: any;
   }) {
+    if (!data.course_name || !data.level_code || !data.initial_tuition_fee) {
+      throw new CourseError('Faltan campos obligatorios', 400);
+    }
     const weeklyHours = this.parseWeeklyHours(data.weekly_hours);
     const registrationFee = this.parseRegistrationFee(data.registration_fee);
     const tuitionFee = this.parseTuitionFee(data.initial_tuition_fee);
@@ -149,7 +152,7 @@ export class CourseService {
   }) {
     const existingCourse = await Course.findOne({ where: { id_course: id, active: true } });
     if (!existingCourse) {
-      return null;
+      throw new CourseError('Curso no encontrado', 404);
     }
 
     const weeklyHours = this.parseWeeklyHours(data.weekly_hours);
@@ -178,7 +181,7 @@ export class CourseService {
   async delete(id: any) {
     const existingCourse = await Course.findOne({ where: { id_course: id, active: true } });
     if (!existingCourse) {
-      return null;
+      throw new CourseError('Curso no encontrado', 404);
     }
 
     // No se puede dar de baja un curso que tiene comisiones

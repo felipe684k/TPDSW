@@ -59,6 +59,10 @@ export class ProfessorService {
 
   // Busca un docente por DNI (activo o dado de baja) para avisar o reactivarlo desde el front
   async checkDni(dni: any) {
+    if (!dni || !String(dni).trim()) {
+      throw new ProfessorError('DNI es obligatorio', 400);
+    }
+
     let prof: any = await User.findOne({ where: { dni, role: 'PROFESSOR', active: true } });
     if (prof) {
       return prof;
@@ -82,7 +86,7 @@ export class ProfessorService {
   // ─── ALTA, EDICIÓN Y BAJA ───
 
   // Crea un docente, o reactiva uno dado de baja con el mismo DNI.
-  // Si ya hay un usuario activo con ese DNI devuelve conflict: true y el controller responde 409.
+  // Si ya hay un usuario activo con ese DNI lanza ProfessorError 409.
   async create(data: {
     dni: any;
     first_name: any;
@@ -92,11 +96,15 @@ export class ProfessorService {
     birth_date: any;
   }) {
     const { dni, first_name, last_name, phone, email, birth_date } = data;
+    if (!dni || !first_name || !last_name) {
+      throw new ProfessorError('DNI, Nombre y Apellido son obligatorios', 400);
+    }
+
     assertValidDniAndEmail(dni, normalizeEmail(email));
 
     const activeExistingProfessor: any = await User.findOne({ where: { dni, active: true } });
     if (activeExistingProfessor) {
-      return { conflict: true, data: null };
+      throw new ProfessorError('Ya existe un usuario con el DNI: ' + dni, 409);
     }
 
     const inactiveProfessor: any = await User.findOne({
@@ -125,7 +133,7 @@ export class ProfessorService {
         username: String(dni),
         active: true
       });
-      return { conflict: false, reactivated: true, data: inactiveProfessor };
+      return { reactivated: true, data: inactiveProfessor };
     }
 
     const newProfessor = await User.create({
@@ -142,10 +150,10 @@ export class ProfessorService {
       active: true
     });
 
-    return { conflict: false, reactivated: false, data: newProfessor };
+    return { reactivated: false, data: newProfessor };
   }
 
-  // Edita un docente activo: solo se cambian los campos que se enviaron (null si no existe o está inactivo)
+  // Edita un docente activo: solo se cambian los campos que se enviaron (404 si no existe o está inactivo)
   async update(id: any, data: {
     dni?: any;
     first_name?: any;
@@ -159,7 +167,7 @@ export class ProfessorService {
 
     const existingProfessor = await User.findOne({ where: { id, role: 'PROFESSOR', active: true } });
     if (!existingProfessor) {
-      return null;
+      throw new ProfessorError('No se encontró un profesor con ID ' + id, 404);
     }
 
     const dataToUpdate: any = {};
@@ -190,7 +198,7 @@ export class ProfessorService {
     const professor: any = await User.findOne({ where: { id, role: 'PROFESSOR', active: true } });
 
     if (!professor) {
-      return null;
+      throw new ProfessorError('No se encontró un profesor activo con ID ' + id, 404);
     }
 
     const ts = Date.now();

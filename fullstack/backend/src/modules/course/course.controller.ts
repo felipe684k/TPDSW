@@ -1,5 +1,5 @@
 import { type Request, type Response, type NextFunction } from 'express';
-import { AppError, parseId } from '../../errors/AppError.js';
+import { parseId } from '../../errors/AppError.js';
 import { sendSuccess } from '../../utils/response.js';
 import { CourseService } from './course.service.js';
 
@@ -28,11 +28,6 @@ export const getAllCourses = async (req: Request, res: Response, next: NextFunct
 export const createCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { course_name, level_code, registration_fee, initial_tuition_fee, weekly_hours } = req.body;
-    
-    if (!course_name || !level_code || !initial_tuition_fee) {
-      throw new AppError('Faltan campos obligatorios', 400);
-    }
-
     const newCourse = await courseService.create({
       course_name,
       level_code,
@@ -52,16 +47,12 @@ export const updateCourse = async (req: Request, res: Response, next: NextFuncti
   try {
     const id = parseId(req.params.id);
     const { course_name, level_code, registration_fee, weekly_hours } = req.body;
-    
     const existingCourse = await courseService.update(id, {
       course_name,
       level_code,
       registration_fee,
       weekly_hours
     });
-    if (!existingCourse) {
-      throw new AppError('Curso no encontrado', 404);
-    }
 
     sendSuccess(res, existingCourse, 'Curso actualizado exitosamente');
   } catch (error) {
@@ -73,12 +64,7 @@ export const updateCourse = async (req: Request, res: Response, next: NextFuncti
 export const deleteCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = parseId(req.params.id);
-    
-    const existingCourse = await courseService.delete(id);
-    if (!existingCourse) {
-      throw new AppError('Curso no encontrado', 404);
-    }
-    
+    await courseService.delete(id);
     sendSuccess(res, null, 'Curso desactivado exitosamente');
   } catch (error) {
     next(error);
