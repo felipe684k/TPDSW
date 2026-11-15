@@ -1,7 +1,16 @@
 import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
+import { AppError } from '../../errors/AppError.js';
 import { User } from '../../models/user.js';
+import { sequelize, UserSection } from '../../models/index.js';
 import { normalizeEmail, assertUniqueUserFields, assertValidDniAndEmail } from '../user/user.service.js';
+
+export class ProfessorError extends AppError {
+  constructor(message: string, statusCode: number = 400) {
+    super(message, statusCode);
+    this.name = 'ProfessorError';
+  }
+}
 
 /**
  * SERVICE DE DOCENTES
@@ -98,9 +107,12 @@ export class ProfessorService {
       }
     });
 
-    // Email vacío -> NULL, y no puede estar usado por otro usuario
+    // Email vacío -> NULL, y ni email ni username (igual al DNI) pueden estar usados por otro usuario
     const cleanEmail = normalizeEmail(email);
-    await assertUniqueUserFields({ email: cleanEmail }, inactiveProfessor?.id);
+    await assertUniqueUserFields(
+      { dni: String(dni), email: cleanEmail, username: String(dni) },
+      inactiveProfessor?.id
+    );
 
     if (inactiveProfessor) {
       await inactiveProfessor.update({
@@ -110,7 +122,7 @@ export class ProfessorService {
         email: cleanEmail,
         birth_date,
         dni,
-        username: dni,
+        username: String(dni),
         active: true
       });
       return { conflict: false, reactivated: true, data: inactiveProfessor };
@@ -123,7 +135,7 @@ export class ProfessorService {
       phone,
       email: cleanEmail,
       birth_date,
-      username: dni,
+      username: String(dni),
       // Los docentes no inician sesión, pero la clave nunca se guarda en texto plano
       password: await bcrypt.hash(String(dni), 10),
       role: 'PROFESSOR',
@@ -133,7 +145,7 @@ export class ProfessorService {
     return { conflict: false, reactivated: false, data: newProfessor };
   }
 
-  // Edita un docente: solo se cambian los campos que se enviaron (null si no existe)
+  // Edita un docente activo: solo se cambian los campos que se enviaron (null si no existe o está inactivo)
   async update(id: any, data: {
     dni?: any;
     first_name?: any;
@@ -145,13 +157,16 @@ export class ProfessorService {
   }) {
     const { dni, first_name, last_name, phone, email, birth_date, active } = data;
 
-    const existingProfessor = await User.findOne({ where: { id, role: 'PROFESSOR' } });
+    const existingProfessor = await User.findOne({ where: { id, role: 'PROFESSOR', active: true } });
     if (!existingProfessor) {
       return null;
     }
 
     const dataToUpdate: any = {};
-    if (dni !== undefined) dataToUpdate.dni = dni;
+    if (dni !== undefined) {
+      dataToUpdate.dni = dni;
+      dataToUpdate.username = String(dni);
+    }
     if (first_name !== undefined) dataToUpdate.first_name = first_name;
     if (last_name !== undefined) dataToUpdate.last_name = last_name;
     if (phone !== undefined) dataToUpdate.phone = phone;
@@ -160,14 +175,17 @@ export class ProfessorService {
     if (active !== undefined) dataToUpdate.active = active;
 
     assertValidDniAndEmail(dataToUpdate.dni, dataToUpdate.email);
-    await assertUniqueUserFields({ dni: dataToUpdate.dni, email: dataToUpdate.email }, id);
+    await assertUniqueUserFields(
+      { dni: dataToUpdate.dni, email: dataToUpdate.email, username: dataToUpdate.username },
+      id
+    );
 
-    await User.update(dataToUpdate, { where: { id, role: 'PROFESSOR' } });
+    await User.update(dataToUpdate, { where: { id, role: 'PROFESSOR', active: true } });
 
     return { id, ...dataToUpdate };
   }
 
-  // Baja lógica: active = false y se agrega "_deleted_<fecha>" a DNI, email y username para liberarlos
+  // Baja lógica: bloquea si tiene comisiones asignadas (409) y ejecuta la baja en una transacción
   async delete(id: any) {
     const professor: any = await User.findOne({ where: { id, role: 'PROFESSOR', active: true } });
 
@@ -176,15 +194,35 @@ export class ProfessorService {
     }
 
     const ts = Date.now();
-    await User.update(
-      {
-        active: false,
-        email: professor.email ? `${professor.email}_deleted_${ts}` : null,
-        username: `${professor.username}_deleted_${ts}`,
-        dni: `${professor.dni}_deleted_${ts}`
-      },
-      { where: { id, role: 'PROFESSOR', active: true } }
-    );
+    const t = await sequelize.transaction();
+    try {
+      const assignedSectionsCount = await UserSection.count({
+        where: { id_user: id },
+        transaction: t
+      });
+
+      if (assignedSectionsCount > 0) {
+        throw new ProfessorError(
+          'No se puede desactivar el profesor porque tiene comisiones asignadas. Reasigná otro docente a sus comisiones antes de darlo de baja.',
+          409
+        );
+      }
+
+      await User.update(
+        {
+          active: false,
+          email: professor.email ? `${professor.email}_deleted_${ts}` : null,
+          username: `${professor.username}_deleted_${ts}`,
+          dni: `${professor.dni}_deleted_${ts}`
+        },
+        { where: { id, role: 'PROFESSOR', active: true }, transaction: t }
+      );
+
+      await t.commit();
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
 
     return true;
   }

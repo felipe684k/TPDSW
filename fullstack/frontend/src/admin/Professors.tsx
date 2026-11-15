@@ -130,7 +130,10 @@ export default function Professors() {
       setProfessorToDelete(null)
     } catch (error) {
       console.error('Error deactivating professor', error)
-      alert('Error al desactivar el profesor.')
+      setDeleteModalOpen(false)
+      setProfessorToDelete(null)
+      setToast({ text: error instanceof Error ? error.message : 'Error al desactivar el profesor.', type: 'danger' })
+      setTimeout(() => setToast(null), 4000)
     }
   }
 

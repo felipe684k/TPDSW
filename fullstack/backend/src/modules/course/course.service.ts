@@ -146,7 +146,7 @@ export class CourseService {
     registration_fee: any;
     weekly_hours?: any;
   }) {
-    const existingCourse = await Course.findOne({ where: { id_course: id } });
+    const existingCourse = await Course.findOne({ where: { id_course: id, active: true } });
     if (!existingCourse) {
       return null;
     }
@@ -168,14 +168,14 @@ export class CourseService {
       level_code: data.level_code,
       registration_fee: registrationFee,
       weekly_hours: weeklyHours
-    }, { where: { id_course: id } });
+    }, { where: { id_course: id, active: true } });
 
     return existingCourse;
   }
 
   // Baja lógica del curso
   async delete(id: any) {
-    const existingCourse = await Course.findOne({ where: { id_course: id } });
+    const existingCourse = await Course.findOne({ where: { id_course: id, active: true } });
     if (!existingCourse) {
       return null;
     }
@@ -187,7 +187,7 @@ export class CourseService {
     }
 
     // Baja lógica: se marca como inactivo en vez de borrar la fila
-    await Course.update({ active: false }, { where: { id_course: id } });
+    await Course.update({ active: false }, { where: { id_course: id, active: true } });
     return existingCourse;
   }
 }

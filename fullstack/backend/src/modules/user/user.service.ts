@@ -232,7 +232,7 @@ export class UserService {
     const cleanInput = username.trim();
 
     // scope('withPassword'): por defecto el modelo nunca trae la contraseña; acá se pide explícitamente
-    let foundUser: any = await User.scope('withPassword').findOne({
+    const foundUser: any = await User.scope('withPassword').findOne({
       where: {
         [Op.or]: [
           { username: cleanInput },
@@ -243,32 +243,19 @@ export class UserService {
       }
     });
 
-    // Si no se encontró por username/DNI/email exacto, verificamos si coincide con el nombre de un profesor activo
-    if (!foundUser) {
-      foundUser = await User.scope('withPassword').findOne({
-        where: {
-          role: 'PROFESSOR',
-          active: true,
-          [Op.and]: [
-            sequelize.where(sequelize.fn('LOWER', sequelize.col('first_name')), cleanInput.toLowerCase())
-          ]
-        }
-      });
-    }
-
     if (!foundUser) {
       throw new UserError('Usuario o contraseña incorrectos', 401);
-    }
-
-    // Si el usuario es profesor, bloqueamos el ingreso con mensaje explícito de su rol
-    if (foundUser.role === 'PROFESSOR') {
-      throw new UserError('No podés ingresar al sistema porque sos profesor. El acceso está habilitado únicamente para Administración y Alumnos.', 403);
     }
 
     const isPasswordValid = await bcrypt.compare(password, foundUser.password).catch(() => false);
 
     if (!isPasswordValid) {
       throw new UserError('Usuario o contraseña incorrectos', 401);
+    }
+
+    // Si el usuario es profesor, bloqueamos el ingreso con mensaje explícito de su rol (recién tras validar contraseña)
+    if (foundUser.role === 'PROFESSOR') {
+      throw new UserError('No podés ingresar al sistema porque sos profesor. El acceso está habilitado únicamente para Administración y Alumnos.', 403);
     }
 
     // Solo la secretaría (ADMIN) y los alumnos (STUDENT) tienen acceso al sistema
