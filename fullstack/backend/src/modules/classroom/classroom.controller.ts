@@ -1,5 +1,6 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { AppError, parseId } from '../../errors/AppError.js';
+import { sendSuccess } from '../../utils/response.js';
 import { ClassroomService } from './classroom.service.js';
 
 /**
@@ -16,7 +17,7 @@ const classroomService = new ClassroomService();
 export const getClassrooms = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const classrooms = await classroomService.findAll();
-        res.json({ success: true, data: classrooms });
+        sendSuccess(res, classrooms, 'Aulas obtenidas exitosamente');
     } catch (error) {
         next(error);
     }
@@ -27,7 +28,7 @@ export const createClassroom = async (req: Request, res: Response, next: NextFun
     try {
         const { name, capacity } = req.body;
         const newClassroom = await classroomService.create({ name, capacity });
-        res.status(201).json({ success: true, data: newClassroom });
+        sendSuccess(res, newClassroom, 'Aula creada exitosamente', 201);
     } catch (error) {
         next(error);
     }
@@ -44,7 +45,7 @@ export const updateClassroom = async (req: Request, res: Response, next: NextFun
             throw new AppError('Aula no encontrada', 404);
         }
 
-        res.json({ success: true, data: classroom });
+        sendSuccess(res, classroom, 'Aula actualizada exitosamente');
     } catch (error) {
         next(error);
     }
@@ -59,7 +60,7 @@ export const deleteClassroom = async (req: Request, res: Response, next: NextFun
             throw new AppError('Aula no encontrada', 404);
         }
 
-        res.json({ success: true, message: 'Aula eliminada exitosamente' });
+        sendSuccess(res, null, 'Aula eliminada exitosamente');
     } catch (error) {
         next(error);
     }

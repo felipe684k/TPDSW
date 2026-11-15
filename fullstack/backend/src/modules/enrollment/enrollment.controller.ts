@@ -1,5 +1,6 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { AppError, parseId } from '../../errors/AppError.js';
+import { sendSuccess } from '../../utils/response.js';
 import { EnrollmentService } from './enrollment.service.js';
 
 /**
@@ -17,7 +18,7 @@ export const getAllEnrollments = async (req: Request, res: Response, next: NextF
   try {
     const { id_section } = req.query;
     const enrollments = await enrollmentService.findAll({ id_section });
-    res.status(200).json({ status: 'ok', data: enrollments });
+    sendSuccess(res, enrollments, 'Inscripciones obtenidas exitosamente');
   } catch (error) {
     next(error);
   }
@@ -40,7 +41,7 @@ export const createEnrollment = async (req: Request, res: Response, next: NextFu
       id_section
     });
 
-    res.status(201).json({ status: 'ok', message: 'Inscripción registrada exitosamente', data: newEnrollment });
+    sendSuccess(res, newEnrollment, 'Inscripción registrada exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -61,7 +62,7 @@ export const updateEnrollment = async (req: Request, res: Response, next: NextFu
       throw new AppError('Inscripción no encontrada', 404);
     }
 
-    res.status(200).json({ status: 'ok', message: 'Inscripción actualizada exitosamente' });
+    sendSuccess(res, existingEnrollment, 'Inscripción actualizada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -77,7 +78,7 @@ export const deleteEnrollment = async (req: Request, res: Response, next: NextFu
       throw new AppError('Inscripción no encontrada', 404);
     }
 
-    res.status(200).json({ status: 'ok', message: 'Inscripción dada de baja exitosamente' });
+    sendSuccess(res, null, 'Inscripción dada de baja exitosamente');
   } catch (error) {
     next(error);
   }

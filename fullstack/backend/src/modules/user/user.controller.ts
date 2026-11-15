@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { AppError, parseId } from '../../errors/AppError.js';
+import { sendSuccess } from '../../utils/response.js';
 import { UserService } from './user.service.js';
 
 /**
@@ -17,7 +18,7 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
   try {
     const { search, level } = req.query;
     const cleanUsers = await userService.findAll({ search, level });
-    res.status(200).json({ status: 'ok', message: 'Lista obtenida exitosamente', data: cleanUsers });
+    sendSuccess(res, cleanUsers, 'Lista obtenida exitosamente');
   } catch (error) {
     next(error);
   }
@@ -33,11 +34,11 @@ export const checkStudentDni = async (req: Request, res: Response, next: NextFun
 
     const student = await userService.checkStudentDni(dni as string);
     if (student) {
-      res.status(200).json({ status: 'ok', data: student });
+      sendSuccess(res, student, 'Alumno encontrado');
       return;
     }
 
-    res.status(200).json({ status: 'not_found', data: null });
+    sendSuccess(res, null, 'No se encontró un alumno inactivo con ese DNI');
   } catch (error) {
     next(error);
   }
@@ -49,11 +50,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     const { username, password } = req.body;
     const userData = await userService.login(username, password);
 
-    res.status(200).json({
-      status: 'ok',
-      message: 'Inicio de sesión exitoso',
-      data: userData
-    });
+    sendSuccess(res, userData, 'Inicio de sesión exitoso');
   } catch (error) {
     next(error);
   }
@@ -64,7 +61,7 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
   try {
     const id = parseId(req.params.id);
     const foundUser = await userService.findById(id);
-    res.status(200).json({ status: 'ok', message: 'Alumno encontrado exitosamente', data: foundUser });
+    sendSuccess(res, foundUser, 'Alumno encontrado exitosamente');
   } catch (error) {
     next(error);
   }
@@ -85,11 +82,11 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
     });
 
     if (result.reactivated) {
-      res.status(200).json({ status: 'ok', message: 'Alumno reactivado exitosamente', data: result.user });
+      sendSuccess(res, result.user, 'Alumno reactivado exitosamente', 200);
       return;
     }
 
-    res.status(201).json({ status: 'ok', message: 'Alumno registrado exitosamente', data: result.user });
+    sendSuccess(res, result.user, 'Alumno registrado exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -113,11 +110,7 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
       level_code
     });
 
-    res.status(200).json({
-      status: 'ok',
-      message: 'Alumno actualizado exitosamente',
-      data: updatedData
-    });
+    sendSuccess(res, updatedData, 'Alumno actualizado exitosamente');
   } catch (error) {
     next(error);
   }
@@ -128,7 +121,7 @@ export const deleteUser = async (req: Request, res: Response, next: NextFunction
   try {
     const id = parseId(req.params.id);
     await userService.delete(id);
-    res.status(200).json({ status: 'ok', message: 'Alumno desactivado exitosamente', data: null });
+    sendSuccess(res, null, 'Alumno desactivado exitosamente');
   } catch (error) {
     next(error);
   }

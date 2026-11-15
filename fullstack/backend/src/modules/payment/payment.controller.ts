@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { AppError } from '../../errors/AppError.js';
+import { sendSuccess } from '../../utils/response.js';
 import { PaymentService } from './payment.service.js';
 
 /**
@@ -16,7 +17,7 @@ const paymentService = new PaymentService();
 export const getAllPayments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const payments = await paymentService.findAll();
-    res.status(200).json({ status: 'ok', data: payments });
+    sendSuccess(res, payments, 'Pagos obtenidos exitosamente');
   } catch (error) {
     next(error);
   }
@@ -38,21 +39,18 @@ export const getStudentAccountStatus = async (req: Request, res: Response, next:
     );
 
     if (result.enrollments.length === 0 && result.message) {
-      res.status(200).json({
-        status: 'ok',
-        message: result.message,
-        data: { enrollments: [], installments: [] }
-      });
+      sendSuccess(res, { enrollments: [], installments: [] }, result.message);
       return;
     }
 
-    res.status(200).json({
-      status: 'ok',
-      data: {
+    sendSuccess(
+      res,
+      {
         enrollments: result.enrollments,
         installments: result.installments
-      }
-    });
+      },
+      'Estado de cuenta obtenido exitosamente'
+    );
   } catch (error) {
     next(error);
   }
@@ -71,11 +69,7 @@ export const registerPayment = async (req: Request, res: Response, next: NextFun
       payment_date
     });
 
-    res.status(201).json({
-      status: 'ok',
-      message: result.message,
-      data: result.payment
-    });
+    sendSuccess(res, result.payment, result.message, 201);
   } catch (error) {
     next(error);
   }
@@ -88,7 +82,7 @@ export const getDebtors = async (req: Request, res: Response, next: NextFunction
     const debtors = await paymentService.getDebtors(
       id_academic_year ? Number(id_academic_year) : undefined
     );
-    res.status(200).json({ status: 'ok', data: debtors });
+    sendSuccess(res, debtors, 'Reporte de deudores obtenido exitosamente');
   } catch (error) {
     next(error);
   }

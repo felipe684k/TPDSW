@@ -16,7 +16,8 @@ export const tuitionFeeService = {
   getTuitionFees: async (): Promise<TuitionFee[]> => {
     const response = await fetch(API_URL);
     if (!response.ok) throw new Error('Error al obtener las cuotas');
-    return response.json();
+    const json = await response.json();
+    return json.data || [];
   },
 
   createTuitionFee: async (data: Partial<TuitionFee>): Promise<TuitionFee> => {
@@ -29,6 +30,7 @@ export const tuitionFeeService = {
       const errorJson = await response.json().catch(() => null);
       throw new Error(errorJson?.message || 'Error al crear la cuota');
     }
-    return response.json();
+    const json = await response.json();
+    return json.data;
   }
 };

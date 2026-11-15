@@ -1,4 +1,5 @@
 import { type Request, type Response, type NextFunction } from 'express';
+import { sendSuccess } from '../../utils/response.js';
 import { LevelService } from './level.service.js';
 
 /**
@@ -15,7 +16,7 @@ const levelService = new LevelService();
 export const getAllLevels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const levels = await levelService.findAll();
-        res.status(200).json({ status: 'ok', data: levels });
+        sendSuccess(res, levels, 'Niveles obtenidos exitosamente');
     } catch (error) {
         next(error);
     }

@@ -1,5 +1,6 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { AppError, parseId } from '../../errors/AppError.js';
+import { sendSuccess } from '../../utils/response.js';
 import { CourseService } from './course.service.js';
 
 /**
@@ -17,7 +18,7 @@ export const getAllCourses = async (req: Request, res: Response, next: NextFunct
   try {
     const { level } = req.query;
     const courses = await courseService.findAll({ level });
-    res.status(200).json({ status: 'ok', data: courses });
+    sendSuccess(res, courses, 'Cursos obtenidos exitosamente');
   } catch (error) {
     next(error);
   }
@@ -40,7 +41,7 @@ export const createCourse = async (req: Request, res: Response, next: NextFuncti
       weekly_hours
     });
 
-    res.status(201).json({ status: 'ok', message: 'Curso registrado exitosamente', data: newCourse });
+    sendSuccess(res, newCourse, 'Curso registrado exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -62,7 +63,7 @@ export const updateCourse = async (req: Request, res: Response, next: NextFuncti
       throw new AppError('Curso no encontrado', 404);
     }
 
-    res.status(200).json({ status: 'ok', message: 'Curso actualizado exitosamente' });
+    sendSuccess(res, existingCourse, 'Curso actualizado exitosamente');
   } catch (error) {
     next(error);
   }
@@ -78,7 +79,7 @@ export const deleteCourse = async (req: Request, res: Response, next: NextFuncti
       throw new AppError('Curso no encontrado', 404);
     }
     
-    res.status(200).json({ status: 'ok', message: 'Curso desactivado exitosamente' });
+    sendSuccess(res, null, 'Curso desactivado exitosamente');
   } catch (error) {
     next(error);
   }

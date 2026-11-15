@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { AppError, parseId } from '../../errors/AppError.js';
+import { sendSuccess } from '../../utils/response.js';
 import { AcademicYearService } from './academic_year.service.js';
 
 /**
@@ -16,7 +17,7 @@ const academicYearService = new AcademicYearService();
 export const getAcademicYears = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const academicYears = await academicYearService.findAll();
-    res.json({ success: true, data: academicYears });
+    sendSuccess(res, academicYears, 'Ciclos lectivos obtenidos exitosamente');
   } catch (error) {
     next(error);
   }
@@ -30,7 +31,7 @@ export const getAcademicYearById = async (req: Request, res: Response, next: Nex
     if (!academicYear) {
       throw new AppError('Ciclo lectivo no encontrado', 404);
     }
-    res.json({ success: true, data: academicYear });
+    sendSuccess(res, academicYear, 'Ciclo lectivo obtenido exitosamente');
   } catch (error) {
     next(error);
   }
@@ -41,7 +42,7 @@ export const createAcademicYear = async (req: Request, res: Response, next: Next
   try {
     const { name, start_date, end_date } = req.body;
     const newAcademicYear = await academicYearService.create({ name, start_date, end_date });
-    res.status(201).json({ success: true, data: newAcademicYear });
+    sendSuccess(res, newAcademicYear, 'Ciclo lectivo creado exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -58,7 +59,7 @@ export const updateAcademicYear = async (req: Request, res: Response, next: Next
       throw new AppError('Ciclo lectivo no encontrado', 404);
     }
 
-    res.json({ success: true, data: academicYear });
+    sendSuccess(res, academicYear, 'Ciclo lectivo actualizado exitosamente');
   } catch (error) {
     next(error);
   }
@@ -72,7 +73,7 @@ export const deleteAcademicYear = async (req: Request, res: Response, next: Next
     if (!deleted) {
       throw new AppError('Ciclo lectivo no encontrado', 404);
     }
-    res.json({ success: true, message: 'Ciclo lectivo eliminado exitosamente' });
+    sendSuccess(res, null, 'Ciclo lectivo eliminado exitosamente');
   } catch (error) {
     next(error);
   }

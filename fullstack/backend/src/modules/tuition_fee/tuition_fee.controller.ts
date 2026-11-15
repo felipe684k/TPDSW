@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { sendSuccess } from '../../utils/response.js';
 import { TuitionFeeService } from './tuition_fee.service.js';
 
 /**
@@ -15,7 +16,7 @@ const tuitionFeeService = new TuitionFeeService();
 export const getTuitionFees = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const fees = await tuitionFeeService.findAll();
-    res.json(fees);
+    sendSuccess(res, fees, 'Aranceles obtenidos exitosamente');
   } catch (error) {
     next(error);
   }
@@ -30,7 +31,7 @@ export const createTuitionFee = async (req: Request, res: Response, next: NextFu
       monthly_cost,
       start_date
     });
-    res.status(201).json(newFee);
+    sendSuccess(res, newFee, 'Arancel registrado exitosamente', 201);
   } catch (error) {
     next(error);
   }

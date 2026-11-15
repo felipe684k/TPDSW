@@ -1,5 +1,6 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { AppError, parseId } from '../../errors/AppError.js';
+import { sendSuccess } from '../../utils/response.js';
 import { ProfessorService } from './professor.service.js';
 
 /**
@@ -18,7 +19,7 @@ export const getAllProfessors = async (req: Request, res: Response, next: NextFu
     const { search, status } = req.query;
     const professors = await professorService.findAll({ search, status });
 
-    res.status(200).json({ status: 'ok', message: 'Profesores obtenidos exitosamente', data: professors });
+    sendSuccess(res, professors, 'Profesores obtenidos exitosamente');
   } catch (error) {
     next(error);
   }
@@ -31,11 +32,11 @@ export const checkProfessorDni = async (req: Request, res: Response, next: NextF
     const prof = await professorService.checkDni(dni);
 
     if (prof) {
-      res.status(200).json({ status: 'ok', data: prof });
+      sendSuccess(res, prof, 'Profesor encontrado');
       return;
     }
 
-    res.status(200).json({ status: 'not_found', data: null });
+    sendSuccess(res, null, 'No se encontró un profesor inactivo con ese DNI');
   } catch (error) {
     next(error);
   }
@@ -64,11 +65,11 @@ export const createProfessor = async (req: Request, res: Response, next: NextFun
     }
 
     if (result.reactivated) {
-      res.status(201).json({ status: 'ok', message: 'Profesor reactivado exitosamente', data: result.data });
+      sendSuccess(res, result.data, 'Profesor reactivado exitosamente', 200);
       return;
     }
 
-    res.status(201).json({ status: 'ok', message: 'Profesor registrado exitosamente', data: result.data });
+    sendSuccess(res, result.data, 'Profesor registrado exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -94,7 +95,7 @@ export const updateProfessor = async (req: Request, res: Response, next: NextFun
       throw new AppError('No se encontró un profesor con ID ' + id, 404);
     }
 
-    res.status(200).json({ status: 'ok', message: 'Profesor actualizado exitosamente', data: updatedData });
+    sendSuccess(res, updatedData, 'Profesor actualizado exitosamente');
   } catch (error) {
     next(error);
   }
@@ -111,7 +112,7 @@ export const deleteProfessor = async (req: Request, res: Response, next: NextFun
       throw new AppError('No se encontró un profesor activo con ID ' + id, 404);
     }
 
-    res.status(200).json({ status: 'ok', message: 'Profesor desactivado exitosamente', data: null });
+    sendSuccess(res, null, 'Profesor desactivado exitosamente');
   } catch (error) {
     next(error);
   }

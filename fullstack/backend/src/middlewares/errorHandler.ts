@@ -12,6 +12,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ConnectionError, ConnectionTimedOutError } from 'sequelize';
 import { AppError } from '../errors/AppError.js';
+export { sendSuccess } from '../utils/response.js';
 
 // Mensaje que ve el usuario cuando MySQL no responde (también lo usa /api/health en app.ts)
 export const DB_UNAVAILABLE_MESSAGE = 'No hay conexión con la base de datos. Intentá de nuevo en unos minutos.';
